@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#173b39"/>
+<title>UnlockPlan · Feasibility before commitment</title>
+<link rel="stylesheet" href="/static/style.css"/>
+</head><body>
+<a class="skip-link" href="#main">Skip to planner</a>
+<header class="masthead"><div class="brand"><div class="brand-mark" aria-hidden="true"><span>U</span></div><div><strong>UnlockPlan</strong><small>CLIMATE-SMART DECISION WORKSPACE</small></div></div><div class="top-right"><span class="pill dot">P0 prototype</span><span class="muted tiny">Jalna, Maharashtra · Cotton</span></div></header>
+<div class="shell">
+<aside class="sidebar" aria-label="Planner sections">
+  <div class="side-heading">PLANNING FLOW</div>
+  <nav class="navlist">
+    <a href="#situation"><span>01</span> Situation</a><a href="#weather"><span>02</span> Weather evidence</a><a href="#resources"><span>03</span> Resources</a><a href="#changes"><span>04</span> Permitted changes</a><a href="#results"><span>05</span> Feasibility</a><a href="#summary"><span>06</span> Selected summary</a>
+  </nav>
+  <div class="sidebar-note"><strong>Planning ≠ prediction</strong><p>UnlockPlan does not forecast weather. It checks whether an action is feasible under the information and constraints you declare.</p><a href="#sources">Sources & limitations</a></div>
+</aside>
+<main id="main" class="workspace">
+ <div class="hero" id="situation">
+   <div class="eyebrow"><span class="eyebrow-line"></span> HACKVERSE 2026 / SOLUTION WORKSPACE</div>
+   <h1>Can your plan <em>actually happen</em> before conditions change?</h1>
+   <p>Turn a candidate climate preparation window into a practical resource check. See what's feasible, what's blocked, and the smallest <u>sets of permitted changes</u> that could unblock an action.</p>
+   <div class="hero-facts"><span><span class="mini-icon">⌁</span> One crop · Cotton</span><span><span class="mini-icon">◷</span> One preparation deadline</span><span><span class="mini-icon">◇</span> User-defined resources</span></div>
+ </div>
+ <div class="banner safety" role="note"><strong>Demonstration only.</strong> No field validation, crop-loss guarantee, safe-storage certification, or resource-delivery guarantee. No resource quantities are preset. Enter your own user-reported comparable units; the app does not independently verify them. Synthetic test fixtures are used in automated tests only.</div>
+ <section class="panel" id="weather" aria-labelledby="weather-title">
+  <div class="section-head"><div><div class="kicker">STEP 02 / FORECAST CONTEXT</div><h2 id="weather-title">Weather evidence <span class="muted normal">· Open-Meteo</span></h2><p>Public model data is context—not a field measurement or an automatic decision cutoff.</p></div><span class="status status-loading" id="forecast-status">Not checked</span></div>
+  <div class="weather-grid">
+    <div class="weather-main"><div class="label">Public forecast connection</div><div id="weather-message" class="weather-message">Checking source availability…</div><button class="secondary" id="refresh-forecast" type="button">↻ Refresh actual forecast</button><div class="micro" id="weather-meta">Reference point 19.84°N, 75.89°E · Asia/Kolkata · not a farm address.</div></div>
+    <div class="window-box"><label for="deadline">Candidate preparation deadline <span class="origin">Configured assumption</span></label><input id="deadline" type="datetime-local" required /><p>Choose your own time, or select an actual forecast hour below. Neither choice is a predicted rain onset or a certified safe harvest window.</p></div>
+  </div>
+  <div class="forecast-hours" id="weather-hours" aria-live="polite"></div>
+  <div class="source-inline">Data: <a href="https://open-meteo.com/en/docs" target="_blank" rel="noopener noreferrer">Open-Meteo documentation ↗</a> · <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener noreferrer">Terms and attribution ↗</a> · Weather data © Open-Meteo (CC BY 4.0)</div>
+ </section>
+ <section class="panel" id="resources" aria-labelledby="resources-title">
+  <div class="section-head"><div><div class="kicker">STEP 03 / DECLARED CONTEXT</div><h2 id="resources-title">What do you have available?</h2><p>Plan for <strong>already-picked cotton handling</strong>—not a recommendation to harvest. Use one consistent, farmer-defined handling batch unit across target, capacity and options. This is not a certified agricultural measurement.</p></div><span class="pill">One target action</span></div>
+  <div class="action-line"><div class="action-icon">↗</div><div><strong>Prepare protected handling of already-picked material</strong><p>Protection from rain and soiling is historically mentioned by ICAR for Jalna cotton; appropriate handling and safety require separate confirmation.</p></div></div>
+  <div class="form-grid">
+   <div class="form-field"><label for="target">Planned amount <span class="origin" id="origin-target">Not supplied</span></label><div class="unit-input"><input type="number" min="0" step="1" id="target" placeholder="Enter actual amount"/><span>handling units</span></div></div>
+   <div class="form-field"><label for="capacity">Already confirmed capacity <span class="origin" id="origin-capacity">Not supplied</span></label><div class="unit-input"><input type="number" min="0" step="1" id="capacity" placeholder="Enter confirmed capacity"/><span>handling units</span></div></div>
+   <div class="form-field"><label for="hours">Estimated preparation time <span class="origin">Configured assumption</span></label><div class="unit-input"><input type="number" min="0" step="0.5" id="hours" placeholder="Enter estimated time"/><span>hours</span></div></div>
+   <div class="form-field"><label for="readiness">Handling-location readiness <span class="origin">User-reported / unknown</span></label><select id="readiness"><option value="unknown">Unknown — not checked</option><option value="yes">Yes — user confirms readiness</option><option value="no">No — not ready</option></select></div>
+  </div>
+  <div class="form-field" style="margin-top:17px"><label for="baseline-resources">Identifiers already included in confirmed capacity <span class="origin">User-reported</span></label><input id="baseline-resources" type="text" value="" placeholder="e.g. existing-cover, facility-1"/><p class="footnote">Separate identifiers by commas. Additional options with these same identifiers are excluded, preventing double counting. Confirm that the initial capacity does not already include any optional resource.</p></div>
+  <div class="banner neutr"><strong>Important:</strong> a covered or prepared location is not automatically suitable or safe storage. The app cannot independently verify readiness.</div>
+ </section>
+ <section class="panel" id="changes" aria-labelledby="changes-title">
+  <div class="section-head"><div><div class="kicker">STEP 04 / CONTROLLED OPTIONS</div><h2 id="changes-title">Which changes are permitted?</h2><p>Only explicitly available <em>and</em> confirmed alternatives can appear in a feasible package. A requested resource is not confirmed. No change quantities are preset. Enable only real user-permitted, available, appropriately confirmed options.</p></div><span class="pill">Up to 4 options</span></div>
+  <div class="change-list" id="change-list"></div>
+  <p class="footnote">Each confirmed option is <strong>projected</strong> if selected; it is not assumed already executed. Resource IDs prevent the same capacity being counted twice. Reducing the target leaves an explicit portion unhandled.</p>
+  <label class="footnote" style="display:block; margin:10px 0"><input type="checkbox" id="input-confirm"/> I confirm these numbers are user-reported and refer to comparable handling units. This does not mean they have been independently verified.</label>
+  <button id="evaluate" class="primary" type="button">Evaluate feasibility <span aria-hidden="true">→</span></button>
+  <p id="error" class="error" role="alert" hidden></p>
+ </section>
+ <section class="panel" id="results" aria-labelledby="results-title">
+  <div class="section-head"><div><div class="kicker">STEP 05 / DETERMINISTIC ENGINE</div><h2 id="results-title">Feasible, blocked, or unknown?</h2><p>Every result is traced to user-declared conditions; no AI-generated farming prescription.</p></div><span class="status status-loading" id="result-status">Not evaluated</span></div>
+  <div id="result-content" class="empty-state"><span class="empty-graphic">◇</span><h3>Your assessment will appear here</h3><p>Adjust the inputs and select <strong>Evaluate feasibility</strong> to test all permitted minimal-change packages.</p></div>
+ </section>
+ <section class="panel" id="summary" aria-labelledby="summary-title">
+  <div class="section-head"><div><div class="kicker">STEP 06 / CHOICE & ACCOUNTABILITY</div><h2 id="summary-title">Selected plan summary</h2><p>Choosing a package records a conditional option; it does not book, acquire, or execute anything.</p></div></div>
+  <div id="selection-content" class="empty-state compact">No package selected. Evaluate the plan first.</div>
+ </section>
+ <section class="panel sources" id="sources"><div class="kicker">EVIDENCE REGISTER</div><h2>Sources, provenance & scope</h2><div id="source-list">Loading source register…</div><p class="footnote">Engine rules are developer interpretations, not ICAR-issued software rules. Missing information never becomes zero. No current local agronomic efficacy validation has been performed.</p></section>
+ <footer>UnlockPlan · Educational feasibility prototype · <span>Transparent assumptions. No unsupported promises.</span></footer>
+</main></div>
+<script src="/static/app.js" defer></script>
+</body></html>
