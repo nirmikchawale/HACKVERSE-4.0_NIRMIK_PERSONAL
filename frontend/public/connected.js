@@ -10,6 +10,7 @@
   const okLocation=()=>state.place?.state==='Maharashtra'&&state.place?.city?.trim().toLowerCase()==='jalna';
   const statuses=['feasible','blocked','unknown','completed'];
   let comparisonGeneration=0,attestedDeadlineRows=[],candidateSignature='';
+  let manualGeneration=0,manualDeadlineRows=[];
   let previousPlace=state.place.city+'|'+state.place.state;
   const ledger=el('section','live-ledger');
   ledger.id='sourceLedger';
@@ -56,7 +57,7 @@
   }
   function clearResult(){
     live.error=null;live.evaluation=null;live.request=null;live.comparison=null;live.replan=null;live.selectedPackage=null;
-    resetCandidateComparisons();
+    resetCandidateComparisons();resetManualComparisons();
     renderSourceMatrix();
   }
   const oldNote=noteChange;
@@ -323,10 +324,10 @@
       b.type='button';b.append(el('strong','', 'Package '+(i+1)+' · '+p.change_ids.join(', ')));
       b.append(el('p','',p.projected.status.toUpperCase()+' · capacity '+num(p.projected.projected_capacity_units)+' / target '+num(p.projected.projected_target_units)+' handling units'));
       b.append(el('small','',p.warning||'Conditional package; resource confirmation is not a completed action.'));
-      b.addEventListener('click',()=>{live.selectedPackage=i;live.comparison=null;live.replan=null;resetCandidateComparisons();renderPackages();renderSummary();});list.append(b);
+      b.addEventListener('click',()=>{live.selectedPackage=i;live.comparison=null;live.replan=null;resetCandidateComparisons();resetManualComparisons();renderPackages();renderSummary();});list.append(b);
     });
     compare.replaceChildren();
-    if(live.selectedPackage===null||!packs[live.selectedPackage]){compare.append(el('p','',packs.length?'Select a package, then use Compare / replan with FastAPI.':'No eligible package selected.'));renderCandidateComparisonChoices();return;}
+    if(live.selectedPackage===null||!packs[live.selectedPackage]){compare.append(el('p','',packs.length?'Select a package, then use Compare / replan with FastAPI.':'No eligible package selected.'));renderCandidateComparisonChoices();renderManualControls();return;}
     const p=packs[live.selectedPackage],a=live.evaluation.baseline,b=p.projected;
     compare.append(el('h3','', 'Selected conditional package'));
     compare.append(el('p','', 'Before: '+a.status.toUpperCase()+' · '+num(a.projected_capacity_units)+' capacity / '+num(a.projected_target_units)+' target.'));
@@ -334,9 +335,9 @@
     compare.append(el('p','', 'Original work left unhandled: '+num(b.original_target_unhandled_units)+' handling units. '+p.warning));
     if(live.comparison){compare.append(el('p','live-valid','Backend comparison: '+live.comparison.changes.status_before+' → '+live.comparison.changes.status_after+'. '+live.comparison.interpretation));}
     if(live.replan){compare.append(el('p','live-valid','Server-attested forecast-hour replan: '+live.replan.forecast_selection.selected_hour_local+' IST · '+live.replan.forecast_selection.attribution));}
-    renderCandidateComparisonChoices();
+    renderCandidateComparisonChoices();renderManualControls();
   }
-  here('clearPackage').addEventListener('click',e=>{e.stopImmediatePropagation();live.selectedPackage=null;live.comparison=null;live.replan=null;resetCandidateComparisons();renderPackages();renderSummary();},true);
+  here('clearPackage').addEventListener('click',e=>{e.stopImmediatePropagation();live.selectedPackage=null;live.comparison=null;live.replan=null;resetCandidateComparisons();resetManualComparisons();renderPackages();renderSummary();},true);
   const compareButton=el('button','btn primary','Compare / replan with FastAPI');compareButton.id='compareApi';compareButton.type='button';
   here('comparePanel').parentElement.append(compareButton);
   compareButton.addEventListener('click',async()=>{
@@ -505,6 +506,104 @@
     link.download='agri-foresight-attested-deadlines-'+new Date().toISOString().slice(0,10)+'.csv';
     link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
+
+  // EX-07: explicit user-chosen future times, with NO model/IMD assertion.
+  // /api/compare is authoritative even if Open-Meteo is unavailable.
+  const manualPanel=el('section','panel manual-time-panel');manualPanel.id='manualDeadlinePanel';
+  manualPanel.append(el('h2','','Manual deadline alternatives · no weather required'));
+  manualPanel.append(el('p','manual-disclosure',
+    'When a reliable model forecast is unavailable, enter up to three distinct future planning deadlines. FastAPI compares declared resources and hours only; these dates are farmer-selected assumptions, not observed or predicted rain onset.'));
+  const manualFields=el('div','manual-fields');
+  const manualInputs=[1,2,3].map(n=>{
+    const label=el('label','manual-field');label.append(el('span','','Candidate '+n+' · IST'));
+    const input=el('input','manual-input');input.id='manualDeadline'+n;input.type='datetime-local';
+    input.setAttribute('aria-label','Manual candidate '+n+' in India Standard Time');
+    input.addEventListener('input',resetManualComparisons);
+    label.append(input);manualFields.append(label);return input;
+  });
+  manualPanel.append(manualFields);
+  const manualRun=el('button','btn primary','Compare manual deadlines with FastAPI');
+  manualRun.id='compareManualDeadlines';manualRun.type='button';
+  const manualStatus=el('p','manual-status','Evaluate farmer-declared resources on Page 04 first.');
+  manualStatus.id='manualDeadlineStatus';manualStatus.setAttribute('role','status');
+  const manualOutput=el('div','manual-output');manualOutput.id='manualDeadlineResults';
+  manualPanel.append(manualRun,manualStatus,manualOutput);
+  manualPanel.append(el('small','',
+    'No model source, rainfall probability or forecast safety claim is attached to manual comparisons. Successful results are included in Download evidence JSON on Page 06.'));
+  multiPanel.insertAdjacentElement('afterend',manualPanel);
+  function resetManualComparisons(){
+    ++manualGeneration;manualDeadlineRows=[];manualOutput.replaceChildren();
+    manualRun.textContent='Compare manual deadlines with FastAPI';
+  }
+  function renderManualControls(){
+    const ready=!!live.request&&!!live.evaluation&&okLocation();
+    manualRun.disabled=!ready;
+    for(const input of manualInputs)input.disabled=!ready;
+    if(!ready)manualStatus.textContent='No current API-backed farmer assessment. Evaluate resources first.';
+    else if(!manualDeadlineRows.length)manualStatus.textContent='Ready to compare up to 3 farmer-selected times. No forecast is consulted.';
+  }
+  function renderManualResults(){
+    manualOutput.replaceChildren();
+    const table=el('table','multi-table'),head=el('thead'),tr=el('tr');
+    for(const label of ['User-selected deadline (IST)','Server result','Time slack (h)','Blocked / unknown constraints','Evidence classification']){
+      const th=el('th','',label);th.scope='col';tr.append(th);
+    }
+    head.append(tr);table.append(head);
+    const body=el('tbody');
+    for(const entry of manualDeadlineRows){
+      const result=entry.response?.after?.baseline;
+      const constraints=result?.constraints?.filter(c=>c.status!=='pass').map(c=>c.id+': '+c.status).join(', ');
+      const values=[entry.hour.replace('T',' '),
+        result?result.status.toUpperCase():'Unavailable',
+        result?(result.time_budget.time_slack_hours===null?'Unknown':num(result.time_budget.time_slack_hours)):'—',
+        result?(constraints||'None reported'):(entry.error||'No verified server result'),
+        'Farmer-selected time only · no forecast attestation'];
+      const row=el('tr');
+      values.forEach((value,i)=>{
+        const cell=el(i?'td':'th','',value);if(!i)cell.scope='row';row.append(cell);
+      });
+      body.append(row);
+    }
+    table.append(body);const wrap=el('div','multi-overflow');wrap.append(table);manualOutput.append(wrap);
+    const verified=manualDeadlineRows.filter(x=>x.response).length;
+    manualStatus.textContent=verified+'/'+manualDeadlineRows.length+
+      ' manual deadline(s) returned by FastAPI. Unavailable results are not filled in.';
+  }
+  manualRun.addEventListener('click',async()=>{
+    if(manualRun.disabled||!live.request||!live.evaluation)return;
+    const selected=manualInputs.map(i=>i.value).filter(Boolean);
+    if(!selected.length){manualStatus.textContent='Enter at least one user-chosen deadline.';return;}
+    if(new Set(selected).size!==selected.length){manualStatus.textContent='Enter distinct manual deadlines.';return;}
+    if(!selected.every(time=>/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(time)&&
+      Number.isFinite(Date.parse(time+':00+05:30'))&&Date.parse(time+':00+05:30')>Date.now()+60000)){
+      manualStatus.textContent='Each candidate must be a valid future time in IST.';return;
+    }
+    const token=++manualGeneration;
+    manualRun.disabled=true;manualRun.textContent='Checking server…';manualOutput.replaceChildren();
+    manualStatus.textContent='Evaluating '+selected.length+' user-declared deadline(s) through FastAPI…';
+    const before={...live.request,now:new Date().toISOString(),changes:[]};
+    const pack=live.selectedPackage===null?null:live.evaluation.packages[live.selectedPackage];
+    const afterBase=pack?{...before,target_units:pack.projected.projected_target_units,
+      capacity_units:pack.projected.projected_capacity_units}:{...before};
+    const resolved=await Promise.all(selected.map(async hour=>{
+      try{
+        const response=await json('/api/compare',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({before,after:{...afterBase,deadline:hour+':00+05:30'}})});
+        const decision=response?.after?.baseline;
+        if(!response?.changes||!decision||!statuses.includes(decision.status)||
+          decision.time_budget?.candidate_deadline!==hour+':00+05:30'||
+          !Array.isArray(decision.constraints)||
+          !decision.constraints.every(c=>['pass','blocked','unknown'].includes(c.status))||
+          !(decision.time_budget?.time_slack_hours===null||Number.isFinite(decision.time_budget?.time_slack_hours))){
+          throw Error('Manual comparison failed server schema verification.');
+        }
+        return {hour,response};
+      }catch(e){return {hour,error:e.message};}
+    }));
+    if(token!==manualGeneration)return;
+    manualDeadlineRows=resolved;manualRun.disabled=false;
+    manualRun.textContent='Compare manual deadlines with FastAPI';renderManualResults();
+  });
   // EX-05C: a print-safe, source-separated record of *actual* current state.
   const printReceipt=el('section','panel print-evidence-receipt');
   printReceipt.id='printEvidenceReceipt';
@@ -581,7 +680,9 @@
       disclosure:'Conditional simulation using user declarations and genuine FastAPI output; not field-validated agricultural advice.',
       forecast:live.forecast,source_registry:live.sources,evaluation:live.evaluation,comparison:live.comparison,
       replan:live.replan,selected_package:live.selectedPackage,request:live.request,
-      government_climate_historical:governmentClimateData};
+      government_climate_historical:governmentClimateData,
+      source_attested_model_deadlines:attestedDeadlineRows.filter(x=>x.value).map(x=>({candidate_hour_ist:x.hour,source_type:'Open-Meteo model / FastAPI attested',result:x.value})),
+      user_selected_manual_deadlines:manualDeadlineRows.filter(x=>x.response).map(x=>({candidate_hour_ist:x.hour,source_type:'user-declared assumption / FastAPI comparison',result:x.response}))};
     const b=new Blob([JSON.stringify(evidence,null,2)],{type:'application/json'}),url=URL.createObjectURL(b),a=el('a');
     a.href=url;a.download='agri-foresight-evidence-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
