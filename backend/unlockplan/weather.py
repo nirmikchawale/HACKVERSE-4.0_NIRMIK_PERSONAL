@@ -3,6 +3,7 @@ Forecast amounts are model outputs, never observations or agronomic thresholds.
 """
 from __future__ import annotations
 import json
+import tempfile
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -15,7 +16,8 @@ LAT,LON=19.84,75.89
 TIMEZONE='Asia/Kolkata'
 BASE='https://api.open-meteo.com/v1/forecast'
 ATTRIBUTION='Weather data by Open-Meteo.com (CC BY 4.0); model forecasts, not field measurements.'
-CACHE_FILE=Path(__file__).resolve().parents[1]/'cache'/'real_open_meteo_cache.json'
+# Serverless deployments may have a read-only source tree. This cache is ephemeral.
+CACHE_FILE=Path(tempfile.gettempdir())/'unlockplan'/'real_open_meteo_cache.json'
 STALE_AFTER_HOURS=2
 
 class WeatherSchemaError(ValueError):pass
@@ -28,8 +30,15 @@ def validate_forecast(payload:dict)->dict:
     if not isinstance(payload,dict):raise WeatherSchemaError('Forecast must be an object.')
     if payload.get('timezone')!=TIMEZONE or payload.get('utc_offset_seconds')!=19800:
         raise WeatherSchemaError('Unexpected timezone or offset.')
+    # These are model grid-cell coordinates, which can differ slightly from the requested reference.
+    model_lat, model_lon = payload.get('latitude'), payload.get('longitude')
+    if (any(isinstance(x, bool) or not isinstance(x, (int, float)) or not isfinite(x)
+            for x in (model_lat, model_lon))
+            or abs(model_lat-LAT)>0.5 or abs(model_lon-LON)>0.5):
+        raise WeatherSchemaError('Missing, invalid, or geographically mismatched forecast grid cell.')
     units=payload.get('hourly_units')
-    if not isinstance(units,dict) or units.get('precipitation')!='mm' or units.get('precipitation_probability')!='%':
+    if (not isinstance(units,dict) or units.get('time')!='iso8601'
+            or units.get('precipitation')!='mm' or units.get('precipitation_probability')!='%'):
         raise WeatherSchemaError('Unexpected weather units.')
     h=payload.get('hourly')
     if not isinstance(h,dict):raise WeatherSchemaError('Missing hourly data.')
@@ -57,13 +66,16 @@ def validate_forecast(payload:dict)->dict:
     return {'hours':len(times),'missing_precipitation':sum(x is None for x in prec),
             'missing_probability':sum(x is None for x in prob),'first_hour':times[0],
             'last_hour':times[-1], 'timezone':TIMEZONE,'units':units,
+            'model_grid_latitude':model_lat,'model_grid_longitude':model_lon,
             'positive_precipitation_hours':sum(isinstance(x,(int,float)) and x>0 for x in prec)}
 
-def public_summary(record:dict,status:str,error:str|None=None)->dict:
+def public_summary(record:dict,status:str,error:str|None=None,now:datetime|None=None)->dict:
     payload=record['raw']; val=validate_forecast(payload)
+    now = now or datetime.now(timezone.utc)
     return {'status':status,'error':error,'source':'Open-Meteo public model forecast',
             'latitude_reference':LAT,'longitude_reference':LON,'location_label':'Jalna district approximate reference (not farm-level)',
-            'retrieved_at_utc':record['retrieved_at_utc'],'request_url':record['request_url'],
+            'retrieved_at_utc':record['retrieved_at_utc'],'forecast_age_hours':round(age_hours(record,now),3),
+            'request_url':record['request_url'],
             'attribution':ATTRIBUTION,'validated':val,
             'hours':[{'time':time,'precipitation_mm':mm,'precipitation_probability_pct':pct}
                  for time,mm,pct in zip(payload['hourly']['time'],payload['hourly']['precipitation'],payload['hourly']['precipitation_probability'])],
@@ -79,7 +91,8 @@ def read_cache(cache_path:Path=CACHE_FILE)->dict|None:
             raise ValueError('Cache source marker or original URL invalid.')
         validate_forecast(record['raw'])
         retrieved=datetime.fromisoformat(record['retrieved_at_utc'])
-        if retrieved.tzinfo is None:raise ValueError('Timezone missing')
+        if retrieved.tzinfo is None or retrieved.utcoffset()!=timedelta(0):
+            raise ValueError('Cache retrieval timestamp must be UTC')
         return record
     except (KeyError,ValueError,TypeError,WeatherSchemaError,json.JSONDecodeError):
         return None
@@ -90,9 +103,12 @@ def age_hours(record:dict,now:datetime)->float:
 
 def get_forecast(refresh:bool=False,cache_path:Path=CACHE_FILE,fetcher=None,now:datetime|None=None)->dict:
     now=now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        raise ValueError('Forecast evaluation time must have an explicit timezone.')
+    now=now.astimezone(timezone.utc)
     cached=read_cache(cache_path)
     if cached and not refresh and 0<=age_hours(cached,now)<=STALE_AFTER_HOURS:
-        return public_summary(cached,'cached_recent')
+        return public_summary(cached,'cached_recent',now=now)
     url=build_url()
     try:
         if fetcher:
@@ -112,12 +128,12 @@ def get_forecast(refresh:bool=False,cache_path:Path=CACHE_FILE,fetcher=None,now:
         tmp=cache_path.with_suffix('.tmp')
         tmp.write_text(json.dumps(record,ensure_ascii=False,indent=2),encoding='utf-8')
         tmp.replace(cache_path)
-        return public_summary(record,'retrieved_live')
+        return public_summary(record,'retrieved_live',now=now)
     except (HTTPError,URLError,OSError,ValueError,TypeError,KeyError,TimeoutError) as exc:
         error=f'Public forecast fetch or schema validation failed: {type(exc).__name__}: {str(exc)[:160]}'
         if cached:
             status='cached_recent' if 0<=age_hours(cached,now)<=STALE_AFTER_HOURS else 'stale_cache'
-            return public_summary(cached,status,error)
+            return public_summary(cached,status,error,now=now)
         return {'status':'unavailable','error':error,'source':'Open-Meteo public model forecast',
                 'request_url':url,'attribution':ATTRIBUTION,'location_label':'Jalna district approximate reference (not farm-level)',
                 'hours':[],'notice':'Weather unavailable: resource-only sandbox is not live climate advice.'}
