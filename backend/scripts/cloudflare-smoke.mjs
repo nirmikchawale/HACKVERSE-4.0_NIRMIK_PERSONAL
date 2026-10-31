@@ -53,6 +53,6 @@ const run=async()=>{
  assert(n.status!=='unavailable'||n.days.length===0,'Fabricated government data returned');
  assert(n.status==='unavailable'||n.data_kind==='government_gridded_historical','NASA provenance missing');
  console.log(JSON.stringify({result:'PASS',host:'local Cloudflare Python Worker',forms:'real FastAPI',
-   forecast:f.status,government:n.status,government_days:n.days.length,synthetic_live_data:false}));
+   forecast:f.status,forecast_error_type:f.status==='unavailable'?f.error:null,forecast_notice:f.notice,government:n.status,government_days:n.days.length,synthetic_live_data:false}));
 };
 run().catch(error=>{console.error('MIGRATION_SMOKE_FAIL '+String(error));process.exitCode=1});
