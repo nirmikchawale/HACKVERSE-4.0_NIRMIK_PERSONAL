@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b1924" />
+    <meta name="description" content="UnlockPlan is a forecast-informed, resource-aware preparation feasibility prototype for already-picked cotton in Jalna, Maharashtra." />
+    <title>UnlockPlan | Climate-smart preparation</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="site-header">
+        <div class="identity" aria-label="UnlockPlan home">
+          <span class="identity-mark" aria-hidden="true">U<span class="identity-dot">.</span></span>
+          <span class="identity-name">UnlockPlan</span>
+        </div>
+        <span class="header-context">HACKVERSE 4.0 <span aria-hidden="true">/</span> Jalna, Maharashtra</span>
+        <span class="environment-pill">Development foundation</span>
+      </header>
+
+      <main id="main-content">
+        <section class="intro" aria-labelledby="page-title">
+          <div class="intro-copy">
+            <p class="eyebrow"><span class="eyebrow-line" aria-hidden="true"></span> PREPARATION DECISION WORKSPACE</p>
+            <h1 id="page-title">Weather changes.<br /><span class="headline-accent">Your plan should know.</span></h1>
+            <p class="intro-description">A forecast can warn you. UnlockPlan is being built to show whether your own resources and time can support a preparation plan—and what confirmed changes may help.</p>
+            <div class="scope-note"><span class="scope-icon" aria-hidden="true">i</span><span>Prototype scope: rain-preparedness for <strong>already-picked cotton</strong> in Jalna. Not field-validated agricultural or storage advice.</span></div>
+          </div>
+          <aside class="intro-side" aria-labelledby="status-title">
+            <div class="status-top"><p class="panel-kicker">SYSTEM STATUS</p><span class="status-indicator" aria-hidden="true"></span></div>
+            <h2 id="status-title">Foundation ready for integration</h2>
+            <p id="runtime-status" class="status-message" role="status" aria-live="polite">Initializing TypeScript interface…</p>
+            <div class="status-divider"></div>
+            <p class="status-footer">No live API connection, farmer inventory, or forecast is represented by this screen.</p>
+          </aside>
+        </section>
+
+        <section class="workspace" aria-labelledby="workspace-title">
+          <div class="section-heading">
+            <div><p class="eyebrow eyebrow-small">PLANNED USER JOURNEY</p><h2 id="workspace-title">One decision, four connected steps.</h2></div>
+            <span class="section-subtitle">Interface wiring begins in B-02</span>
+          </div>
+          <div class="steps-grid" id="steps-grid">
+            <article class="step-card" aria-labelledby="step-weather-title">
+              <div class="step-head"><span class="step-number">01</span><span class="step-state">Not connected</span></div>
+              <div class="step-art" aria-hidden="true"><span class="art-sun"></span><span class="art-horizon"></span><span class="art-dots">···</span></div>
+              <h3 id="step-weather-title">Forecast context</h3>
+              <p>Model precipitation with source, retrieval time, units and uncertainty clearly identified.</p>
+              <div class="card-foot">Live data: unavailable</div>
+            </article>
+            <article class="step-card" aria-labelledby="step-time-title">
+              <div class="step-head"><span class="step-number">02</span><span class="step-state">Not connected</span></div>
+              <div class="step-art" aria-hidden="true"><span class="art-timeline"><i></i><i></i><i></i></span></div>
+              <h3 id="step-time-title">Candidate deadline</h3>
+              <p>Choose a preparation cut-off. Forecast probability is not an exact rain-onset time.</p>
+              <div class="card-foot">Deadline: not selected</div>
+            </article>
+            <article class="step-card" aria-labelledby="step-resources-title">
+              <div class="step-head"><span class="step-number">03</span><span class="step-state">Not connected</span></div>
+              <div class="step-art" aria-hidden="true"><span class="art-resource"><i></i><i></i><i></i></span></div>
+              <h3 id="step-resources-title">Your resources</h3>
+              <p>Report real capacity, prerequisites, durations and permitted resource changes.</p>
+              <div class="card-foot">Farmer inputs: not entered</div>
+            </article>
+            <article class="step-card" aria-labelledby="step-results-title">
+              <div class="step-head"><span class="step-number">04</span><span class="step-state">Not connected</span></div>
+              <div class="step-art" aria-hidden="true"><span class="art-result"><i></i><i></i><i></i></span></div>
+              <h3 id="step-results-title">Feasibility result</h3>
+              <p>Explain feasible, blocked or unknown conditions—and inclusion-minimal confirmed options.</p>
+              <div class="card-foot">Decision: not calculated</div>
+            </article>
+          </div>
+        </section>
+        <section class="provenance" aria-label="Data provenance and limitations">
+          <span class="provenance-symbol" aria-hidden="true">↗</span>
+          <p><strong>Evidence boundary.</strong> Weather will come from an attributed external Open-Meteo model; ICAR-CRIDA Jalna guidance is historical context. No live values have been fetched or simulated in this foundation.</p>
+        </section>
+      </main>
+      <footer class="site-footer"><span>UnlockPlan / Evidence-aware feasibility prototype</span><span>Phase B-01 · UI foundation only</span></footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
