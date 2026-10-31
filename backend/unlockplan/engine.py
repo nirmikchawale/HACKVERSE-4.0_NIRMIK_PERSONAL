@@ -56,8 +56,10 @@ def validate(case: dict) -> dict:
     if now is None:
         raise InputError('now must be supplied; the engine does not invent evaluation time.')
     baseline_resources = case.get('baseline_resource_ids', [])
-    if (not isinstance(baseline_resources,list) or any(not isinstance(x,str) or not x.strip() for x in baseline_resources)
-            or len(baseline_resources)!=len(set(baseline_resources))):
+    if not isinstance(baseline_resources, list) or any(not isinstance(x, str) or not x.strip() for x in baseline_resources):
+        raise InputError('baseline_resource_ids must contain unique nonempty resource IDs.')
+    baseline_resources = [x.strip() for x in baseline_resources]
+    if len(baseline_resources) != len(set(baseline_resources)):
         raise InputError('baseline_resource_ids must contain unique nonempty resource IDs.')
     changes = case.get('changes', [])
     if not isinstance(changes, list) or len(changes) > MAX_CHANGES:
@@ -68,7 +70,10 @@ def validate(case: dict) -> dict:
         if not isinstance(raw, dict):
             raise InputError(f'changes[{i}] must be an object.')
         cid = raw.get('id')
-        if not isinstance(cid, str) or not cid.strip() or cid in seen_ids:
+        if not isinstance(cid, str) or not cid.strip():
+            raise InputError('Change IDs must be nonempty and unique.')
+        cid = cid.strip()
+        if cid in seen_ids:
             raise InputError('Change IDs must be nonempty and unique.')
         seen_ids.add(cid)
         kind = raw.get('type')
@@ -86,8 +91,10 @@ def validate(case: dict) -> dict:
         if confirmation not in ALLOWED_CONFIRMATION:
             raise InputError(f'{cid}: unknown confirmation state.')
         resource = raw.get('resource_id')
-        if resource is not None and (not isinstance(resource, str) or not resource.strip()):
-            raise InputError(f'{cid}.resource_id must be a string or null.')
+        if resource is not None:
+            if not isinstance(resource, str) or not resource.strip():
+                raise InputError(f'{cid}.resource_id must be a string or null.')
+            resource = resource.strip()
         cost = raw.get('cost')
         if cost is not None:
             cost = number(cost, f'{cid}.cost')
@@ -106,6 +113,10 @@ def check(case: dict, selected: tuple[dict,...]=()) -> dict | None:
         return None  # no double-booking of a single resource
     capacity = case['capacity_units'] + sum(x['value'] for x in selected if x['type']=='add_capacity')
     reduction = sum(x['value'] for x in selected if x['type']=='reduce_target')
+    # Individual finite inputs may still overflow when added together.
+    # Never report an infinite projected resource or target as feasible.
+    if not isfinite(capacity) or not isfinite(reduction):
+        return None
     if reduction > case['target_units']:
         return None  # cannot shrink the target below zero
     target = case['target_units'] - reduction
@@ -129,9 +140,11 @@ def check(case: dict, selected: tuple[dict,...]=()) -> dict | None:
         time_status='pass' if hours>=case['required_hours'] else 'blocked'
         time_exp=f'Time until candidate deadline {hours:.2f} h; user-configured task duration {case["required_hours"]:g} h.'
     constraints.append({'id':'timing','status':time_status,'explanation':time_exp,'provenance':'user-reported + configured assumption'})
+    known_blockers = [c['id'] for c in constraints if c['status']=='blocked']
     status = 'unknown' if any(c['status']=='unknown' for c in constraints) else (
              'blocked' if any(c['status']=='blocked' for c in constraints) else 'feasible')
-    return {'status':status, 'constraints':constraints,'projected_capacity_units':capacity,
+    return {'status':status, 'constraints':constraints,'known_blockers':known_blockers,
+            'projected_capacity_units':capacity,
             'projected_target_units':target,'original_target_unhandled_units':reduction,
             'shortfall_units':max(0,target-capacity)}
 
@@ -172,6 +185,8 @@ def evaluate(raw: dict) -> dict:
         message='Already feasible under declared assumptions; no additional change is needed.'
     elif baseline['status']=='unknown':
         message='One or more prerequisites are unknown; the plan cannot be called feasible.'
+        if baseline['known_blockers']:
+            message += ' Confirmed blockers: '+', '.join(baseline['known_blockers'])+'.'
     elif not packages:
         message='No inclusion-minimal feasible package exists among confirmed permissible changes.'
     else:
