@@ -64,9 +64,12 @@ async def edge_forecast(*, refresh: bool = False,
         age = age_hours(existing, now)
         if not refresh and 0 <= age <= STALE_AFTER_HOURS:
             return public_summary(existing, "cached_recent", now=now)
+    stage = "provider_download"
     try:
         raw = await _request_json(url, limit=_MAX_FORECAST_BODY, timeout=9)
+        stage = "schema_validation"
         verified = validate_forecast(raw)
+        stage = "timezone_validation"
         from zoneinfo import ZoneInfo
         first = datetime.fromisoformat(verified["first_hour"]).replace(tzinfo=ZoneInfo(TIMEZONE))
         last = datetime.fromisoformat(verified["last_hour"]).replace(tzinfo=ZoneInfo(TIMEZONE))
@@ -78,6 +81,7 @@ async def edge_forecast(*, refresh: bool = False,
             "verified_source": "network_response",
         }
         _forecast_cache = record
+        stage = "response_serialization"
         return public_summary(record, "retrieved_live", now=now)
     except (httpx.HTTPError, ValueError, TypeError, KeyError, OSError, TimeoutError) as exc:
         # Never return a stale record under the recent/live status.
@@ -90,6 +94,7 @@ async def edge_forecast(*, refresh: bool = False,
                                       now=now)
         return {
             "status": "unavailable", "error": type(exc).__name__,
+            "error_stage": stage,
             "source": "Open-Meteo public model forecast", "request_url": url,
             "attribution": ATTRIBUTION, "hours": [],
             "location_label": "Jalna district approximate reference (not farm-level)",
