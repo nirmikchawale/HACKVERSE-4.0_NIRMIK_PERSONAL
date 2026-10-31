@@ -42,32 +42,32 @@
           </div>
           <div class="steps-grid" id="steps-grid">
             <article class="step-card" aria-labelledby="step-weather-title">
-              <div class="step-head"><span class="step-number">01</span><span class="step-state">Not connected</span></div>
+              <div class="step-head"><span class="step-number">01</span><span class="step-state" id="weather-step-state">Forecast pending</span></div>
               <div class="step-art" aria-hidden="true"><span class="art-sun"></span><span class="art-horizon"></span><span class="art-dots">···</span></div>
               <h3 id="step-weather-title">Forecast context</h3>
               <p>Model precipitation with source, retrieval time, units and uncertainty clearly identified.</p>
-              <div class="card-foot">Live data: unavailable</div>
+              <div class="card-foot" id="weather-step-foot">Live data: unavailable</div>
             </article>
             <article class="step-card" aria-labelledby="step-time-title">
-              <div class="step-head"><span class="step-number">02</span><span class="step-state">Not connected</span></div>
+              <div class="step-head"><span class="step-number">02</span><span class="step-state" id="deadline-step-state">Not selected</span></div>
               <div class="step-art" aria-hidden="true"><span class="art-timeline"><i></i><i></i><i></i></span></div>
               <h3 id="step-time-title">Candidate deadline</h3>
               <p>Choose a preparation cut-off. Forecast probability is not an exact rain-onset time.</p>
-              <div class="card-foot">Deadline: not selected</div>
+              <div class="card-foot" id="deadline-step-foot">Deadline: not selected</div>
             </article>
             <article class="step-card" aria-labelledby="step-resources-title">
-              <div class="step-head"><span class="step-number">03</span><span class="step-state">Not connected</span></div>
+              <div class="step-head"><span class="step-number">03</span><span class="step-state" id="resources-step-state">Awaiting input</span></div>
               <div class="step-art" aria-hidden="true"><span class="art-resource"><i></i><i></i><i></i></span></div>
               <h3 id="step-resources-title">Your resources</h3>
               <p>Report real capacity, prerequisites, durations and permitted resource changes.</p>
-              <div class="card-foot">Farmer inputs: not entered</div>
+              <div class="card-foot" id="resources-step-foot">Farmer inputs: not entered</div>
             </article>
             <article class="step-card" aria-labelledby="step-results-title">
-              <div class="step-head"><span class="step-number">04</span><span class="step-state">Not connected</span></div>
+              <div class="step-head"><span class="step-number">04</span><span class="step-state" id="results-step-state">Not calculated</span></div>
               <div class="step-art" aria-hidden="true"><span class="art-result"><i></i><i></i><i></i></span></div>
               <h3 id="step-results-title">Feasibility result</h3>
               <p>Explain feasible, blocked or unknown conditions—and inclusion-minimal confirmed options.</p>
-              <div class="card-foot">Decision: not calculated</div>
+              <div class="card-foot" id="results-step-foot">Decision: not calculated</div>
             </article>
           </div>
         </section>

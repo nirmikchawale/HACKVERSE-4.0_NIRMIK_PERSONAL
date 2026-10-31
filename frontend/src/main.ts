@@ -18,6 +18,10 @@ const make = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string, 
   if (content !== undefined) element.textContent = content;
   return element;
 };
+function updateStep(step: 'weather' | 'deadline' | 'resources' | 'results', label: string, footer: string): void {
+  setText(step + '-step-state', label);
+  setText(step + '-step-foot', footer);
+}
 const stateTag = (name: string, message: string, state: 'pending' | 'success' | 'failure'): void => {
   const node = byId(name);
   node.className = 'state-tag state-' + state;
@@ -44,6 +48,7 @@ function clearDecision(): void {
   revision++;
   evaluation = null;
   stateTag('result-status', 'Not evaluated', 'pending');
+  updateStep('results', 'Not evaluated', 'Decision: not calculated');
   byId('result-content').replaceChildren(make('div', 'empty-result', 'Inputs changed. Re-evaluate to receive a new calculation from the Python engine.'));
   setText('selection-content', 'No option selected. Any earlier result was cleared when inputs changed.');
 }
@@ -60,11 +65,13 @@ function deadlineOriginManual(): void {
   setText('deadline-origin', input('deadline').value ?
     'Manual candidate deadline selected by the user; not a certified rain-onset time.' :
     'No candidate deadline selected.');
+  updateStep('deadline', input('deadline').value ? 'Selected' : 'Not selected', input('deadline').value ? 'Manual deadline: ' + input('deadline').value.replace('T', ' ') + ' IST' : 'Deadline: not selected');
   clearDecision();
 }
 function chooseForecastHour(hour: ForecastHour): void {
   input('deadline').value = hour.time;
   selectedHour = hour.time;
+  updateStep('deadline','Selected','Forecast hour chosen: ' + hour.time.replace('T',' ') + ' IST');
   setText('deadline-origin', 'Selected from an authenticated Open-Meteo model hour (' + hour.time.replace('T', ' ') + ' IST). This is still your candidate assumption, not an agronomic threshold.');
   clearDecision();
   byId('deadline-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -105,6 +112,7 @@ function showForecast(result: ForecastResponse): void {
     stale_cache: 'Stale — not current', unavailable: 'Unavailable',
   };
   stateTag('forecast-status', readable[result.status], live ? 'success' : 'failure');
+  updateStep('weather', live ? 'Connected' : 'Unavailable', live ? 'Authentic model data · ' + readable[result.status] : 'Forecast not current · ' + readable[result.status]);
   const message = live ?
     (result.notice ?? 'External model forecast retrieved; no automatic rainfall threshold is applied.') :
     result.status === 'stale_cache' ?
@@ -143,6 +151,7 @@ async function refreshForecast(force = false): Promise<void> {
     if (attempt !== forecastAttempt) return;
     weather = null;
     stateTag('forecast-status', 'API not connected', 'failure');
+    updateStep('weather', 'Unavailable', 'Live data: unavailable');
     const detail = error instanceof Error ? error.message : 'Unknown API error';
     setText('forecast-message', detail + ' No live weather data is displayed.');
     setText('forecast-meta', 'Jalna approximate reference: 19.84°N, 75.89°E · Asia/Kolkata · integration pending.');
@@ -273,6 +282,7 @@ function showSelection(pkg: ChangePackage): void {
 }
 function showEvaluation(result: EvaluationResponse, evidenceNote = ''): void {
   evaluation = result;
+  updateStep('results', 'Calculated', 'Decision: ' + result.status + ' · see below');
   stateTag('result-status', result.status.toUpperCase(), result.status === 'feasible' || result.status === 'completed' ? 'success' : result.status === 'blocked' ? 'failure' : 'pending');
   const root = byId('result-content');
   root.replaceChildren();
@@ -307,6 +317,7 @@ function showEvaluation(result: EvaluationResponse, evidenceNote = ''): void {
   setText('selection-content', 'No conditional package selected. Selecting one will not book, acquire or execute anything.');
 }
 function showError(error: Error): void {
+  updateStep('results', 'Unavailable', 'Calculation: unavailable');
   stateTag('result-status', 'Calculation unavailable', 'failure');
   const root = byId('result-content');
   root.replaceChildren();
@@ -424,8 +435,13 @@ function start(): void {
   document.documentElement.dataset.runtime = 'foundation';
   const form = byId<HTMLFormElement>('plan-form');
   form.addEventListener('submit', event => { void evaluate(event); });
-  form.addEventListener('input', clearDecision);
-  form.addEventListener('change', clearDecision);
+  const syncResourceCard = (): void => {
+    const hasInput = [input('target'), input('capacity'), input('hours')].some(node => node.value.trim() !== '');
+    updateStep('resources', hasInput ? 'In progress' : 'Awaiting input',
+      hasInput ? 'Farmer input entered · not independently verified' : 'Farmer inputs: not entered');
+  };
+  form.addEventListener('input', () => { clearDecision(); syncResourceCard(); });
+  form.addEventListener('change', () => { clearDecision(); syncResourceCard(); });
   input('deadline').addEventListener('input', deadlineOriginManual);
   byId('add-option').addEventListener('click', addOption);
   byId('refresh-forecast').addEventListener('click', () => { void refreshForecast(true); });
