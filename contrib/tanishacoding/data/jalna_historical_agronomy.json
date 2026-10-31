@@ -1,0 +1,64 @@
+{
+  "data_type": "institutional_historical_guidance",
+  "status": "historical_context_not_current",
+  "district": "Jalna",
+  "state": "Maharashtra",
+  "source": {
+    "organization": "ICAR-CRIDA / district agricultural contingency plan",
+    "title": "Agriculture Contingency Plan for District Jalna",
+    "url": "https://www.icar-crida.res.in/CP-2012/statewiseplans/Maharastra%28Pdf%29/MAU%2C%20Parbhani/Maharashtra%2033-Jalna-31-12-2011.pdf",
+    "document_year_indicated": 2011,
+    "page_soil_printed": 1,
+    "page_rain_contingency_printed": 21,
+    "originating_soil_source": "NBSS&LUP, Nagpur"
+  },
+  "location_reference": {
+    "latitude": 19.84,
+    "longitude": 75.89,
+    "precision": "approximate district reference, not farm GPS",
+    "timezone": "Asia/Kolkata"
+  },
+  "district_soil_categories_historical": [
+    {
+      "label": "Deep black soils",
+      "area_1000_ha": 85.16,
+      "table_percent": 13.37
+    },
+    {
+      "label": "Medium deep soils",
+      "area_1000_ha": 136.0,
+      "table_percent": 21.36
+    },
+    {
+      "label": "Shallow soils",
+      "area_1000_ha": 415.61,
+      "table_percent": 65.27
+    }
+  ],
+  "quality_audit": {
+    "sum_of_listed_soil_areas_1000_ha": 636.77,
+    "district_geographical_area_1000_ha_as_reported_in_document": 772.6,
+    "source_column_header": "Percent of total geographical area",
+    "caution": "Published soil percentages sum to 100% of the three listed soil classes, but the class areas total 636.77 thousand ha, below the stated 772.6 thousand ha district area. Do not label those percentages as shares of the full district without independent reconciliation.",
+    "verified_current_farm_soil": false
+  },
+  "historical_rainfall": {
+    "annual_average_mm": 750.4,
+    "type": "historical district climate normal shown in dated plan; NOT measured current rainfall or any hourly forecast"
+  },
+  "post_harvest_cotton_context": {
+    "source_stage": "post-harvest",
+    "source_section": "Section 2.2 Unusual rains",
+    "source_brief_summary": "Historical contingency guidance says to prevent picked cotton from exposure to drenching and soiling.",
+    "allowed_use": "Optional contextual citation only; not an operational recommendation or automated threshold."
+  },
+  "exclusions": [
+    "No soil-pH value for a particular farm",
+    "No measured soil moisture for current farmer location",
+    "No farmer-specific field boundary",
+    "No validated action deadline",
+    "No quantified yield/loss reduction",
+    "No storage-safety certification"
+  ],
+  "ui_recommendation": "Optional Source/Evidence drawer; never a live soil condition tile."
+}
