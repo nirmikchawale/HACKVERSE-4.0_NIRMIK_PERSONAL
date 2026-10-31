@@ -97,3 +97,20 @@ test('provider failures never create synthetic window totals or an export',async
   await expect(page.locator('#downloadGovernmentCSV')).toBeDisabled();
   await expect(page.locator('#governmentClimateRows')).toContainText('NASA upstream unavailable');
 });
+
+test('a missing forecast timestamp is not silently skipped when calculating six-hour coverage',async({page})=>{
+  const sparse=forecast();
+  sparse.hours=sparse.hours.filter((_,i)=>i!==1);
+  await page.route('**/api/health',route=>route.fulfill({status:200,json:{
+    ok:true,version:'P0',disclaimer:'Not field validated.'
+  }}));
+  await page.route('**/api/sources',route=>route.fulfill({status:200,json:{
+    sources:[],operational_rules:[],input_categories:['forecast']
+  }}));
+  await page.route('**/api/forecast*',route=>route.fulfill({status:200,json:sparse}));
+  await page.goto('/');
+  await page.locator('#navDesktop [data-nav="1"]').click();
+  const first=page.locator('#forecastWindowSummary .forecast-window-card').first();
+  await expect(first).toContainText('Rainfall coverage: 4/6 hourly values');
+  await expect(first).toContainText('Known partial rainfall: 4 mm');
+});

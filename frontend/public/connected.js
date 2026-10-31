@@ -73,10 +73,18 @@
       if(!Number.isFinite(at)||at<now||seen.has(h.time))return false;
       seen.add(h.time);return true;
     }).sort((a,b)=>a.time.localeCompare(b.time));
-    chart.append(el('p','forecast-window-label','Upcoming model hours · descriptive precipitation sums only; no safe-action rainfall threshold.'));
+    if(!future.length){
+      chart.append(el('p','forecast-window-label','No future source-native hourly records available; no model totals calculated.'));
+      return;
+    }
+    const start=Date.parse(future[0].time+':00+05:30');
+    const byHour=new Map(future.map(h=>[Date.parse(h.time+':00+05:30'),h]));
+    chart.append(el('p','forecast-window-label','Upcoming model hours beginning '+
+      future[0].time.replace('T',' ')+' IST · descriptive precipitation sums only; no safe-action rainfall threshold.'));
     const grid=el('div','forecast-window-grid');grid.id='forecastWindowSummary';
     for(const n of [6,12,24]){
-      const rows=future.slice(0,n),rain=rows.filter(h=>h.precipitation_mm!==null),
+      const rows=Array.from({length:n},(_,i)=>byHour.get(start+i*3_600_000)).filter(Boolean),
+        rain=rows.filter(h=>h.precipitation_mm!==null),
         prob=rows.filter(h=>h.precipitation_probability_pct!==null),
         complete=rows.length===n&&rain.length===n;
       const card=el('article','forecast-window-card');
