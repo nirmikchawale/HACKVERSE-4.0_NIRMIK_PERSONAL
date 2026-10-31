@@ -112,6 +112,14 @@
   here('toggleForecast').addEventListener('click',e=>{e.stopImmediatePropagation();refreshForecast(true);},true);
   here('clearForecast').addEventListener('click',e=>{e.stopImmediatePropagation();live.forecast=null;live.selectedHour=null;renderWeather();},true);
   here('deadlineInput').addEventListener('input',()=>{live.selectedHour=null;clearResult();renderAssessment();renderPackages();renderSummary();},true);
+  // The original editor rebuilt every input on change, destroying still-focused
+  // controls before the next value had been committed. Keep active rows mounted.
+  const buildChangeRows=renderChangeEditor;
+  renderChangeEditor=function(){
+    const visibleRows=here('changeEditor').querySelectorAll('.change-row').length;
+    if(visibleRows>0&&visibleRows===additional.changes.length)return;
+    buildChangeRows();
+  };
   const oldResourceUpdate=updateResourceUI;
   updateResourceUI=function(){additional.demoInputs=false;oldResourceUpdate();here('demoDataBanner').style.display='none';};
   here('loadDemoInputs')?.remove();
@@ -144,7 +152,19 @@
     const baseline=here('baseline').value.split(',').map(x=>x.trim()).filter(Boolean);
     if(new Set(baseline).size!==baseline.length)throw new Error('Baseline resource identifiers must be unique.');
     const used=new Set(baseline);
-    const changes=additional.changes.map((c,i)=>{
+    // Capture the actual currently displayed options at submit time so a
+    // pending blur/change event cannot silently discard a typed resource ID.
+    const rows=Array.from(here('changeEditor').querySelectorAll('.change-row'));
+    if(rows.length!==additional.changes.length)throw new Error('Change editor state is out of sync; review the options.');
+    const uiChanges=additional.changes.map((c,i)=>{
+      const row=rows[i];
+      return {...c,type:row.querySelector('[data-x=type]').value,
+        amount:row.querySelector('[data-x=amount]').value,
+        rid:row.querySelector('[data-x=rid]').value,
+        availability:row.querySelector('[data-x=availability]').value};
+    });
+    additional.changes=uiChanges;saveExtra();
+    const changes=uiChanges.map((c,i)=>{
       const value=Number(c.amount);if(!Number.isFinite(value)||value<=0)throw new Error('Option '+(i+1)+' needs a positive amount.');
       const rid=c.type==='add_capacity'?String(c.rid||'').trim():null;
       if(c.type==='add_capacity'&&!rid)throw new Error('Option '+(i+1)+' requires a unique resource identifier.');
