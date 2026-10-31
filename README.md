@@ -1,4 +1,6 @@
-# UnlockPlan — HACKVERSE 4.0
+# Agri Foresight — HACKVERSE 4.0
+
+**Public product name:** Agri Foresight (internally the implementation retains `unlockplan` source/API identifiers to avoid breaking integrations).
 
 **Problem statement:** Predictive Climate-Smart Agriculture Planner  
 **MVP:** Forecast-informed, resource-aware feasibility planner for rain-preparedness of **already-picked cotton** in Jalna, Maharashtra.
@@ -11,7 +13,7 @@
 - **Workstream B-02:** Typed interactive weather, deadline, farmer-resource and feasibility-result screens.
 - **Workstream A-05:** Python FastAPI source and six-route contract imported unchanged from tested `feat/unlockplan-core` commit `22308c67938135c2ee6c3815d3d17d1b9904ba3a`.
 - **Workstream B-03:** Frontend and FastAPI configured as two Vercel Services (beta), with same-origin `/api` routing and protected preview verification. Backend tests, typecheck, build, local genuine FastAPI browser interactions and real preview GET routes have passed; consult current draft PR #2 and its CI for latest exact SHA.
-- **Production:** No authorized merge to `main` and no production promotion. A Vercel `READY` preview is not a release certificate.
+- **Production:** The certified unified six-screen FastAPI application was merged to `main` in PR #11 and deployed to Vercel. Public URL as of the branding release preparation: https://hackverse-40nirmikpersonal.vercel.app/. The requested `agriforesight.vercel.app` alias requires separate Vercel domain assignment and live verification.
 
 ## Project layout
 

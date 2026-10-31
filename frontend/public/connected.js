@@ -1,4 +1,4 @@
-/* UnlockPlan unified six-screen runtime. Uses only source-labelled FastAPI responses.
+/* Agri Foresight unified six-screen runtime. Uses only source-labelled FastAPI responses.
    No simulated weather, crop-safety thresholds, fabricated farmer data or AI claims. */
 (() => {
   "use strict";
@@ -288,14 +288,14 @@
       forecast:live.forecast,source_registry:live.sources,evaluation:live.evaluation,comparison:live.comparison,
       replan:live.replan,selected_package:live.selectedPackage,request:live.request};
     const b=new Blob([JSON.stringify(evidence,null,2)],{type:'application/json'}),url=URL.createObjectURL(b),a=el('a');
-    a.href=url;a.download='unlockplan-evidence-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    a.href=url;a.download='agri-foresight-evidence-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
   // A bounded, working rules-based helper; no external generative AI is claimed.
   canned.weather.en='Page 02 shows live or recently cached Open-Meteo model data when validated by FastAPI. If unavailable, no forecast hour is offered.';
   canned.result.en='On Page 04 click Evaluate using FastAPI after saving a deadline and confirmed resources. Page 05 can compare an eligible conditional package with the actual backend.';
   canned.resource.en='Page 03 records farmer-declared, comparable handling units, readiness and separately confirmed alternatives. Requested resources do not count as confirmed.';
   document.querySelector('.assist-foot').textContent='Built-in multilingual FAQ, not a live AI model. Voice input depends on browser support.';
-  here('assistantLaunch').title='Open built-in UnlockPlan guide';
+  here('assistantLaunch').title='Open built-in Agri Foresight guide';
   // Remove old prototype-only buttons and labels; leave genuine working navigation and optional browser speech.
   const disclaimers=[
     ['railFootText','Real weather evidence and FastAPI feasibility are available for the supported Jalna scenario only.'],
