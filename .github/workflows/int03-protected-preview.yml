@@ -1,0 +1,60 @@
+name: INT-03 Protected Deployed Preview Certification
+on:
+  push:
+    branches: [cert/unlockplan-int03-remote]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  protected-preview:
+    name: Authenticated POST and desktop/mobile on frozen preview SHA
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      # Frozen, already-certified application commit; this workflow does not deploy.
+      INT03_SOURCE_SHA: c83290b99eaaa89bdc5afd6956ee3a38fcbf908d
+      VERCEL_PREVIEW_URL: https://hackverse-40nirmikpersonal-idw14reli-nirmikchawale1-4179.vercel.app
+      CI: 'true'
+    steps:
+      - name: Checkout certification branch (application source identical to frozen preview)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Check application code did not change from certified preview
+        run: |
+          set -euo pipefail
+          git diff --exit-code "$INT03_SOURCE_SHA" HEAD -- backend frontend vercel.json
+          echo 'Application source unchanged from preview SHA.'
+      - name: Setup Node 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install pinned dependencies and Chromium before creating OIDC token
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Authenticated remote HTTP POST and browser tests
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const { spawnSync } = require('node:child_process');
+            const { resolve } = require('node:path');
+            // Short-lived GitHub OIDC token: no persistent bypass secret, no SSO changes.
+            const token = await core.getIDToken();
+            core.setSecret(token);
+            const env = { ...process.env, VERCEL_OIDC_TOKEN: token };
+            const result = spawnSync(process.execPath, [
+              resolve('frontend/node_modules/@playwright/test/cli.js'), 'test',
+              '--config', 'frontend/playwright.int03.config.mjs',
+              'int03-deployed.spec.mjs'
+            ], { cwd: process.cwd(), env, stdio: 'inherit', timeout: 540000 });
+            if (result.error) throw result.error;
+            if (result.status !== 0) core.setFailed(
+              'INT-03 remote gate failed. Check whether GitHub OIDC is trusted by Vercel preview or whether a real endpoint/browser regression occurred. Do not release.'
+            );
