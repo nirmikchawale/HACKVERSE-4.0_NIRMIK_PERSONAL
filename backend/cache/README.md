@@ -1,0 +1,1 @@
+The actual-response cache is intentionally empty. Genuine live Open-Meteo responses are written here only by unlockplan.weather.get_forecast after network retrieval and schema validation. Synthetic test payloads are never copied here.
