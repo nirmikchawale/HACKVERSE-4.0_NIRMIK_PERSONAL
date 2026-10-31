@@ -6,3 +6,15 @@
 .forecast-window-card small{display:block;font-size:11px;line-height:1.5;color:var(--muted)}
 .forecast-window-label{margin:13px 0 7px;font-size:12px;line-height:1.5;color:var(--muted)}
 @media(max-width:720px){.forecast-window-grid{grid-template-columns:1fr}.forecast-window-card{padding:13px}}
+
+/* EX-05 — compact source verification receipt; works in light/dark and mobile. */
+.source-matrix{margin:18px 0 24px}
+.source-matrix-intro{color:var(--muted);font-size:13px;line-height:1.55}
+.source-matrix-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,215px),1fr));gap:12px;margin-top:14px}
+.source-matrix-card{min-width:0;border:1px solid var(--border);border-radius:14px;padding:15px;background:var(--card);color:var(--ink)}
+.source-matrix-card strong,.source-matrix-card span,.source-matrix-card small{display:block}
+.source-matrix-card strong{font-size:13px;line-height:1.4}
+.source-matrix-card .source-matrix-state{font-size:13px;font-weight:750;margin:7px 0;color:var(--teal)}
+.source-matrix-card[data-kind=unavailable] .source-matrix-state{color:var(--muted)}
+.source-matrix-card small{font-size:11px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+@media(max-width:600px){.source-matrix-card{padding:12px}}
