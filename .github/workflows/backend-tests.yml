@@ -1,0 +1,32 @@
+name: UnlockPlan baseline tests
+
+on:
+  push:
+    branches: [feat/unlockplan-core]
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  backend-baseline:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Verify imported archive integrity
+        run: cd backend && sha256sum -c MANIFEST.sha256
+      - name: Create isolated environment and run Python tests
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -r backend/requirements.txt
+          cd backend
+          ../.venv/bin/python -m pytest -q
+      - name: Verify legacy static JavaScript syntax
+        run: node --check backend/static/app.js
