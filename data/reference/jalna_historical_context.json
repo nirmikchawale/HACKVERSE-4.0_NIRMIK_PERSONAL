@@ -1,0 +1,56 @@
+{
+  "kind": "historic_institutional_context_not_live_or_farm_specific",
+  "document": "ICAR-CRIDA Jalna district agricultural contingency plan",
+  "document_year_indicated": 2011,
+  "source_url": "https://www.icar-crida.res.in/CP-2012/statewiseplans/Maharastra%28Pdf%29/MAU%2C%20Parbhani/Maharashtra%2033-Jalna-31-12-2011.pdf",
+  "pdf_pages_0_based": [
+    0,
+    20
+  ],
+  "reference_location": {
+    "latitude": 19.84,
+    "longitude": 75.89,
+    "scope": "approximate Jalna district, not farm"
+  },
+  "soil": {
+    "source_credit": "NBSS&LUP, Nagpur",
+    "units_for_area": "thousand hectares",
+    "categories": [
+      {
+        "type": "deep_black_soils",
+        "area": 85.16,
+        "published_percent": 13.37
+      },
+      {
+        "type": "medium_deep_soils",
+        "area": 136,
+        "published_percent": 21.36
+      },
+      {
+        "type": "shallow_soils",
+        "area": 415.61,
+        "published_percent": 65.27
+      }
+    ],
+    "published_district_area_1000_ha": 772.6,
+    "listed_soil_area_sum_1000_ha": 636.77,
+    "quality_warning": "The published table calls percentages 'percent of geographical area', but the 3 soil classes sum to 636.77 thousand hectares while the document gives district area 772.6 thousand hectares; category percentages sum to 100. Do not interpret percentages as verified district-wide share without independent denominator reconciliation.",
+    "current_farm_measurements_available": false
+  },
+  "rainfall": {
+    "historic_annual_average_mm": 750.4,
+    "note": "Historical figure only; never substitute for current weather."
+  },
+  "cotton_context": {
+    "section": "2.2, page printed 21, post-harvest",
+    "paraphrase": "Historical plan discusses protecting picked cotton from rainfall exposure and soiling.",
+    "source_is_current_agronomic_validation": false
+  },
+  "not_for": [
+    "soil pH predictions",
+    "live soil moisture",
+    "field-specific soil classes",
+    "safe rain threshold",
+    "yield protection guarantee"
+  ]
+}
