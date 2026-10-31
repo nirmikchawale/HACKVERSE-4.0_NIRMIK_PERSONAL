@@ -1,6 +1,6 @@
 import './style.css';
 import { checkHealth, compareCases, evaluateCase, loadForecast, loadSources, replanCase } from './contracts';
-import type { Assessment, ChangePackage, EvaluateRequest, EvaluationResponse, ForecastHour, ForecastResponse } from './contracts';
+import type { Assessment, ChangePackage, ComparisonResponse, EvaluateRequest, EvaluationResponse, ForecastHour, ForecastResponse, ReplanResponse } from './contracts';
 import { createRequest } from './plan';
 import type { ChangeDraft, PlanDraft } from './plan';
 
@@ -51,6 +51,7 @@ function clearDecision(): void {
   updateStep('results', 'Not evaluated', 'Decision: not calculated');
   byId('result-content').replaceChildren(make('div', 'empty-result', 'Inputs changed. Re-evaluate to receive a new calculation from the Python engine.'));
   setText('selection-content', 'No option selected. Any earlier result was cleared when inputs changed.');
+  renderComparison(null);
 }
 function currentISTHour(): string {
   const parts = new Intl.DateTimeFormat('en-GB', {
@@ -325,7 +326,52 @@ function showError(error: Error): void {
   box.append(make('strong', '', 'No feasibility calculation was completed.'), make('p', '', error.message));
   root.append(box);
   setText('selection-content', 'No calculated option available.');
+  renderComparison(null);
 }
+
+/** Display *only* differences calculated by FastAPI; do not reproduce engine logic. */
+function renderComparison(value: ComparisonResponse | ReplanResponse | null): void {
+  const node = byId('comparison-content');
+  node.replaceChildren();
+  if (value === null) {
+    stateTag('comparison-status', 'No comparison', 'pending');
+    node.append(make('p', 'empty-helper', 'Evaluate your plan, change a resource or candidate deadline, and re-evaluate to view a Python-calculated comparison.'));
+    return;
+  }
+  stateTag('comparison-status', 'Compared', 'pending');
+  const changes = value.changes;
+  const lead = make('div', 'result-lead');
+  lead.append(
+    make('strong', '', changes.status_before.toUpperCase() + ' → ' + changes.status_after.toUpperCase()),
+    make('p', '', value.interpretation),
+  );
+  node.append(lead);
+  const metrics = make('div', 'result-metrics');
+  const appendMetric = (label: string, v: string): void => {
+    const metric = make('div', 'metric');
+    metric.append(make('span', '', label), make('strong', '', v));
+    metrics.append(metric);
+  };
+  const delta = changes.time_slack_delta_hours;
+  appendMetric('Time slack change', delta === null ? 'Unknown' : (delta > 0 ? '+' : '') + fmt(delta) + ' h');
+  appendMetric('Previous conditional packages', String(value.before.packages.length));
+  appendMetric('Revised conditional packages', String(value.after.packages.length));
+  node.append(metrics);
+  node.append(
+    make('p', 'detail-line', 'Changed declarations: ' + (changes.changed_fields.join(', ') || 'None')),
+    make('p', 'detail-line', 'New blockers: ' + (changes.new_blockers.join(', ') || 'None')),
+    make('p', 'detail-line', 'Resolved blockers: ' + (changes.resolved_blockers.join(', ') || 'None')),
+    make('p', 'detail-line', 'New unknown conditions: ' + (changes.new_unknowns.join(', ') || 'None')),
+    make('p', 'detail-line', 'Resolved unknown conditions: ' + (changes.resolved_unknowns.join(', ') || 'None')),
+  );
+  if ('forecast_selection' in value && value.forecast_selection) {
+    node.append(make('p', 'context-note', 'Server-verified model hour: ' +
+      value.forecast_selection.selected_hour_local.replace('T', ' ') + ' IST. ' +
+      value.forecast_selection.limitation));
+  }
+  node.append(make('p', 'detail-line', 'Both plans are conditional feasibility calculations. Neither status certifies crop safety, weather onset or resource delivery.'));
+}
+
 async function evaluate(event: SubmitEvent): Promise<void> {
   event.preventDefault();
   const errorNode = byId('form-error');
@@ -346,6 +392,7 @@ async function evaluate(event: SubmitEvent): Promise<void> {
   stateTag('result-status', 'Evaluating', 'pending');
   try {
     let result: EvaluationResponse;
+    let comparison: ComparisonResponse | ReplanResponse | null = null;
     let evidenceNote = '';
     if (selectedHour !== null) {
       // The API, not the browser, validates that the forecast hour is still
@@ -358,6 +405,7 @@ async function evaluate(event: SubmitEvent): Promise<void> {
       if (response.forecast_selection.selected_hour_local !== selectedHour) {
         throw new Error('The Python API returned a mismatched forecast selection.');
       }
+      comparison = response;
       result = response.after;
       evidenceNote = 'Server-attested forecast-hour replan: ' +
         response.forecast_selection.selected_hour_local.replace('T', ' ') +
@@ -365,6 +413,7 @@ async function evaluate(event: SubmitEvent): Promise<void> {
         ' Source: ' + response.forecast_selection.attribution;
     } else if (lastAcceptedCase !== null) {
       const response = await compareCases({ before: lastAcceptedCase, after: request });
+      comparison = response;
       result = response.after;
       evidenceNote = 'Manual before/after comparison. Changed constraints: ' +
         (response.changes.changed_fields.join(', ') || 'none') +
@@ -376,6 +425,7 @@ async function evaluate(event: SubmitEvent): Promise<void> {
     if (submittedRevision !== revision) return;
     lastAcceptedCase = request;
     showEvaluation(result, evidenceNote);
+    renderComparison(comparison);
     byId('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) {
     if (submittedRevision !== revision) return;
