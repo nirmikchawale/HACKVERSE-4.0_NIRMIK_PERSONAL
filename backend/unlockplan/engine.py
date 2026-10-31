@@ -131,19 +131,30 @@ def check(case: dict, selected: tuple[dict,...]=()) -> dict | None:
     constraints.append({'id':'capacity','status':'pass' if cap_pass else 'blocked',
                         'explanation':f'Declared target {target:g} {UNIT}s; projected capacity {capacity:g} {UNIT}s; shortfall {max(0,target-capacity):g}.',
                         'provenance':'user-reported + configured assumption'})
+    available_hours = None
+    time_slack_hours = None
     if case['deadline'] is None:
         time_status='unknown'
-        time_exp='No user-selected preparation deadline provided.'
+        time_exp='No user-selected preparation deadline provided; time slack is unknown.'
     else:
-        from datetime import timezone
-        hours=(case['deadline']-case['now']).total_seconds()/3600
-        time_status='pass' if hours>=case['required_hours'] else 'blocked'
-        time_exp=f'Time until candidate deadline {hours:.2f} h; user-configured task duration {case["required_hours"]:g} h.'
+        available_hours=(case['deadline']-case['now']).total_seconds()/3600
+        time_slack_hours=available_hours-case['required_hours']
+        time_status='pass' if time_slack_hours>=0 else 'blocked'
+        time_exp=(f'Time until candidate deadline {available_hours:.2f} h; '
+                  f'user-configured task duration {case["required_hours"]:g} h; '
+                  f'time slack {time_slack_hours:+.2f} h. '
+                  'This is a user-selected deadline, not a certified rain onset or safe operating threshold.')
     constraints.append({'id':'timing','status':time_status,'explanation':time_exp,'provenance':'user-reported + configured assumption'})
     known_blockers = [c['id'] for c in constraints if c['status']=='blocked']
     status = 'unknown' if any(c['status']=='unknown' for c in constraints) else (
              'blocked' if any(c['status']=='blocked' for c in constraints) else 'feasible')
     return {'status':status, 'constraints':constraints,'known_blockers':known_blockers,
+            'time_budget':{'candidate_deadline':case['deadline'].isoformat() if case['deadline'] else None,
+                           'evaluated_at':case['now'].isoformat(),
+                           'available_hours':available_hours,
+                           'required_hours':case['required_hours'],
+                           'time_slack_hours':time_slack_hours,
+                           'basis':'user-selected candidate deadline; not a forecasted rain onset or safety certification'},
             'projected_capacity_units':capacity,
             'projected_target_units':target,'original_target_unhandled_units':reduction,
             'shortfall_units':max(0,target-capacity)}

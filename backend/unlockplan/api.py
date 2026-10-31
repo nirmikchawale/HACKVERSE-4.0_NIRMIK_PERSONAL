@@ -4,7 +4,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from pathlib import Path
+from datetime import datetime, timezone
 from .engine import evaluate, InputError
+from .planning import compare_plans, replan_from_forecast
 from .weather import get_forecast, CACHE_FILE, read_cache
 from .sources import REGISTRY,RULES
 
@@ -20,6 +22,27 @@ def health():
 def evaluate_endpoint(case:dict):
     try:return evaluate(case)
     except InputError as exc:raise HTTPException(status_code=422,detail=str(exc)) from exc
+
+@app.post('/api/compare')
+def compare_endpoint(payload:dict):
+    try:
+        return compare_plans(payload.get('before'), payload.get('after'))
+    except InputError as exc:
+        raise HTTPException(status_code=422,detail=str(exc)) from exc
+
+@app.post('/api/replan')
+def replan_endpoint(payload:dict):
+    # Only a server-retrieved forecast is eligible to bind an hourly deadline.
+    # Unavailable or stale weather never yields a forecast-attributed plan.
+    forecast_result=get_forecast(refresh=False)
+    if forecast_result.get('status') not in {'retrieved_live','cached_recent'}:
+        raise HTTPException(status_code=409,detail='Current authentic forecast unavailable. Use manual /api/compare.')
+    try:
+        return replan_from_forecast(payload.get('before'),payload.get('after'),
+                                    payload.get('selected_hour_local'),forecast_result,
+                                    datetime.now(timezone.utc))
+    except InputError as exc:
+        raise HTTPException(status_code=422,detail=str(exc)) from exc
 
 @app.get('/api/forecast')
 def forecast(refresh:bool=False):
