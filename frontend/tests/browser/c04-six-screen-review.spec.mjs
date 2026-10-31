@@ -15,7 +15,11 @@ test('six-screen prototype loads all routes and keeps standalone sample weather 
   await expect(page.locator('#navDesktop [data-nav]')).toHaveCount(6);
   await page.locator('#navDesktop [data-nav="1"]').click();
   await expect(page.locator('.section.active')).toContainText('Weather & planning window');
-  await expect(page.locator('#forecastTimeline')).not.toContainText('Current measured');
+  await expect(page.locator('#weatherChartMode')).toContainText('No forecast loaded');
+  await page.locator('#toggleForecast').click();
+  await expect(page.locator('#forecastSourceChip')).toContainText('SAMPLE DATA · NOT LIVE');
+  await page.locator('#clearForecast').click();
+  await expect(page.locator('#forecastSourceChip')).toContainText('NOT CONNECTED');
   await expect(page.getByRole('link', {name:/Connected API planner/})).toHaveAttribute('href','/');
   expect(errors).toEqual([]);
 });
