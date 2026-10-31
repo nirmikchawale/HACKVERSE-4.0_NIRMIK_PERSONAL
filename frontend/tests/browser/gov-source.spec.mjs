@@ -19,6 +19,14 @@ test('NASA historical panel shows verified values separate from future forecast'
  await expect(page.locator('#governmentClimateRows')).toContainText('7.25 mm/day');
  await expect(page.locator('#governmentClimateRows')).toContainText('Rainfall: unavailable');
  await expect(page.locator('#governmentClimateProvenance')).toContainText('not a forecast');
+ await expect(page.locator('#governmentClimateSummary')).toContainText('1/2 days with values');
+ await page.locator('#governmentClimateRange').selectOption('all');
+ await expect(page.locator('#governmentClimateRows .gov-day')).toHaveCount(2);
+ const downloadPromise=page.waitForEvent('download');
+ await page.locator('#downloadGovernmentClimate').click();
+ const downloaded=await downloadPromise;
+ expect(downloaded.suggestedFilename()).toContain('agri-foresight-nasa-jalna');
+
 });
 test('government source failure renders empty status, never test numbers',async({page})=>{
  await page.route('**/api/government-climate*',r=>r.fulfill({status:200,json:{
@@ -28,4 +36,21 @@ test('government source failure renders empty status, never test numbers',async(
  await expect(page.locator('#governmentClimateStatus')).toHaveText('Official source unavailable');
  await expect(page.locator('#governmentClimateRows .gov-day')).toHaveCount(0);
  await expect(page.locator('#governmentClimateRows')).toContainText('Official upstream unreachable');
+ await expect(page.locator('#downloadGovernmentClimate')).toBeDisabled();
+ await expect(page.locator('#governmentClimateSummary')).toBeEmpty();
+
+});
+
+test('changing to unsupported location clears government history without leaking Jalna data',async({page})=>{
+ await page.route('**/api/government-climate*',r=>r.fulfill({status:200,json:verified}));
+ await page.goto('/');await page.locator('#navDesktop [data-nav="1"]').click();
+ await expect(page.locator('#governmentClimateRows .gov-day')).toHaveCount(2);
+ page.on('dialog',dialog=>dialog.accept());
+ await page.locator('#locationButton').click();
+ await page.locator('#stateSelect').selectOption('Gujarat');
+ await page.locator('#otherCity').fill('Surat');
+ await page.locator('#confirmPlace').click();
+ await expect(page.locator('#governmentClimateStatus')).toHaveText('Unavailable for selected location');
+ await expect(page.locator('#governmentClimateRows .gov-day')).toHaveCount(0);
+ await expect(page.locator('#downloadGovernmentClimate')).toBeDisabled();
 });
