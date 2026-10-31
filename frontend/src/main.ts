@@ -57,6 +57,8 @@ function currentISTHour(): string {
 }
 function deadlineOriginManual(): void {
   selectedHour = null;
+  const deadlineFoot = document.querySelector<HTMLElement>('.step-card:nth-child(2) .card-foot');
+  if (deadlineFoot) deadlineFoot.textContent = input('deadline').value ? 'Deadline: user-selected' : 'Deadline: not selected';
   setText('deadline-origin', input('deadline').value ?
     'Manual candidate deadline selected by the user; not a certified rain-onset time.' :
     'No candidate deadline selected.');
@@ -65,6 +67,8 @@ function deadlineOriginManual(): void {
 function chooseForecastHour(hour: ForecastHour): void {
   input('deadline').value = hour.time;
   selectedHour = hour.time;
+  const deadlineFoot = document.querySelector<HTMLElement>('.step-card:nth-child(2) .card-foot');
+  if (deadlineFoot) deadlineFoot.textContent = 'Deadline: user-selected forecast hour';
   setText('deadline-origin', 'Selected from an authenticated Open-Meteo model hour (' + hour.time.replace('T', ' ') + ' IST). This is still your candidate assumption, not an agronomic threshold.');
   clearDecision();
   byId('deadline-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -105,6 +109,14 @@ function showForecast(result: ForecastResponse): void {
     stale_cache: 'Stale — not current', unavailable: 'Unavailable',
   };
   stateTag('forecast-status', readable[result.status], live ? 'success' : 'failure');
+  const weatherCard = document.querySelector<HTMLElement>('.step-card:first-child');
+  const cardState = weatherCard?.querySelector<HTMLElement>('.step-state');
+  const cardFoot = weatherCard?.querySelector<HTMLElement>('.card-foot');
+  if (cardState) cardState.textContent = live ? 'Model forecast connected' : 'Current model unavailable';
+  if (cardFoot) cardFoot.textContent = live ? 'Model hours: ' + result.hours.length : 'Live data: unavailable';
+  setText('status-footer', live
+    ? 'Live external model evidence, not farm observation or safety guidance.'
+    : 'No current external model data. Manual resource-only planning remains possible.');
   const message = live ?
     (result.notice ?? 'External model forecast retrieved; no automatic rainfall threshold is applied.') :
     result.status === 'stale_cache' ?
@@ -124,6 +136,7 @@ function showForecast(result: ForecastResponse): void {
   }
   showForecastHours(result);
   if (live) {
+    setText('status-title', 'Forecast and resource planning connected');
     const badge = byId('runtime-status');
     badge.dataset.state = 'connected';
     badge.textContent = 'Forecast API connected. Feasibility calculation still requires a successful Python evaluate response.';
@@ -274,6 +287,11 @@ function showSelection(pkg: ChangePackage): void {
 function showEvaluation(result: EvaluationResponse): void {
   evaluation = result;
   stateTag('result-status', result.status.toUpperCase(), result.status === 'feasible' || result.status === 'completed' ? 'success' : result.status === 'blocked' ? 'failure' : 'pending');
+  const resultCard = document.querySelector<HTMLElement>('.step-card:last-child');
+  const resultCardState = resultCard?.querySelector<HTMLElement>('.step-state');
+  const resultCardFoot = resultCard?.querySelector<HTMLElement>('.card-foot');
+  if (resultCardState) resultCardState.textContent = 'Python result';
+  if (resultCardFoot) resultCardFoot.textContent = 'Decision: ' + result.status;
   const root = byId('result-content');
   root.replaceChildren();
   const lead = make('div', 'result-lead');
