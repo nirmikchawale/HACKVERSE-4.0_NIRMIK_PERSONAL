@@ -32,7 +32,7 @@ jobs:
       - name: Build actual frontend assets
         working-directory: frontend
         run: |
-          npm ci
+          npm install
           npm run build
       - name: Install official Python Worker CLI runner
         run: python -m pip install 'uv>=0.8,<1'
