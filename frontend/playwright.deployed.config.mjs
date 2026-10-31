@@ -6,7 +6,7 @@ const parsed = new URL(url);
 if (parsed.protocol !== 'https:' || !parsed.hostname.endsWith('.vercel.app') ||
     parsed.pathname !== '/' || parsed.search || parsed.hash) throw new Error('Invalid immutable preview origin.');
 export default defineConfig({
-  testDir: './tests/browser', testMatch: 'b04-protected-preview.spec.mjs',
+  testDir: './tests/protected', testMatch: 'b04-protected-preview.spec.mjs',
   retries: 0, workers: 1, timeout: 45_000,
   expect: { timeout: 25_000 }, reporter: [['list']],
   outputDir: 'test-results/b04',
