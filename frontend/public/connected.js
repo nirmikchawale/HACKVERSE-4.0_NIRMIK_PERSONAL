@@ -4,6 +4,7 @@
   "use strict";
   const live={forecast:null,sources:null,health:null,evaluation:null,request:null,comparison:null,replan:null,selectedHour:null,selectedPackage:null,forecastLoading:false,error:null};
   const here=id=>document.getElementById(id);
+  const css04=document.createElement('link');css04.rel='stylesheet';css04.href='/evidence-04.css';document.head.append(css04);
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;};
   const num=n=>Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'Unknown';
   const okLocation=()=>state.place?.state==='Maharashtra'&&state.place?.city?.trim().toLowerCase()==='jalna';
@@ -64,6 +65,34 @@
     here('weatherValue').textContent=live.forecast?(isCurrent()?'Model forecast '+(live.forecast.hours.length)+' h':live.forecast.status.toUpperCase()):'No verified forecast';
   };
   updateWeatherUI=renderWeather;
+  // Descriptive sums of genuine future model hours, never a safety cutoff.
+  function renderForecastWindows(chart,forecast){
+    const now=Date.now(),seen=new Set();
+    const future=forecast.hours.filter(h=>{
+      const at=Date.parse(h.time+':00+05:30');
+      if(!Number.isFinite(at)||at<now||seen.has(h.time))return false;
+      seen.add(h.time);return true;
+    }).sort((a,b)=>a.time.localeCompare(b.time));
+    chart.append(el('p','forecast-window-label','Upcoming model hours · descriptive precipitation sums only; no safe-action rainfall threshold.'));
+    const grid=el('div','forecast-window-grid');grid.id='forecastWindowSummary';
+    for(const n of [6,12,24]){
+      const rows=future.slice(0,n),rain=rows.filter(h=>h.precipitation_mm!==null),
+        prob=rows.filter(h=>h.precipitation_probability_pct!==null),
+        complete=rows.length===n&&rain.length===n;
+      const card=el('article','forecast-window-card');
+      card.append(el('strong','','Next '+n+' forecast hours'));
+      card.append(el('span','window-value',rain.length?
+        (complete?'Modeled rainfall: ':'Known partial rainfall: ')+
+        num(rain.reduce((total,h)=>total+h.precipitation_mm,0))+' mm':'Rainfall unavailable'));
+      card.append(el('small','','Rainfall coverage: '+rain.length+'/'+n+' hourly values. '+
+        (complete?'All requested hours reported.':'Incomplete; missing hours are not dry hours.')));
+      card.append(el('small','','Highest individual-hour model probability: '+
+        (prob.length?num(Math.max(...prob.map(h=>h.precipitation_probability_pct)))+'%':'Unavailable')+
+        '. Not a probability for the whole window.'));
+      grid.append(card);
+    }
+    chart.append(grid);
+  }
   function renderWeather(){
     const chart=here('weatherChart'),mode=here('weatherChartMode'),chip=here('forecastSourceChip');
     chart.replaceChildren();here('toggleForecast').textContent='Refresh live forecast';here('clearForecast').textContent='Clear forecast view';
@@ -80,6 +109,7 @@
     mode.textContent='Open-Meteo • '+(f.hours.length)+' model hours • precipitation (mm), probability (%) • IST';
     const provenance=el('p','live-provenance','Retrieved '+f.retrieved_at_utc+' · age '+num(f.forecast_age_hours)+' h · '+(f.attribution||'Open-Meteo')+'. Model output, not observed rain or safe crop timing.');
     chart.append(provenance);
+    renderForecastWindows(chart,f);
     const bars=el('div','weather-bars');
     const sample=f.hours.slice(0,24);
     const max=Math.max(0.1,...sample.map(h=>h.precipitation_mm??0));
@@ -311,7 +341,9 @@
   govRange.append(optSeven,optAll);
   const govDownload=el('button','btn','Download verified NASA JSON');
   govDownload.id='downloadGovernmentClimate';govDownload.type='button';govDownload.disabled=true;
-  govActions.append(govRefresh,govRange,govDownload,govStatus);
+  const govCSV=el('button','btn','Download verified NASA CSV');
+  govCSV.id='downloadGovernmentCSV';govCSV.type='button';govCSV.disabled=true;
+  govActions.append(govRefresh,govRange,govDownload,govCSV,govStatus);
   const govRows=el('div','gov-history-grid');
   govRows.id='governmentClimateRows';
   const govDetail=el('p','gov-source-detail');
@@ -349,6 +381,7 @@
     const token=++governmentClimateRequest;
     governmentClimateData=null;
     govDownload.disabled=true;
+    govCSV.disabled=true;
     govSummary.textContent='';
     govRows.replaceChildren();
     if(!okLocation()){
@@ -384,7 +417,7 @@
       govStatus.textContent=(data.status==='cached_recent'?'Verified recent response':'Verified government response')+' · '+data.days.length+' historical days';
       governmentClimateData=data;
       govDownload.disabled=false;
-      renderGovernmentClimate(data);
+       govCSV.disabled=false;      renderGovernmentClimate(data);
       govDetail.replaceChildren();
       const link=el('a','','NASA POWER official daily API');link.href='https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
       link.rel='noopener noreferrer';link.target='_blank';
@@ -407,6 +440,25 @@
     const url=URL.createObjectURL(blob),link=el('a');
     link.href=url;link.download='agri-foresight-nasa-jalna-'+governmentClimateData.latest_data_date+'.json';
     link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
+  govCSV.addEventListener('click',()=>{
+    if(!governmentClimateData||!okLocation()||govCSV.disabled)return;
+    const d=governmentClimateData;
+    const columns=['date','precipitation_mm_day','temperature_c','source','data_kind','retrieved_at_utc','source_url'];
+    const txt=value=>{
+      let out=String(value??'');
+      if(/^\s*[=+\-@\t\r]/.test(out))out="'"+out;
+      return '"'+out.replace(/"/g,'""')+'"';
+    };
+    const n=value=>typeof value==='number'&&Number.isFinite(value)?String(value):'';
+    const lines=d.days.map(day=>[txt(day.date),n(day.precipitation_mm_day),n(day.temperature_c),
+      txt(d.source),txt(d.data_kind),txt(d.retrieved_at_utc),
+      txt(d.source_url||'https://power.larc.nasa.gov/docs/services/api/temporal/daily/')].join(','));
+    const content='\uFEFF'+columns.join(',')+'\r\n'+lines.join('\r\n')+'\r\n';
+    const blob=new Blob([content],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob),anchor=el('a');
+    anchor.href=url;anchor.download='agri-foresight-nasa-jalna-'+d.latest_data_date+'.csv';
+    anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
   let governmentLocation=state.place.city+'|'+state.place.state;
   const updateSummaryAndLocation=updateSummaries;
