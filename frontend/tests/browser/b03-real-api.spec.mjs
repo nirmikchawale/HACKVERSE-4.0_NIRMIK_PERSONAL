@@ -70,16 +70,15 @@ test.describe('B-03 genuine FastAPI and browser integration', () => {
     if ((weather.status === 'retrieved_live' || weather.status === 'cached_recent') && candidates.length) {
       const hour = candidates[0].time;
       const replanned = await request.post('/api/replan', { data: { before: original, after, selected_hour_local: hour } });
-      expect([200,409]).toContain(replanned.status());
-      if (replanned.status() === 200) {
-        const data = await replanned.json();
-        expect(data.forecast_selection.selected_hour_local).toBe(hour);
-        expect(data.forecast_selection.forecast_status).toMatch(/retrieved_live|cached_recent/);
-        expect(data.forecast_selection.attribution).toContain('Open-Meteo');
-        expect(data.after.baseline.time_budget.candidate_deadline).toContain(hour + ':00+05:30');
-      } else {
-        expect((await replanned.json()).detail).toContain('forecast unavailable');
-      }
+      // A source-current forecast must be accepted by the server on this
+      // same-process local integration path. This test does not replace
+      // missing genuine weather with a fixture.
+      expect(replanned.status()).toBe(200);
+      const data = await replanned.json();
+      expect(data.forecast_selection.selected_hour_local).toBe(hour);
+      expect(data.forecast_selection.forecast_status).toMatch(/retrieved_live|cached_recent/);
+      expect(data.forecast_selection.attribution).toContain('Open-Meteo');
+      expect(data.after.baseline.time_budget.candidate_deadline).toContain(hour + ':00+05:30');
     }
   });
 
@@ -110,4 +109,30 @@ test.describe('B-03 genuine FastAPI and browser integration', () => {
     await expect(page.locator('#result-content')).toContainText('Manual before/after comparison');
     expect(errors).toEqual([]);
   });
+  test('real browser forecast selection triggers server-attested replan when current', async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto('/');
+    const forecastStatus = page.locator('#forecast-status');
+    await expect(forecastStatus).not.toHaveText('Checking source', { timeout: 25_000 });
+    const status = (await forecastStatus.textContent()) ?? '';
+    if (status === 'Retrieved live' || status === 'Recent authentic cache') {
+      const select = page.getByRole('button', { name: 'Use as candidate deadline' }).first();
+      await expect(select).toBeVisible();
+      await select.click();
+      await page.locator('#target').fill('10');
+      await page.locator('#capacity').fill('10');
+      await page.locator('#hours').fill('1');
+      await page.locator('#readiness').selectOption('yes');
+      await page.locator('#input-confirm').check();
+      await page.locator('#evaluate').click();
+      await expect(page.locator('#result-status')).toHaveText('FEASIBLE', { timeout: 25_000 });
+      await expect(page.locator('#result-content')).toContainText('Server-attested forecast-hour replan');
+      await expect(page.locator('#result-content')).toContainText('Open-Meteo');
+    } else {
+      // This branch certifies honest degradation, not successful weather replanning.
+      await expect(page.locator('#forecast-hours button')).toHaveCount(0);
+      await expect(page.locator('#forecast-message')).toContainText(/unavailable|stale|not configured|not reachable/i);
+    }
+  });
+
 });
