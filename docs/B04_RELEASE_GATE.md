@@ -8,7 +8,7 @@ The GitHub job `B-04 protected preview exact-SHA browser and POST` intentionally
 
 **Required human approval gate:** GitHub → Settings → Environments → create `b04-preview-certification`. Restrict deployment branches to `feat/unlockplan-app-deploy`, require an owner reviewer, and deny self-approval where available. Add both secrets under that environment (not unprotected repository-level secrets). The reviewer must inspect the exact commit before approving any secret-bearing job. A public fork or unreviewed PR must never obtain the secrets.
 
-Do not paste credentials into chat, a workflow YAML, a GitHub issue, or screenshot. The head-SHA gate resolves the feature-branch alias to its immutable, READY preview deployment and refuses wrong project, wrong branch, or production.
+Do not paste credentials into chat, a workflow YAML, a GitHub issue, or screenshot. The artifact upload uses nested screenshot paths and excludes Playwright traces, videos, HTML reports and API response bodies. The head-SHA gate resolves the feature-branch alias to its immutable, READY preview deployment and refuses wrong project, wrong branch, or production.
 
 The CI job has a single-branch concurrency guard to cancel superseded runs. Browser tests inject the secret **only on the target preview origin**, run real requests (no mocked routes), and disable Playwright traces/videos to keep secrets out of artifacts. It checks all six API routes, actual POSTs, error states and desktop/mobile layout. A missing live forecast is an honest degraded state, never synthetic weather.
 
