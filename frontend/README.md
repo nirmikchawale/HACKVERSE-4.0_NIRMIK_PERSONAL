@@ -1,15 +1,36 @@
-# UnlockPlan TypeScript frontend — B-02
+# UnlockPlan frontend — B-03 integrated TypeScript application
 
-Status: Typed interactive frontend implemented. This does not mean FastAPI is deployed to the Vercel preview.
+The frontend uses native HTML/CSS, strict TypeScript and Vite. It sends requests to same-origin FastAPI routes; **it never simulates live forecasts or computes feasibility in the browser**.
 
-Use npm install, npm test, npm run typecheck, npm run build, then npx playwright install --with-deps chromium and npm run test:browser.
+## API wiring
 
-Screens:
-- GET /api/forecast: model hours with source/time/units, explicit unavailable/stale/error.
-- Candidate deadline: manual IST date/time or user-selected authenticated model hour. Never an inferred safe rain threshold.
-- Farmer form: no default amounts, comparable abstract handling units, up to 10 distinct optional resource changes, explicit availability/confirmation and acknowledgement.
-- POST /api/evaluate: frontend renders only returned Python feasibility constraints/packages; no browser reimplementation of the engine, and edits invalidate old results.
+- `GET /api/health`: connection and non-field-validation disclaimer.
+- `GET /api/sources`: original source register, links and limitations.
+- `GET /api/forecast`: authentic source records, timezone, hourly units and unavailable/stale states.
+- `POST /api/evaluate`: first user-declared feasibility assessment.
+- `POST /api/compare`: manual before/after comparison on later evaluations.
+- `POST /api/replan`: server-attested forecast-hour selection and revised assessment. Rejects unavailable/stale/invalid selected-hour evidence.
 
-B-02 preview lacks the Python API, so production UI shows an honest degraded state until B-03 establishes same-origin API routing. Live /api/sources, /api/compare and /api/replan integration remain later-phase tasks. Fake fixtures exist only in the Playwright test module and must not be shipped as real forecast or farmer data.
+A selected model hour is an **optional candidate deadline**, not predicted exact rain onset or a safe agricultural threshold. Changes to farmer inputs invalidate old displayed results. The Python backend remains the authority.
 
-No production merge or release under this phase.
+## Local commands
+
+```bash
+npm install
+npm test
+npm run typecheck
+npm run build
+npm run test:browser
+```
+
+For **real backend integration**, start Uvicorn separately from `backend/` on `127.0.0.1:8000`, then run:
+
+```bash
+B03_INTEGRATION=true npm run test:browser -- tests/browser/b03-real-api.spec.mjs
+```
+
+`vite.config.ts` proxies `/api/*` and `/openapi.json` locally. On Vercel, the root `vercel.json` routes services; the Vercel project root must be the **repository root**, with framework and root-level build overrides unset. Vercel Services is beta.
+
+**No sample farmer quantities are prefilled.** Mock weather/evaluation fixtures exist only inside isolated Playwright tests. Any unavailable forecast or API is labeled rather than replaced with synthetic user-facing values.
+
+B-03 preview and CI certification are distinct from B-04 release-engineering setup and B-05 **production** authorization. Do not merge unverified code.
