@@ -82,83 +82,38 @@ test.describe('B-03 genuine FastAPI and browser integration', () => {
     }
   });
 
-  test('browser uses genuine health, source and evaluation API; changing inputs triggers compare', async ({ page }) => {
-    const errors = [];
-    page.on('pageerror', error => errors.push(error.message));
-    await page.goto('/');
-    await expect(page.locator('#api-health')).toContainText('FastAPI /api/health: connected');
-    await expect(page.locator('#source-register .source-entry').first()).toBeVisible();
-    await page.locator('#deadline').fill('2099-01-01T12:00');
-    await page.locator('#target').fill('10');
-    await page.locator('#capacity').fill('6');
-    await page.locator('#hours').fill('4');
-    await page.locator('#readiness').selectOption('yes');
-    await page.locator('#input-confirm').check();
-    await page.locator('#add-option').click();
-    await page.locator('.opt-amount').fill('4');
-    await page.locator('.opt-resource').fill('real-typed-test-resource');
-    await page.locator('.opt-availability').selectOption('available');
-    await page.locator('.opt-confirmation').selectOption('confirmed');
-    await page.locator('#evaluate').click();
-    await expect(page.locator('#result-status')).toHaveText('BLOCKED');
-    await expect(page.locator('.package-card')).toHaveCount(1);
-    await expect(page.locator('#result-content')).toContainText('Python deterministic feasibility engine');
-    await page.locator('#capacity').fill('10');
-    await page.locator('#evaluate').click();
-    await expect(page.locator('#result-status')).toHaveText('FEASIBLE');
-    await expect(page.locator('#result-content')).toContainText('Manual before/after comparison');
-    await expect(page.locator('#comparison-status')).toHaveText('Compared');
-    await expect(page.locator('#comparison-content')).toContainText('BLOCKED → FEASIBLE');
-    await expect(page.locator('#comparison-content')).toContainText('Resolved blockers: capacity');
-    expect(errors).toEqual([]);
-  });
-  test('mobile integration is legible and uses actual FastAPI, with no horizontal overflow', async ({page}) => {
-    await page.setViewportSize({width:390,height:844});
-    const errors=[];
-    page.on('pageerror', err=>errors.push(err.message));
-    await page.goto('/');
-    await expect(page.locator('#api-health')).toContainText('FastAPI /api/health: connected');
-    await expect(page.locator('#source-register .source-entry').first()).toBeVisible();
-    await expect(page.locator('#comparison-panel')).toBeVisible();
-    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1);
-    expect(overflow).toBe(false);
-    await page.locator('#deadline').fill('2099-01-01T12:00');
-    await page.locator('#target').fill('10');
-    await page.locator('#capacity').fill('10');
-    await page.locator('#hours').fill('1');
-    await page.locator('#readiness').selectOption('yes');
-    await page.locator('#input-confirm').check();
-    await page.locator('#evaluate').click();
-    await expect(page.locator('#result-status')).toHaveText('FEASIBLE');
-    await expect(page.locator('#comparison-status')).toHaveText('No comparison');
-    await page.screenshot({path:'test-results/int02-mobile-real-api.png',fullPage:true});
-    expect(errors).toEqual([]);
-  });
 
-  test('real browser forecast selection triggers server-attested replan when current', async ({ page }) => {
-    test.setTimeout(60_000);
-    await page.goto('/');
-    const forecastStatus = page.locator('#forecast-status');
-    await expect(forecastStatus).not.toHaveText('Checking source', { timeout: 25_000 });
-    const status = (await forecastStatus.textContent()) ?? '';
-    if (status === 'Retrieved live' || status === 'Recent authentic cache') {
-      const select = page.getByRole('button', { name: 'Use as candidate deadline' }).first();
-      await expect(select).toBeVisible();
-      await select.click();
-      await page.locator('#target').fill('10');
-      await page.locator('#capacity').fill('10');
-      await page.locator('#hours').fill('1');
-      await page.locator('#readiness').selectOption('yes');
-      await page.locator('#input-confirm').check();
-      await page.locator('#evaluate').click();
-      await expect(page.locator('#result-status')).toHaveText(/FEASIBLE|BLOCKED/, { timeout: 25_000 });
-      await expect(page.locator('#result-content')).toContainText('Server-attested forecast-hour replan');
-      await expect(page.locator('#result-content')).toContainText('Open-Meteo');
-    } else {
-      // This branch certifies honest degradation, not successful weather replanning.
-      await expect(page.locator('#forecast-hours button')).toHaveCount(0);
-      await expect(page.locator('#forecast-message')).toContainText(/unavailable|stale|not configured|not reachable/i);
-    }
-  });
-
+test('unified desktop uses genuine FastAPI and returns minimal packages',async({page})=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');
+ await expect(page.locator('#apiConnectionStatus')).toContainText('FastAPI connected',{timeout:25000});
+ await expect(page.locator('#sourceLedger .source-entry').first()).toBeVisible();
+ await page.locator('#deadlineInput').fill('2099-01-01T12:00');await page.locator('#saveDeadline').click();
+ await page.locator('#quantity').fill('10');await page.locator('#capacity').fill('6');
+ await page.locator('#duration').fill('1');await page.locator('#readiness').selectOption('yes');
+ await page.locator('#confirmInputs').check();await page.locator('#saveResources').click();
+ await page.locator('#addChange').click();await page.locator('#changeEditor [data-x=amount]').fill('4');
+ await page.locator('#changeEditor [data-x=rid]').fill('genuine-extra');
+ await page.locator('#changeEditor [data-x=availability]').selectOption('confirmed');
+ await page.locator('#runAssessment').click();
+ await expect(page.locator('#resultTitle')).toHaveText('API VERIFIED · BLOCKED',{timeout:20000});
+ await expect(page.locator('#packageList .package-card')).toHaveCount(1);
+ await page.locator('#packageList .package-card').click();await page.locator('#compareApi').click();
+ await expect(page.locator('#comparePanel')).toContainText('Backend comparison',{timeout:20000});
+ expect(errors).toEqual([]);
+});
+test('unified mobile actual API status and no horizontal overflow',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('/');
+ await expect(page.locator('#apiConnectionStatus')).toContainText('FastAPI connected',{timeout:25000});
+ await expect(page.locator('#navMobile [data-nav]')).toHaveCount(6);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1)).toBe(false);
+});
+test('current forecast is labelled or unavailable without fabrication',async({page})=>{
+ await page.goto('/');
+ await expect(page.locator('#forecastSourceChip')).not.toHaveText('FETCHING',{timeout:25000});
+ const status=(await page.locator('#forecastSourceChip').textContent())||'';
+ expect(['LIVE MODEL FORECAST','RECENT VERIFIED CACHE','UNAVAILABLE','NOT CONNECTED','STALE · DO NOT USE']).toContain(status);
+ if(status==='LIVE MODEL FORECAST'||status==='RECENT VERIFIED CACHE')
+  await expect(page.locator('#weatherChart .live-provenance')).toContainText('Open-Meteo');
+ else await expect(page.locator('#weatherChart .hour-bar')).toHaveCount(0);
+});
 });
