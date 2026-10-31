@@ -1,0 +1,50 @@
+{
+  "kind": "state_UT_names_only",
+  "country": "India",
+  "audit_date": "2026-11-01",
+  "sources": [
+    "https://www.mea.gov.in/india-at-glance.htm",
+    "https://www.mha.gov.in/index.php/union-territories-divisions"
+  ],
+  "states": [
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal"
+  ],
+  "union_territories": [
+    "Andaman and Nicobar Islands",
+    "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Jammu and Kashmir",
+    "Ladakh",
+    "Lakshadweep",
+    "Puducherry"
+  ],
+  "availability_notice": "Names are a selector reference. Districts, cities and villages are not exhaustively provided. Current backend still supports only approximate Jalna district reference."
+}
