@@ -40,10 +40,16 @@ async def _request_json(url: str, *, limit: int, timeout: float) -> Any:
             or url.startswith("https://power.larc.nasa.gov/api/temporal/daily/point?")):
         raise ValueError("External climate source is not approved.")
     async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
-        response = await client.get(url, headers={
+        headers = {
             "User-Agent": "AgriForesight-official-evidence/1.0",
             "Accept": "application/json",
-        })
+        }
+        # Open-Meteo sometimes negotiates compressed payloads that Pyodide's
+        # HTTPX/Fetch bridge fails to decode. Request the normal JSON bytes
+        # rather than ever interpreting compressed bytes as UTF-8 text.
+        if url.startswith("https://api.open-meteo.com/"):
+            headers["Accept-Encoding"] = "identity"
+        response = await client.get(url, headers=headers)
         response.raise_for_status()
         if len(response.content) > limit:
             raise ValueError("Official climate response exceeds size limit.")
