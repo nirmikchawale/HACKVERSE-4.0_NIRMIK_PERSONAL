@@ -5,6 +5,10 @@ on:
     paths:
       - 'backend/**'
       - 'frontend/**'
+      - 'worker.py'
+      - 'wrangler.jsonc'
+      - 'pyproject.toml'
+      - 'scripts/prepare-cloudflare-release.mjs'
       - '.github/workflows/mig-cloudflare-local.yml'
   workflow_dispatch:
 
