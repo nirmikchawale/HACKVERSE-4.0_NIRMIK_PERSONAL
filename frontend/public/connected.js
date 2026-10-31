@@ -236,6 +236,58 @@
     } catch(e){live.error=e.message;here('resourceNotice').textContent=e.message;here('resultReason').textContent=e.message;}
     finally{live.busy=false;button.disabled=false;button.textContent='Evaluate using FastAPI';renderAssessment();renderPackages();renderSummary();renderSourceMatrix();}
   }
+
+  // EX-05: all explanations are server-origin fields. Client never ranks or
+  // recomputes feasibility, agronomic thresholds, or resource availability.
+  const diagnosis=el('section','panel backend-diagnosis');
+  diagnosis.id='decisionDiagnostics';
+  diagnosis.setAttribute('aria-label','Explain the FastAPI feasibility decision');
+  diagnosis.append(el('h3','','Why did the resource assessment return this result?'));
+  const decisionNotes=el('div','backend-diagnosis-body');
+  decisionNotes.id='decisionDiagnosticNotes';
+  decisionNotes.setAttribute('aria-live','polite');
+  diagnosis.append(decisionNotes);
+  here('constraintList').parentElement.append(diagnosis);
+  function renderDecisionDiagnostics(){
+    decisionNotes.replaceChildren();
+    const report=live.evaluation;
+    if(!report){
+      decisionNotes.append(el('p','gov-intro',
+        'Not evaluated. Save farmer-declared inputs and a candidate deadline, then request a real FastAPI assessment.'));
+      return;
+    }
+    decisionNotes.append(el('p','gov-intro',
+      'Server result: '+report.status.toUpperCase()+
+      '. This evaluates declared capacity, readiness and timing only; it cannot certify safe cotton storage or protection.'));
+    const labels={readiness:'Handling-location readiness',capacity:'Declared handling capacity',timing:'Candidate deadline and time'};
+    const constraintResults=report.baseline?.constraints||[];
+    let found=0;
+    for(const c of constraintResults){
+      if(c.status==='pass')continue;
+      found++;
+      const note=el('article','backend-diagnosis-item');
+      note.dataset.status=c.status;
+      note.append(el('strong','', (labels[c.id]||c.id)+' · '+c.status.toUpperCase()),
+        el('p','',c.explanation),
+        el('small','','Source of this assessment: '+(c.provenance||'FastAPI returned constraint')));
+      decisionNotes.append(note);
+    }
+    if(!found){
+      decisionNotes.append(el('p','gov-intro',
+        report.status==='completed'?
+          'Action is farmer-declared completed; the engine has not executed or inspected it.':
+          'All returned baseline resource constraints passed; this is not an agronomic or storage-safety guarantee.'));
+    }
+    for(const x of report.excluded_changes||[]){
+      const note=el('article','backend-diagnosis-item');
+      note.dataset.status='excluded';
+      note.append(el('strong','','Not counted · '+x.id),
+        el('p','',x.reason||'The backend did not accept this change as a confirmed available resource.'));
+      decisionNotes.append(note);
+    }
+    decisionNotes.append(el('small','',
+      'This explanation preserves the backend decision and explicitly excludes unconfirmed resources. Select alternatives on Page 05 for real API comparison.'));
+  }
   updateAssessmentUI=renderAssessment;
   function renderAssessment(){
     const r=live.evaluation,base=r?.baseline;
@@ -249,13 +301,14 @@
     here('resultReason').textContent=r?r.message:(live.error||'Enter farmer-declared resources and a candidate deadline, then evaluate with the real FastAPI engine.');
     here('engineIndicator').textContent=r?'FASTAPI DETERMINISTIC ENGINE · RESPONSE VERIFIED':'FASTAPI ENGINE · NO RESULT';
     const list=here('constraintList');list.replaceChildren();
-    if(!r){list.append(el('div','empty',live.error||'No API assessment yet.'));return;}
+    if(!r){list.append(el('div','empty',live.error||'No API assessment yet.'));renderDecisionDiagnostics();return;}
     for(const c of base.constraints){
       const row=el('div','constraint-line '+(c.status==='pass'?'':c.status==='blocked'?'problem':'unknown'));
       row.append(el('span','symbol',c.status==='pass'?'✓':c.status==='blocked'?'×':'?'));
       const content=el('div');content.append(el('strong','',c.id+' · '+c.status),el('small','',c.explanation),el('small','', 'Provenance: '+c.provenance));row.append(content);list.append(row);
     }
     for(const rejected of r.excluded_changes){list.append(el('div','live-excluded',rejected.id+': '+rejected.reason));}
+    renderDecisionDiagnostics();
   }
   updateChangeUI=renderPackages;
   function renderPackages(){
