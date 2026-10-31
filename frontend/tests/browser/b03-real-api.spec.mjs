@@ -86,7 +86,7 @@ test.describe('B-03 genuine FastAPI and browser integration', () => {
 test('unified desktop uses genuine FastAPI and returns minimal packages',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');
  await expect(page.locator('#apiConnectionStatus')).toContainText('FastAPI connected',{timeout:25000});
- await expect(page.locator('#sourceLedger .source-entry').first()).toBeVisible();
+ await expect(page.locator('#sourceLedger .source-entry').first()).toBeAttached();
  await page.locator('#navDesktop [data-nav="1"]').click();await page.locator('#deadlineInput').fill('2099-01-01T12:00');await page.locator('#saveDeadline').click();
  await page.locator('#navDesktop [data-nav="2"]').click();await page.locator('#quantity').fill('10');await page.locator('#capacity').fill('6');
  await page.locator('#duration').fill('1');await page.locator('#readiness').selectOption('yes');

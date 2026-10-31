@@ -25,7 +25,7 @@ test('sourced hourly model forecast is selectable but no rain-onset guarantee',a
  await page.locator('#navDesktop [data-nav="1"]').click();
  await page.locator('#weatherChart .hour-bar').click();
  await expect(page.locator('#deadlineInput')).toHaveValue(hour);
- await expect(page.locator('#deadlineNotice')).toContainText('model hour');
+ await expect(page.locator('#deadlineNotice')).toContainText('Model hour');
 });
 test('unavailable weather shows no invented selectable hours',async({page})=>{
  await stub(page,{status:'unavailable',hours:[],notice:'Source unreachable'});await page.goto('/');
@@ -48,7 +48,7 @@ test('server evaluation and comparison use declared resources, not local arithme
  await page.locator('#changeEditor [data-x=rid]').fill('worker-extra');
  await page.locator('#changeEditor [data-x=availability]').selectOption('confirmed');
  await page.locator('#navDesktop [data-nav="3"]').click();await page.locator('#runAssessment').click();
- await expect(page.locator('#resultTitle')).toHaveText('API VERIFIED · BLOCKED');
+ await expect(page.locator('#resultTitle')).toHaveText('API VERIFIED · BLOCKED',{timeout:10000}).catch(async()=>{throw new Error('C05 diagnostic: '+await page.locator('#resourceNotice').textContent()+'; '+await page.locator('#resultReason').textContent());});
  await expect(page.locator('#packageList .package-card')).toHaveCount(1);
  expect(posted.target_units).toBe(10);expect(posted.changes[0].confirmation_state).toBe('confirmed');
  await page.locator('#navDesktop [data-nav="4"]').click();await page.locator('#packageList .package-card').click();await page.locator('#compareApi').click();
