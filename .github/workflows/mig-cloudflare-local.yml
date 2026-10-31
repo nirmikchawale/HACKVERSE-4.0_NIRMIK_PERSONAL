@@ -49,6 +49,11 @@ jobs:
               echo 'Real Cloudflare Worker health is reachable'
               exit 0
             fi
+            if ! kill -0 "$(cat /tmp/agri-cloudflare-worker.pid)" 2>/dev/null; then
+              echo 'Cloudflare Worker exited before health became reachable'
+              tail -n 85 /tmp/agri-cloudflare-pywrangler.log
+              exit 1
+            fi
             sleep 1
           done
           echo 'Cloudflare Worker local startup failed'
