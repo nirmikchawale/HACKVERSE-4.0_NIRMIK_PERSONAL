@@ -35,6 +35,14 @@ const nasa={
   ]
 };
 test('future model window sums distinguish missing readings from zero and never show safe crop advice',async({page})=>{
+  // The unified frontend first validates health and sources before fetching weather.
+  // These are test-only interceptions, not runtime fallback data.
+  await page.route('**/api/health',route=>route.fulfill({status:200,json:{
+    ok:true,version:'P0',disclaimer:'Not field validated.'
+  }}));
+  await page.route('**/api/sources',route=>route.fulfill({status:200,json:{
+    sources:[],operational_rules:[],input_categories:['forecast']
+  }}));
   await page.route('**/api/forecast*',route=>route.fulfill({status:200,json:forecast()}));
   await page.goto('/');
   await page.locator('#navDesktop [data-nav="1"]').click();
