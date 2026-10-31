@@ -37,8 +37,8 @@
 
         <section class="workspace" aria-labelledby="workspace-title">
           <div class="section-heading">
-            <div><p class="eyebrow eyebrow-small">PLANNED USER JOURNEY</p><h2 id="workspace-title">One decision, four connected steps.</h2></div>
-            <span class="section-subtitle">Interface wiring begins in B-02</span>
+            <div><p class="eyebrow eyebrow-small">WORKFLOW OVERVIEW</p><h2 id="workspace-title">One decision, four connected steps.</h2></div>
+            <span class="section-subtitle">Core controls available below</span>
           </div>
           <div class="steps-grid" id="steps-grid">
             <article class="step-card" aria-labelledby="step-weather-title">
@@ -71,12 +71,111 @@
             </article>
           </div>
         </section>
+
+        <section class="builder" id="planner" aria-labelledby="planner-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow eyebrow-small">B-02 / INTERACTIVE PLANNER</p>
+              <h2 id="planner-title">Build your preparation decision.</h2>
+            </div>
+            <span class="section-subtitle">No farmer quantities are prefilled</span>
+          </div>
+
+          <div class="planner-grid">
+            <section class="planner-panel" id="forecast-panel" aria-labelledby="forecast-panel-title">
+              <div class="panel-head">
+                <div><p class="panel-kicker">01 / MODEL EVIDENCE</p><h3 id="forecast-panel-title">Weather forecast</h3></div>
+                <span id="forecast-status" class="state-tag state-pending" role="status">Checking source</span>
+              </div>
+              <p class="field-help">External model guidance, not a field sensor or an agronomic safety threshold.</p>
+              <p id="forecast-message" class="context-note" aria-live="polite">Checking whether the Python forecast API is available…</p>
+              <p id="forecast-meta" class="detail-line">Jalna approximate reference: 19.84°N, 75.89°E · Asia/Kolkata.</p>
+              <button id="refresh-forecast" type="button" class="action-button action-secondary">Refresh authentic forecast</button>
+              <div id="forecast-hours" class="hour-list" aria-live="polite">
+                <p class="empty-helper">No authenticated forecast hours available yet.</p>
+              </div>
+              <div class="source-inline">Data provider: <a href="https://open-meteo.com/en/docs" target="_blank" rel="noopener noreferrer">Open-Meteo</a> · CC BY 4.0. Forecast values are model estimates.</div>
+            </section>
+
+            <section class="planner-panel" id="deadline-panel" aria-labelledby="deadline-panel-title">
+              <div class="panel-head">
+                <div><p class="panel-kicker">02 / FARMER-CHOSEN CUTOFF</p><h3 id="deadline-panel-title">Candidate deadline</h3></div>
+                <span class="state-tag state-pending">User assumption</span>
+              </div>
+              <label class="form-label" for="deadline">Complete preparation before (IST)</label>
+              <input id="deadline" type="datetime-local" class="text-input" aria-describedby="deadline-help deadline-origin"/>
+              <p id="deadline-help" class="field-help">Select your own deadline or choose an hour from a current authenticated forecast above. Neither choice predicts the exact arrival of rain.</p>
+              <p id="deadline-origin" class="context-note" aria-live="polite">No candidate deadline selected.</p>
+              <p class="detail-line">Timezone: Asia/Kolkata (UTC+05:30). Your deadline is an assumption; it is not generated automatically from rainfall probability.</p>
+            </section>
+          </div>
+
+          <section class="planner-panel resource-panel" id="resource-panel" aria-labelledby="resource-panel-title">
+            <div class="panel-head">
+              <div><p class="panel-kicker">03 / FARMER-REPORTED INPUTS</p><h3 id="resource-panel-title">Resources and permitted changes</h3></div>
+              <span class="state-tag">No sample inventory</span>
+            </div>
+            <p class="field-help">For already-picked cotton in Jalna only. Use one consistent, farmer-defined abstract handling unit for all quantities. The app cannot certify storage suitability or real farm operations.</p>
+            <form id="plan-form" novalidate>
+              <div class="input-grid">
+                <label class="field-control" for="target">Planned amount <span class="field-origin">User-reported</span>
+                  <input id="target" class="text-input" type="number" min="0" step="any" placeholder="Enter amount" inputmode="decimal"/>
+                  <span class="field-help">Comparable handling units</span>
+                </label>
+                <label class="field-control" for="capacity">Already confirmed capacity <span class="field-origin">User-reported</span>
+                  <input id="capacity" class="text-input" type="number" min="0" step="any" placeholder="Enter capacity" inputmode="decimal"/>
+                  <span class="field-help">Do not include optional resources twice</span>
+                </label>
+                <label class="field-control" for="hours">Estimated preparation duration <span class="field-origin">Assumption</span>
+                  <input id="hours" class="text-input" type="number" min="0" step="any" placeholder="Enter duration" inputmode="decimal"/>
+                  <span class="field-help">Hours to complete the action</span>
+                </label>
+                <label class="field-control" for="readiness">Handling-location readiness <span class="field-origin">User-reported</span>
+                  <select id="readiness" class="text-input">
+                    <option value="unknown">Unknown — not verified</option>
+                    <option value="yes">Yes — farmer confirms readiness</option>
+                    <option value="no">No — location not ready</option>
+                  </select>
+                  <span class="field-help">Readiness is not safety certification</span>
+                </label>
+              </div>
+              <label class="field-control baseline-control" for="baseline-resources">Identifiers included in confirmed capacity
+                <input id="baseline-resources" class="text-input" type="text" placeholder="Comma-separated IDs, if any" autocomplete="off"/>
+                <span class="field-help">Use distinct IDs to avoid counting an existing resource again as an optional change.</span>
+              </label>
+              <div class="options-head">
+                <div><h4>Optional, permitted changes</h4><p class="field-help">Add only farmer-declared options. Requested or unknown resources are never counted as confirmed.</p></div>
+                <button id="add-option" class="action-button action-secondary" type="button">+ Add option</button>
+              </div>
+              <div id="change-list" class="options-list"><p class="empty-helper" id="no-options">No additional changes declared.</p></div>
+              <label class="checkbox-line" for="completed"><input type="checkbox" id="completed"/> The action has already been completed (user declaration)</label>
+              <label class="checkbox-line" for="input-confirm"><input type="checkbox" id="input-confirm"/> I confirm these quantities are user-reported, refer to comparable handling units and are not independently verified.</label>
+              <div class="form-actions">
+                <button class="action-button action-primary" type="submit" id="evaluate">Evaluate feasibility</button>
+                <p class="field-help">Calculations require the actual Python engine. No client-side feasibility result is invented.</p>
+              </div>
+              <p id="form-error" class="form-error" role="alert" hidden></p>
+            </form>
+          </section>
+
+          <section class="planner-panel result-panel" id="result-panel" aria-labelledby="result-panel-title">
+            <div class="panel-head">
+              <div><p class="panel-kicker">04 / DETERMINISTIC RESULT</p><h3 id="result-panel-title">Feasibility and conditional options</h3></div>
+              <span id="result-status" class="state-tag state-pending" role="status">Not evaluated</span>
+            </div>
+            <div id="result-content" aria-live="polite" class="result-content">
+              <div class="empty-result"><strong>Decision not calculated</strong><p>Complete your own resource details and select Evaluate. If the Python API is unavailable, this section will explain why instead of showing simulated results.</p></div>
+            </div>
+            <div id="selection-content" class="selection-content" aria-live="polite">No package selected. Selecting a calculated option does not book, acquire, or execute it.</div>
+          </section>
+        </section>
+
         <section class="provenance" aria-label="Data provenance and limitations">
           <span class="provenance-symbol" aria-hidden="true">↗</span>
           <p><strong>Evidence boundary.</strong> Weather will come from an attributed external Open-Meteo model; ICAR-CRIDA Jalna guidance is historical context. No live values have been fetched or simulated in this foundation.</p>
         </section>
       </main>
-      <footer class="site-footer"><span>UnlockPlan / Evidence-aware feasibility prototype</span><span>Phase B-01 · UI foundation only</span></footer>
+      <footer class="site-footer"><span>UnlockPlan / Evidence-aware feasibility prototype</span><span>Phase B-02 · typed interactive frontend</span></footer>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

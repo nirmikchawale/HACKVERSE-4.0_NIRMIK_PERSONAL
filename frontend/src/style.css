@@ -69,3 +69,80 @@ h1 { max-width: 790px; margin-bottom: 22px; font-size: clamp(39px, 4.8vw, 67px);
 @media (max-width: 1050px) { .site-header, main, .site-footer { padding-inline: 30px; } .intro { grid-template-columns: minmax(0,1.4fr) minmax(270px,1fr); gap: 32px; } .steps-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } .step-card { min-height: 275px; } }
 @media (max-width: 660px) { .site-header { flex-wrap: wrap; gap: 12px; padding: 19px 19px; } .header-context { display: none; } .environment-pill { margin-left: auto; font-size: 9px; } main { padding: 54px 19px 35px; } .intro { display: flex; flex-direction: column; align-items: stretch; gap: 30px; } .intro-side { padding: 24px; } h1 { font-size: clamp(37px, 9.5vw, 56px); } .workspace { padding-top: 64px; } .section-heading { flex-direction: column; align-items: start; } .steps-grid { grid-template-columns: 1fr; } .step-card { min-height: 242px; } .step-art { height: 57px; } .site-footer { padding: 22px 19px 26px; flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+
+
+/* B-02 interactive panels extend, rather than replace, the B-01 design system. */
+.builder { padding-top: 80px; }
+.planner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+.planner-panel { border: 1px solid rgba(174,220,205,.16); border-radius: 18px; background: #122936; padding: 28px; min-width: 0; }
+.panel-head { display: flex; align-items: start; justify-content: space-between; gap: 15px; margin-bottom: 12px; }
+.panel-head .panel-kicker { margin: 0 0 10px; }
+.panel-head h3 { font-size: 21px; line-height: 1.3; letter-spacing: -.04em; margin: 0; }
+.state-tag { color: #d8dfe1; border: 1px solid rgba(192,219,207,.25); border-radius: 999px; padding: 6px 10px; font-size: 11px; line-height: 1.3; font-weight: 700; white-space: nowrap; }
+.state-pending { color: #ead1a2; border-color: rgba(218,176,115,.3); }
+.state-success { color: #b3eac6; border-color: rgba(142,225,169,.4); }
+.state-failure { color: #ffc5ad; border-color: rgba(245,162,145,.4); }
+.field-help { color: #a4bab7; font-size: 12px; line-height: 1.65; margin: 5px 0 15px; }
+.context-note { padding: 15px 17px; background: rgba(90,142,129,.12); border: 1px solid rgba(160,225,190,.16); border-radius: 11px; color: #d6e8dd; font-size: 13px; line-height: 1.65; }
+.detail-line { font-size: 11px; line-height: 1.7; color: #9ab9b7; overflow-wrap: anywhere; }
+.action-button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 10px; cursor: pointer; padding: 11px 15px; font: 700 12px 'DM Sans', sans-serif; transition: background .15s ease, border-color .15s ease; }
+.action-button:disabled { cursor: not-allowed; opacity: .65; }
+.action-secondary { color: #cff0da; border: 1px solid rgba(165,231,192,.42); background: rgba(153,221,181,.07); }
+.action-secondary:hover:not(:disabled) { background: rgba(153,221,181,.17); }
+.action-primary { color: #0b1924; border: 1px solid #a9f5b8; background: #a9f5b8; }
+.action-primary:hover:not(:disabled) { background: #c2ffd0; }
+.hour-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; margin: 18px 0; }
+.hour-cell { padding: 11px; border: 1px solid rgba(164,213,190,.17); border-radius: 10px; color: #dfede4; }
+.hour-cell strong { display: block; font-size: 15px; margin: 6px 0; }
+.hour-cell small { color: #a6c3bb; font-size: 11px; line-height: 1.5; }
+.hour-cell .action-button { width: 100%; margin-top: 9px; min-height: 35px; font-size: 10px; }
+.empty-helper { color: #8aa9a6; font-size: 12px; line-height: 1.6; grid-column: 1/-1; }
+.source-inline { border-top: 1px solid rgba(180,222,200,.12); padding-top: 16px; margin-top: 17px; color: #9bb5af; font-size: 11px; line-height: 1.7; }
+.source-inline a { color: #acf0bf; }
+.form-label, .field-control { display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #e0eee5; font-weight: 700; }
+.field-control .field-help { margin-top: 0; font-weight: 400; }
+.field-origin { color: #a7c8b5; font-weight: 400; }
+.text-input { width: 100%; background: #0a202c; color: #edf7f1; border: 1px solid #43636c; border-radius: 10px; padding: 12px 12px; font: 500 13px 'DM Sans',sans-serif; min-height: 44px; color-scheme: dark; }
+.text-input:focus { outline: 2px solid #a9f5b8; outline-offset: 2px; }
+.text-input::placeholder { color: #829e9e; }
+.input-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 15px 20px; margin: 22px 0; }
+.baseline-control { margin: 14px 0 24px; }
+.resource-panel, .result-panel { margin-bottom: 18px; }
+.options-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid rgba(174,220,205,.15); padding-top: 23px; }
+.options-head h4 { margin: 0; font: 700 15px Manrope, sans-serif; }
+.options-head .field-help { margin: 6px 0 0; }
+.options-list { margin: 18px 0 26px; }
+.option-card { margin: 11px 0; border-radius: 12px; border: 1px solid rgba(182,224,205,.16); background: #102532; padding: 16px; }
+.option-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
+.option-top strong { color: #c3ead2; font-size: 13px; }
+.option-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.option-grid .field-control { font-size: 11px; }
+.option-grid .text-input { font-size: 12px; }
+.remove-option { border: 0; background: none; color: #efc2b8; cursor: pointer; font-size: 12px; }
+.checkbox-line { display: flex; gap: 12px; align-items: start; font-size: 12px; line-height: 1.6; color: #d2e3d8; margin: 13px 0; cursor: pointer; }
+.checkbox-line input { accent-color: #a9f5b8; margin-top: 3px; width: 16px; height: 16px; flex-shrink: 0; }
+.form-actions { display: flex; align-items: center; gap: 17px; margin-top: 23px; flex-wrap: wrap; }
+.form-actions .field-help { margin: 0; max-width: 440px; }
+.form-error { padding: 14px 16px; border: 1px solid #a65c54; background: rgba(145,59,57,.14); border-radius: 10px; color: #ffd7cf; font-size: 12px; line-height: 1.6; margin: 15px 0 0; }
+.result-content { margin: 19px 0; }
+.empty-result { padding: 25px 0; color: #b7cfc5; }
+.empty-result strong { font-size: 17px; color: #edf6ef; }
+.empty-result p { font-size: 13px; line-height: 1.7; max-width: 680px; }
+.result-lead { padding: 18px 20px; border: 1px solid rgba(157,225,181,.25); background: rgba(88,143,126,.12); border-radius: 12px; }
+.result-lead strong { font-size: 18px; }
+.result-lead p { font-size: 13px; line-height: 1.65; color: #bcd2c9; margin: 9px 0 0; }
+.result-metrics { display: flex; flex-wrap: wrap; gap: 11px; margin: 16px 0; }
+.metric { flex: 1 1 160px; padding: 14px 16px; background: #0a202c; border-radius: 12px; }
+.metric span { display: block; color: #a3c3b7; font-size: 11px; margin-bottom: 8px; }
+.metric strong { font-size: 18px; }
+.constraint-row { display: flex; gap: 18px; border-bottom: 1px solid rgba(155,207,183,.13); padding: 14px 4px; }
+.constraint-row .state-tag { height: fit-content; }
+.constraint-row strong { font-size: 12px; }
+.constraint-row p { font-size: 12px; line-height: 1.65; color: #b6cfc6; margin: 6px 0 0; }
+.package-card { padding: 16px; border: 1px solid rgba(157,224,184,.23); border-radius: 11px; margin: 12px 0; }
+.package-card strong { color: #e3f1e5; }
+.package-card p { color: #a9c4b8; font-size: 12px; line-height: 1.6; margin: 8px 0; }
+.selection-content { border-top: 1px solid rgba(178,221,200,.18); padding-top: 16px; color: #b3c8bc; font-size: 12px; line-height: 1.7; }
+.selection-content strong { color: #e5f8e8; }
+@media (max-width: 900px) { .planner-grid { grid-template-columns: 1fr; } .option-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 660px) { .builder { padding-top: 64px; } .planner-panel { padding: 19px; } .panel-head { flex-wrap: wrap; } .input-grid,.hour-list,.option-grid { grid-template-columns: 1fr; } .options-head { align-items: start; flex-direction: column; } .constraint-row { flex-direction: column; gap: 7px; } }
