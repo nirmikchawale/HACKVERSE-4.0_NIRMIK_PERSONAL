@@ -2,7 +2,7 @@
    No simulated weather, crop-safety thresholds, fabricated farmer data or AI claims. */
 (() => {
   "use strict";
-  const live={forecast:null,sources:null,health:null,evaluation:null,request:null,comparison:null,replan:null,selectedHour:null,selectedPackage:null,forecastLoading:false};
+  const live={forecast:null,sources:null,health:null,evaluation:null,request:null,comparison:null,replan:null,selectedHour:null,selectedPackage:null,forecastLoading:false,error:null};
   const here=id=>document.getElementById(id);
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;};
   const num=n=>Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'Unknown';
@@ -52,7 +52,7 @@
     } catch(e){live.forecast=null;alert.textContent=e.message;entries.textContent='Source registry unavailable. No source evidence can be assumed.';renderWeather();}
   }
   function clearResult(){
-    live.evaluation=null;live.request=null;live.comparison=null;live.replan=null;live.selectedPackage=null;
+    live.error=null;live.evaluation=null;live.request=null;live.comparison=null;live.replan=null;live.selectedPackage=null;
   }
   const oldNote=noteChange;
   noteChange=function(){clearResult();oldNote();};
@@ -122,6 +122,17 @@
   for(const id of ['quantity','capacity','duration','readiness','baseline','confirmInputs']){
     here(id).addEventListener('input',()=>{clearResult();renderAssessment();renderPackages();renderSummary();},true);
   }
+  // Update optional resource draft on every input, not only change/blur.
+  // The legacy editor re-renders on change, so waiting until blur can lose
+  // values typed immediately before pressing another control.
+  here('changeEditor').addEventListener('input',event=>{
+    const node=event.target, row=node?.closest?.('.change-row'), key=node?.dataset?.x;
+    if(!row||!key)return;
+    const index=Array.from(here('changeEditor').querySelectorAll('.change-row')).indexOf(row);
+    if(index<0||!additional.changes[index])return;
+    additional.changes[index][key==='rid'?'rid':key]=node.value;
+    saveExtra();clearResult();renderAssessment();renderPackages();renderSummary();
+  },true);
   here('changeEditor').addEventListener('change',()=>{clearResult();renderAssessment();renderPackages();renderSummary();},true);
   function requestFromForm(){
     if(!okLocation())throw new Error('The server-authoritative assessment currently supports Jalna, Maharashtra only.');
@@ -162,7 +173,7 @@
       const result=validateEvaluation(await json('/api/evaluate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)}));
       live.request=req;live.evaluation=result;
       here('resourceNotice').textContent='Farmer-reported inputs saved for this session; evaluated by FastAPI. Resources are not independently certified.';
-    } catch(e){here('resourceNotice').textContent=e.message;here('resultReason').textContent=e.message;}
+    } catch(e){live.error=e.message;here('resourceNotice').textContent=e.message;here('resultReason').textContent=e.message;}
     finally{live.busy=false;button.disabled=false;button.textContent='Evaluate using FastAPI';renderAssessment();renderPackages();renderSummary();}
   }
   updateAssessmentUI=renderAssessment;
@@ -175,10 +186,10 @@
     here('resultReadiness').textContent=state.resources?.readiness||'Unknown';
     here('resultHero').dataset.kind=r?.status||'not-evaluated';
     here('resultTitle').textContent=r?'API VERIFIED · '+r.status.toUpperCase():'Not evaluated';
-    here('resultReason').textContent=r?r.message:'Enter farmer-declared resources and a candidate deadline, then evaluate with the real FastAPI engine.';
+    here('resultReason').textContent=r?r.message:(live.error||'Enter farmer-declared resources and a candidate deadline, then evaluate with the real FastAPI engine.');
     here('engineIndicator').textContent=r?'FASTAPI DETERMINISTIC ENGINE · RESPONSE VERIFIED':'FASTAPI ENGINE · NO RESULT';
     const list=here('constraintList');list.replaceChildren();
-    if(!r){list.append(el('div','empty','No API assessment yet.'));return;}
+    if(!r){list.append(el('div','empty',live.error||'No API assessment yet.'));return;}
     for(const c of base.constraints){
       const row=el('div','constraint-line '+(c.status==='pass'?'':c.status==='blocked'?'problem':'unknown'));
       row.append(el('span','symbol',c.status==='pass'?'✓':c.status==='blocked'?'×':'?'));
