@@ -117,3 +117,21 @@ test('duplicate or past times are rejected, and changed farmer inputs invalidate
   await expect(page.locator('#manualDeadlineResults tbody tr')).toHaveCount(0);
   await expect(page.locator('#compareManualDeadlines')).toBeDisabled();
 });
+
+test('editing a manual candidate while API is pending invalidates the old result and unlocks a new comparison',async({page})=>{
+  await setup(page);
+  await page.route('**/api/compare',async route=>{
+    await new Promise(resolve=>setTimeout(resolve,500));
+    const hour=route.request().postDataJSON().after.deadline.slice(0,16);
+    await route.fulfill({status:200,json:reply(hour)});
+  });
+  await prepare(page);
+  await page.locator('#manualDeadline1').fill(istHour(5));
+  await page.locator('#compareManualDeadlines').click();
+  await expect(page.locator('#manualDeadlineStatus')).toContainText('Evaluating');
+  await page.locator('#manualDeadline1').fill(istHour(7));
+  await expect(page.locator('#compareManualDeadlines')).toBeEnabled();
+  await expect(page.locator('#manualDeadlineStatus')).toContainText('Selection changed');
+  await page.waitForTimeout(650);
+  await expect(page.locator('#manualDeadlineResults tbody tr')).toHaveCount(0);
+});

@@ -389,6 +389,10 @@
   function resetCandidateComparisons(){
     comparisonGeneration++;attestedDeadlineRows=[];multiResults.replaceChildren();
     multiCsv.disabled=true;multiRun.textContent='Compare with real FastAPI';
+    multiRun.disabled=!(live.request&&live.evaluation&&candidateHours().length);
+    multiStatus.textContent=multiRun.disabled?
+      'Current authenticated model hours and evaluated resources are required.':
+      'Selection changed. Submit selected hours for fresh FastAPI attestation.';
   }
   function candidateHours(){
     const f=live.forecast;
@@ -534,6 +538,10 @@
   function resetManualComparisons(){
     ++manualGeneration;manualDeadlineRows=[];manualOutput.replaceChildren();
     manualRun.textContent='Compare manual deadlines with FastAPI';
+    manualRun.disabled=!(live.request&&live.evaluation&&okLocation());
+    manualStatus.textContent=manualRun.disabled?
+      'Evaluate farmer-declared resources before comparing manual deadlines.':
+      'Selection changed. Compare user-selected times again with FastAPI.';
   }
   function renderManualControls(){
     const ready=!!live.request&&!!live.evaluation&&okLocation();
