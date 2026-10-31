@@ -1,0 +1,58 @@
+name: B-04 Protected Preview Certification
+
+on:
+  push:
+    branches: [feat/unlockplan-app-deploy]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'vercel.json'
+      - '.github/workflows/b04-protected-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  b04-protected-preview:
+    name: B-04 protected preview exact-SHA browser and POST
+    if: github.ref == 'refs/heads/feat/unlockplan-app-deploy'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Node 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '22'
+      - name: Verify Vercel exact SHA and protected preview
+        run: node frontend/scripts/b04-verify-preview.mjs
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      - name: Install and audit
+        working-directory: frontend
+        run: |
+          npm install
+          npm audit --audit-level=high
+      - name: TypeScript and Vite build
+        working-directory: frontend
+        run: npm run build
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Test actual protected POST routes and desktop/mobile UI
+        working-directory: frontend
+        run: npx playwright test -c playwright.deployed.config.mjs
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      - name: Upload sanitized screenshots only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: b04-protected-preview-screenshots
+          path: frontend/test-results/b04/*.png
+          if-no-files-found: ignore
