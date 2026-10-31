@@ -1,19 +1,15 @@
-# UnlockPlan frontend — B-01 foundation
+# UnlockPlan TypeScript frontend — B-02
 
-Vanilla TypeScript + Vite + accessible HTML/CSS. This **is not a connected MVP**: the existing Python ZIP and original HTML/CSS have not yet been imported into GitHub. The static foundation deliberately shows no synthetic forecast or resource inventory.
+Status: Typed interactive frontend implemented. This does not mean FastAPI is deployed to the Vercel preview.
 
-## Local commands
+Use npm install, npm test, npm run typecheck, npm run build, then npx playwright install --with-deps chromium and npm run test:browser.
 
-    cd frontend
-    npm install
-    npm run dev
-    npm run typecheck
-    npm run test
-    npm run build
-    npm run preview
+Screens:
+- GET /api/forecast: model hours with source/time/units, explicit unavailable/stale/error.
+- Candidate deadline: manual IST date/time or user-selected authenticated model hour. Never an inferred safe rain threshold.
+- Farmer form: no default amounts, comparable abstract handling units, up to 10 distinct optional resource changes, explicit availability/confirmation and acknowledgement.
+- POST /api/evaluate: frontend renders only returned Python feasibility constraints/packages; no browser reimplementation of the engine, and edits invalidate old results.
 
-Run with Node.js 20.19+ or 22.12+. Until the Python API is imported, /api endpoints are **not present**. No Vercel routing or deployment is configured in B-01.
+B-02 preview lacks the Python API, so production UI shows an honest degraded state until B-03 establishes same-origin API routing. Live /api/sources, /api/compare and /api/replan integration remain later-phase tasks. Fake fixtures exist only in the Playwright test module and must not be shipped as real forecast or farmer data.
 
-## Next step
-
-B-02: import/preserve the original visual assets when they become available; implement typed forecast, candidate deadline, farmer-resource input and result screens against the actual Python contracts. Do not invent response fields or copy synthetic fixtures into user-facing UI.
+No production merge or release under this phase.
