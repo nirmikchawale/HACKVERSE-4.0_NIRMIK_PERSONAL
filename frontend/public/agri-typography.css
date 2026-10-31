@@ -123,3 +123,59 @@ body :is(.section,.app) :is(.bubble-chat,.chatlog) {
 @media (prefers-reduced-motion:reduce){
   html {scroll-behavior:auto;}
 }
+
+/* Material Design 3 type roles, web rem units honoring user text scaling.
+   https://developer.android.com/develop/ui/compose/designsystems/material3 */
+:root{
+ --m3-display-small:2.25rem; --m3-headline-large:2rem;
+ --m3-headline-medium:1.75rem; --m3-headline-small:1.5rem;
+ --m3-title-large:1.375rem; --m3-title-medium:1rem;
+ --m3-title-small:.875rem; --m3-body-large:1rem;
+ --m3-body-medium:.875rem; --m3-body-small:.75rem;
+ --m3-label-large:.875rem; --m3-label-medium:.75rem;
+ --m3-label-small:.6875rem;
+ --af-font:-apple-system,BlinkMacSystemFont,"Roboto","Inter","Segoe UI",system-ui,sans-serif;
+ --af-body:var(--m3-body-large);
+ --af-caption:var(--m3-body-small);
+ --af-control:var(--m3-label-large);
+ --af-label:var(--m3-title-small);
+ --af-page-title:clamp(1.75rem,2.4vw,2rem);
+ --af-section-title:var(--m3-title-large);
+ --af-card-title:var(--m3-title-medium);
+}
+body{font-size:var(--m3-body-large);line-height:1.5;}
+body :is(.section,.app) h1{font-size:var(--af-page-title);line-height:1.25;letter-spacing:-.022em;}
+body :is(.section,.app) h2{font-size:var(--m3-title-large);line-height:1.2727;letter-spacing:0;}
+body :is(.section,.app) h3{font-size:var(--m3-title-medium);line-height:1.5;letter-spacing:.01em;}
+body :is(.section,.app) :is(.page-lead,.hero p,.panel>p,.kpi-sub,.plan-lead,.step small,
+       .guidance-grid p,.notice,.forecast-window-card small,.gov-source-detail,
+       .live-provenance,.forecast-window-label){font-size:var(--m3-body-medium);line-height:1.43;}
+body :is(.section,.app) :is(.rail-footer,.footnote,.source-strip,.status-chip,.chip-outline,
+       .section-label,.rail-caption,.gov-day time,.gov-day small,.small-select,
+       .bubble-chat small,.assist-foot,.gov-source-state){font-size:var(--m3-body-small);line-height:1.4;}
+body :is(.section,.app) :is(.kpi-value,.metric-box strong,.window-value){font-size:var(--m3-title-large);line-height:1.3;}
+body :is(.section,.app) :is(button,.btn,.text-link,input,textarea,select){
+ font-size:var(--m3-label-large);line-height:1.43;
+}
+body :is(.section,.app) :is(.field label,.field>label,.form-label,.field-label,.check-rows b){
+ font-size:var(--m3-title-small);line-height:1.43;
+}
+body :is(.section,.app) :is(.field small,.gov-intro,.deadline-source small,.metric-box small,
+      .kpi-sub,.source-strip,.gov-source-detail,.evidence-cards p,.package-card p,
+      .note-small,.compare-col p,.guidance-grid span,.assist-hint){
+ font-size:var(--m3-body-small);line-height:1.45;
+}
+body .section .hour-bar .bar-time,body .section .hour-bar .bar-value,
+body .section #weatherChart .hour-bar small{
+ font-size:var(--m3-label-small);line-height:1.3;
+}
+body :is(.section,.app) :is(.kpi-value,.metric-box strong,.gov-day b,.window-value,
+      .hour-bar .bar-value){font-variant-numeric:tabular-nums;}
+@media(max-width:740px){
+ :root{--af-page-title:var(--m3-headline-medium);--af-section-title:var(--m3-title-large);}
+ body :is(.section,.app) :is(.mobile-nav button,.mobile-nav button span:last-child){
+   font-size:var(--m3-label-small);line-height:1.25;
+ }
+ body .section .hero p{font-size:var(--m3-body-medium);}
+ body .section h1{font-size:var(--m3-headline-medium);}
+}
