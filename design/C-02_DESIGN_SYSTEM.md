@@ -63,3 +63,13 @@ The raw Aqua/Gold brand swatches should not be used as ordinary light-mode text 
 ## Gate and next action
 
 C-02 is **prepared for visual review**, not yet approved for application integration. C-03 (four high-fidelity functional screen designs) should use these tokens after user direction. C-04 alone owns safe integration into tested frontend components after branch inspection and focused regression tests. C-05 owns full visual, accessibility and judge-demo QA. **No merge or deployment in C-02.**
+
+## Supplement — six theme families, twelve preview appearances
+
+User's five earlier selected families are **retained**, not replaced: Obsidian & Champagne, Royal Amethyst, Porcelain & Copper, Pearl & Misty Iris, and Midnight Sapphire. The newly supplied Agrow-inspired teal/aqua/gold/cream/ink direction is added as **Agrow Heritage**, the recommended default. Six families × Light/Dark = **12 preview appearances**.
+
+Presets live in [premium-palette-families.json](tokens/premium-palette-families.json) and [unlockplan.palette-extensions.css](tokens/unlockplan.palette-extensions.css) and override the semantic tokens without changing the functional UI architecture.
+
+**Expanded local QA:** 48/48 browser combinations covering all six families in both modes at 1440px and 390px across Theme Studio and C-01 adapter: 0 horizontal-overflow failures and 0 page script errors. 84/84 selected nominal foreground/background and control-outline color pairs passed 4.5:1 or 3:1 token-level checks. Twelve family/mode Theme Studio desktop screenshots and the Agrow-specific 24 six-screen screenshots were created. This is bounded prototype testing, not full WCAG or production certification.
+
+**Release boundary:** none of the six presets has been applied to Workstream B. No merge or deployment. C-03 high-fidelity screens and C-04/C-05 integration and certification remain pending user review.
