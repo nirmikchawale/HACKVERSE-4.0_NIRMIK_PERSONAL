@@ -1,0 +1,176 @@
+{
+  "obsidian": {
+    "label": "Obsidian & Champagne",
+    "light": {
+      "bg": "#F4F0EA",
+      "solid": "#FFFDFA",
+      "ink": "#242126",
+      "muted": "#554E4A",
+      "action": "#3B3330",
+      "on": "#FFFFFF",
+      "link": "#654F2B",
+      "accent": "#B79A6B",
+      "accentText": "#675123",
+      "ring": "#3B3330",
+      "border": "#6B5B53"
+    },
+    "dark": {
+      "bg": "#101014",
+      "solid": "#282627",
+      "ink": "#F0EBDD",
+      "muted": "#C9C2B5",
+      "action": "#D1B483",
+      "on": "#1A1716",
+      "link": "#E1C48C",
+      "accent": "#D1B483",
+      "accentText": "#E1C48C",
+      "ring": "#F1D69B",
+      "border": "#ACAAAA"
+    }
+  },
+  "amethyst": {
+    "label": "Royal Amethyst",
+    "light": {
+      "bg": "#F5F0FC",
+      "solid": "#FFFCFF",
+      "ink": "#2A1945",
+      "muted": "#59466C",
+      "action": "#5F2B9E",
+      "on": "#FFFFFF",
+      "link": "#552E8A",
+      "accent": "#BD74C9",
+      "accentText": "#6C2779",
+      "ring": "#5F2B9E",
+      "border": "#806394"
+    },
+    "dark": {
+      "bg": "#160D29",
+      "solid": "#302246",
+      "ink": "#F0EAF9",
+      "muted": "#CFC3E8",
+      "action": "#A88AFF",
+      "on": "#1C1129",
+      "link": "#C6AEFF",
+      "accent": "#E5A3E7",
+      "accentText": "#E5A3E7",
+      "ring": "#E5A3E7",
+      "border": "#BDB1E0"
+    }
+  },
+  "copper": {
+    "label": "Porcelain & Copper",
+    "light": {
+      "bg": "#F6EFE5",
+      "solid": "#FFFDF6",
+      "ink": "#36241C",
+      "muted": "#655246",
+      "action": "#9B4518",
+      "on": "#FFFFFF",
+      "link": "#984017",
+      "accent": "#D4A266",
+      "accentText": "#7C3C19",
+      "ring": "#9B4518",
+      "border": "#896655"
+    },
+    "dark": {
+      "bg": "#1A1411",
+      "solid": "#3C2820",
+      "ink": "#F9EEE0",
+      "muted": "#E0C7B2",
+      "action": "#ED8951",
+      "on": "#1A1411",
+      "link": "#FFC494",
+      "accent": "#E6BA85",
+      "accentText": "#E6BA85",
+      "ring": "#FFD1A7",
+      "border": "#CFB59E"
+    }
+  },
+  "iris": {
+    "label": "Pearl & Misty Iris",
+    "light": {
+      "bg": "#EFF0F8",
+      "solid": "#FCFCFF",
+      "ink": "#2B2945",
+      "muted": "#55536B",
+      "action": "#5A547F",
+      "on": "#FFFFFF",
+      "link": "#595188",
+      "accent": "#B9A8D6",
+      "accentText": "#50446F",
+      "ring": "#5A547F",
+      "border": "#786F97"
+    },
+    "dark": {
+      "bg": "#191925",
+      "solid": "#323144",
+      "ink": "#ECEAF4",
+      "muted": "#D5D3E8",
+      "action": "#A49DCF",
+      "on": "#1A1B2A",
+      "link": "#D6BFEF",
+      "accent": "#D6BFEF",
+      "accentText": "#D6BFEF",
+      "ring": "#DDD2FF",
+      "border": "#D2CDEA"
+    }
+  },
+  "sapphire": {
+    "label": "Midnight Sapphire",
+    "light": {
+      "bg": "#F0F2FA",
+      "solid": "#FDFFFF",
+      "ink": "#1C2751",
+      "muted": "#465374",
+      "action": "#29499F",
+      "on": "#FFFFFF",
+      "link": "#29499F",
+      "accent": "#819CE4",
+      "accentText": "#253A80",
+      "ring": "#29499F",
+      "border": "#687FAF"
+    },
+    "dark": {
+      "bg": "#070B1F",
+      "solid": "#18244A",
+      "ink": "#EEF1FF",
+      "muted": "#C3D0F4",
+      "action": "#668BFF",
+      "on": "#080D1F",
+      "link": "#B5C8FF",
+      "accent": "#ADC9FF",
+      "accentText": "#ADC9FF",
+      "ring": "#C3D9FF",
+      "border": "#AEBCEE"
+    }
+  },
+  "agrow": {
+    "label": "Agrow Heritage",
+    "light": {
+      "bg": "#F6F5E9",
+      "solid": "#FFFCF1",
+      "ink": "#163B37",
+      "muted": "#48615A",
+      "action": "#155555",
+      "on": "#FFFFFF",
+      "link": "#0B6D5C",
+      "accent": "#A89A2A",
+      "accentText": "#67530A",
+      "ring": "#155555",
+      "border": "#53796C"
+    },
+    "dark": {
+      "bg": "#070D11",
+      "solid": "#123C39",
+      "ink": "#F3F0DB",
+      "muted": "#BED4CB",
+      "action": "#30B39B",
+      "on": "#071411",
+      "link": "#7EEAD1",
+      "accent": "#D8C657",
+      "accentText": "#F1DC78",
+      "ring": "#FFE78B",
+      "border": "#8EADA4"
+    }
+  }
+}
