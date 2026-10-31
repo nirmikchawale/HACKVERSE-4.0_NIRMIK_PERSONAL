@@ -47,7 +47,7 @@ def validate(case: dict) -> dict:
     capacity = number(case.get('capacity_units'), 'capacity_units')
     duration = number(case.get('required_hours'), 'required_hours')
     readiness = case.get('readiness', 'unknown')
-    if readiness not in ALLOWED_READINESS:
+    if not isinstance(readiness, str) or readiness not in ALLOWED_READINESS:
         raise InputError('readiness must be yes, no or unknown.')
     if type(case.get('completed', False)) is not bool:
         raise InputError('completed must be a boolean.')
@@ -77,7 +77,7 @@ def validate(case: dict) -> dict:
             raise InputError('Change IDs must be nonempty and unique.')
         seen_ids.add(cid)
         kind = raw.get('type')
-        if kind not in ALLOWED_KINDS:
+        if not isinstance(kind, str) or kind not in ALLOWED_KINDS:
             raise InputError(f'{cid}: unsupported change type.')
         if raw.get('unit') != UNIT:
             raise InputError(f'{cid}: incompatible unit (expected {UNIT}).')
@@ -86,9 +86,9 @@ def validate(case: dict) -> dict:
             raise InputError(f'{cid}.value must be greater than 0.')
         availability = raw.get('availability')
         confirmation = raw.get('confirmation_state')
-        if availability not in ALLOWED_AVAILABILITY:
+        if not isinstance(availability, str) or availability not in ALLOWED_AVAILABILITY:
             raise InputError(f'{cid}: unknown availability state.')
-        if confirmation not in ALLOWED_CONFIRMATION:
+        if not isinstance(confirmation, str) or confirmation not in ALLOWED_CONFIRMATION:
             raise InputError(f'{cid}: unknown confirmation state.')
         resource = raw.get('resource_id')
         if resource is not None:

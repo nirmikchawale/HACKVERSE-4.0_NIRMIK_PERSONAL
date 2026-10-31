@@ -61,6 +61,19 @@ def compare_plans(before: dict, after: dict) -> dict:
     }
 
 
+def parse_selected_hour_local(value: str) -> datetime:
+    """Validate only the exact, timezone-free ISO hour format from Open-Meteo."""
+    if not isinstance(value, str) or not value:
+        raise InputError('selected_hour_local must exactly match a returned forecast hour.')
+    try:
+        chosen = datetime.fromisoformat(value)
+    except ValueError:
+        raise InputError('selected_hour_local must be a valid local ISO timestamp.') from None
+    if chosen.tzinfo is not None or chosen.strftime('%Y-%m-%dT%H:%M') != value:
+        raise InputError('selected_hour_local must be a source-native local hourly timestamp, without an offset.')
+    return chosen
+
+
 def replan_from_forecast(before: dict, after: dict, selected_hour_local: str,
                          forecast_summary: dict, evaluation_now: datetime) -> dict:
     """Bind the revised deadline to an hour returned by the server's forecast adapter.
@@ -84,14 +97,9 @@ def replan_from_forecast(before: dict, after: dict, selected_hour_local: str,
     age = (evaluation_now.astimezone(timezone.utc)-retrieval_time).total_seconds()/3600
     if not isfinite(age) or age < 0 or age > 2:
         raise InputError('Forecast is no longer recent enough for an attributed forecast-hour selection.')
-    if not isinstance(selected_hour_local, str) or not selected_hour_local:
-        raise InputError('selected_hour_local must exactly match a returned forecast hour.')
-    try:
-        chosen = datetime.fromisoformat(selected_hour_local)
-    except ValueError:
-        raise InputError('selected_hour_local must be a valid local ISO timestamp.') from None
-    if chosen.tzinfo is not None or chosen.strftime('%Y-%m-%dT%H:%M') != selected_hour_local:
-        raise InputError('selected_hour_local must be a source-native local hourly timestamp, without an offset.')
+    chosen = parse_selected_hour_local(selected_hour_local)
+    if chosen.replace(tzinfo=TIMEZONE) <= evaluation_now.astimezone(TIMEZONE):
+        raise InputError('Selected forecast hour must be a future candidate deadline.')
     if forecast_summary.get('validated', {}).get('timezone') != 'Asia/Kolkata':
         raise InputError('Forecast timezone does not match the Jalna scenario.')
     matching = [h for h in forecast_summary.get('hours', [])

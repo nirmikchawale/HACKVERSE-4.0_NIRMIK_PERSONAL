@@ -6,6 +6,7 @@ on:
   pull_request:
     paths:
       - 'backend/**'
+      - 'docs/contracts/**'
       - '.github/workflows/backend-tests.yml'
 
 permissions:
@@ -28,5 +29,7 @@ jobs:
           .venv/bin/python -m pip install -r backend/requirements.txt
           cd backend
           ../.venv/bin/python -m pytest -q
+      - name: Verify TypeScript handoff contract
+        run: npx --yes --package typescript@5.8.3 tsc --strict --noEmit --target ES2022 docs/contracts/unlockplan-api.ts
       - name: Verify legacy static JavaScript syntax
         run: node --check backend/static/app.js
