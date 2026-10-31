@@ -1,0 +1,97 @@
+{
+  "scope": "UI reference mapping for existing source only; not a second data provider",
+  "checked_against": [
+    "backend/unlockplan/api.py",
+    "backend/unlockplan/weather.py",
+    "frontend/src/contracts.ts",
+    "frontend/src/main.ts"
+  ],
+  "supported_location": "Jalna district approximate reference (19.84 N, 75.89 E)",
+  "timezone": "Asia/Kolkata",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "cards": [
+        "API status"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/forecast",
+      "cards": [
+        "Forecast status",
+        "hourly precipitation",
+        "candidate deadline"
+      ],
+      "states": [
+        "retrieved_live",
+        "cached_recent",
+        "stale_cache",
+        "unavailable"
+      ],
+      "field_units": {
+        "precipitation_mm": "mm",
+        "precipitation_probability_pct": "%"
+      },
+      "rule": "Never treat stale/unavailable as fresh or invent sample data"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sources",
+      "cards": [
+        "Evidence"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/evaluate",
+      "cards": [
+        "Feasibility",
+        "constraints"
+      ],
+      "states": [
+        "feasible",
+        "blocked",
+        "unknown",
+        "completed"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/compare",
+      "cards": [
+        "Before/after"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/replan",
+      "cards": [
+        "Replanning"
+      ],
+      "rule": "Requires source-attested selected forecast hour; 409 on unavailable current source"
+    }
+  ],
+  "farmer_reported_inputs": [
+    "target_units",
+    "capacity_units",
+    "required_hours",
+    "readiness",
+    "deadline",
+    "completed",
+    "baseline_resource_ids",
+    "changes"
+  ],
+  "unsupported_in_p0": [
+    "arbitrary Indian location-based forecast",
+    "live soil readings",
+    "user accounts",
+    "AI assistant backend",
+    "true field safety recommendations"
+  ],
+  "static_assets": [
+    "reference/india_states_uts.json",
+    "reference/jalna_historical_context.json"
+  ]
+}
