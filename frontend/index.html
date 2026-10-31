@@ -81,7 +81,13 @@ html[data-theme="dark"] .brand-gold{color:#f4d676}
 .gov-day small{color:var(--muted);display:block;margin-top:3px}
 .gov-source-detail{margin-top:12px;font-size:11px;color:var(--muted);overflow-wrap:anywhere;line-height:1.5}
 .gov-source-detail a{color:var(--teal);text-decoration:underline}
-</style></head>
+</style>
+<!-- SF Pro is resolved through the operating system on Apple devices.
+     Inter is a SIL-OFL-licensed web-safe fallback; no Apple font binaries are bundled. -->
+<link rel="preconnect" href="https://rsms.me" crossorigin>
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<link rel="stylesheet" href="/agri-typography.css">
+</head>
 <body>
 <div class="app">
 <aside class="rail"><div class="brand"><img class="brandmark brand-logo" src="/agri-foresight-logo.webp" alt="Agri Foresight golden agricultural emblem" width="46" height="46"><div><strong>Agri <span class="brand-gold">Foresight</span></strong><small data-i18n="brandSub">PREPARATION INTELLIGENCE</small></div></div><p class="rail-caption" data-i18n="workspace">Your workspace</p><nav class="nav" id="navDesktop"></nav><div class="rail-footer"><strong data-i18n="railFootTitle">Clear decisions, not guesswork.</strong><span data-i18n="railFootText">Live forecasts and FastAPI calculations are source-labeled. Farmer declarations are not independently verified.</span></div></aside>
