@@ -290,6 +290,110 @@
     const b=new Blob([JSON.stringify(evidence,null,2)],{type:'application/json'}),url=URL.createObjectURL(b),a=el('a');
     a.href=url;a.download='agri-foresight-evidence-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
+  // Source-separated official government data: historical only, never an
+  // operational rainfall forecast or an input to the feasibility engine.
+  const govPanel=el('section','panel government-evidence');
+  govPanel.id='governmentClimatePanel';
+  govPanel.setAttribute('aria-label','Official NASA POWER historical climate evidence');
+  const govTitle=el('h2','', 'Government climate evidence · NASA POWER');
+  const govIntro=el('p','gov-intro',
+    'Historical daily gridded rainfall and temperature from NASA (US government). Not live observed rainfall, a future forecast, or a measurement at your farm.');
+  const govActions=el('div','gov-action-row');
+  const govRefresh=el('button','btn primary','Refresh official data');
+  govRefresh.id='refreshGovernmentClimate';govRefresh.type='button';
+  const govStatus=el('span','gov-source-state','Checking official source…');
+  govStatus.id='governmentClimateStatus';govStatus.setAttribute('role','status');
+  govActions.append(govRefresh,govStatus);
+  const govRows=el('div','gov-history-grid');
+  govRows.id='governmentClimateRows';
+  const govDetail=el('p','gov-source-detail');
+  govDetail.id='governmentClimateProvenance';
+  govPanel.append(govTitle,govIntro,govActions,govRows,govDetail);
+  document.querySelector('section.section[data-page="1"]').append(govPanel);
+
+  async function loadGovernmentClimate(refresh=false){
+    govRows.replaceChildren();
+    if(!okLocation()){
+      govStatus.textContent='Unavailable for selected location';
+      govRows.append(el('p','gov-intro','Official Jalna reference data cannot be applied to the selected place.'));
+      govDetail.textContent='Switch to Jalna, Maharashtra to retrieve its government historical context.';
+      return;
+    }
+    govRefresh.disabled=true;
+    govStatus.textContent='Contacting NASA POWER…';
+    try{
+      const data=await json('/api/government-climate'+(refresh?'?refresh=true':''));
+      if(!['retrieved_live','cached_recent','unavailable'].includes(data?.status)||!Array.isArray(data.days)||data.source!=='NASA POWER (US government)'){
+        throw new Error('Government climate schema could not be verified.');
+      }
+      if(data.status==='unavailable'){
+        if(data.days.length)throw new Error('Unavailable NASA response unexpectedly contained values.');
+        govStatus.textContent='Official source unavailable';
+        govRows.append(el('p','gov-intro',data.notice||'NASA POWER unavailable. No values are shown.'));
+        govDetail.replaceChildren();
+        const link=el('a','', 'NASA POWER official documentation');link.href='https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
+        link.target='_blank';link.rel='noopener noreferrer';govDetail.append(link);
+        return;
+      }
+      if(data.data_kind!=='government_gridded_historical'||!data.retrieved_at_utc||
+        !data.days.length||data.days.length>40||
+        !data.days.every(x=>/^\\d{4}-\\d{2}-\\d{2}$/.test(x.date)&&
+          (x.precipitation_mm_day===null||(Number.isFinite(x.precipitation_mm_day)&&x.precipitation_mm_day>=0))&&
+          (x.temperature_c===null||Number.isFinite(x.temperature_c)))){
+        throw new Error('Government climate values or provenance failed validation.');
+      }
+      govStatus.textContent=(data.status==='cached_recent'?'Verified recent response':'Verified government response')+' · '+data.days.length+' historical days';
+      const visible=data.days.slice(-7).reverse();
+      for(const item of visible){
+        const card=el('article','gov-day');
+        const date=el('time','',item.date);date.dateTime=item.date;
+        card.append(date,
+          el('b','',item.precipitation_mm_day===null?'Rainfall: unavailable':'Rainfall: '+num(item.precipitation_mm_day)+' mm/day'),
+          el('small','',item.temperature_c===null?'Air temperature: unavailable':'Mean air temperature: '+num(item.temperature_c)+' °C'));
+        govRows.append(card);
+      }
+      govDetail.replaceChildren();
+      const link=el('a','','NASA POWER official daily API');link.href='https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
+      link.rel='noopener noreferrer';link.target='_blank';
+      govDetail.append('Source: ',link,' · Latest provided day: '+data.latest_data_date+
+        ' · Retrieved (UTC): '+data.retrieved_at_utc+'. '+data.notice);
+    }catch(e){
+      govStatus.textContent='Could not verify official data';
+      govRows.replaceChildren(el('p','gov-intro','No government climate values displayed: '+e.message));
+      govDetail.textContent='Only verified NASA POWER responses are eligible; no offline example is substituted.';
+    }finally{govRefresh.disabled=false;}
+  }
+  govRefresh.addEventListener('click',()=>{void loadGovernmentClimate(true);});
+  void loadGovernmentClimate(false);
+
+  // Override obsolete offline-prototype copy, including on language changes.
+  // Model outputs remain labeled; no simulated values appear in the real UI.
+  Object.assign(dict.en,{
+    timelineIntro:'Only source-validated Open-Meteo model hours are displayed. No sample or estimated weather is substituted.',
+    weatherTruthDesc:'A live FastAPI service retrieves hourly Open-Meteo model data with source and age labels.',
+    noTimeline:'Verified hours appear when the provider is available. No values are fabricated.',
+    railFootText:'Live weather and FastAPI calculations are source-labeled. Farmer declarations are not independently measured.',
+    feasCaution:'The connected Python engine validates declared units, blockers and confirmed changes; it does not certify field safety.',
+    simDisclosure:'FastAPI evaluates user-declared constraints; this is not a crop safety or weather suitability certification.',
+    noForecastLedger:'See the timestamped Open-Meteo model timeline on Page 02.',
+    calculationEvidenceDesc:'Only server-validated FastAPI calculations count as actual results.',
+    optionsDesc:'Only explicitly confirmed optional changes are evaluated; requested/unknown changes remain excluded.',
+    replanStep2:'Recalculate the actual backend plan',
+    noPackagesBody:'Submit confirmed options and evaluate through FastAPI.',
+    selectPackage:'Select a server-returned conditional package.',
+  });
+  Object.assign(dict.mr,{
+    timelineIntro:'इथे फक्त स्रोत-पडताळणी झालेला हवामान अंदाज दाखवला जातो; कृत्रिम आकडे दाखवले जात नाहीत.',
+    weatherTruthDesc:'FastAPI द्वारे स्रोत आणि वेळेसह Open-Meteo चा हवामान अंदाज मिळतो.',
+    railFootText:'हवामान आणि गणना स्रोतांसह दाखवली जाते; शेतकऱ्याची नोंद स्वतंत्ररीत्या तपासलेली नाही.',
+    simDisclosure:'FastAPI फक्त घोषित संसाधने आणि वेळ तपासते; शेती सुरक्षिततेचे प्रमाणपत्र नाही.',
+  });
+  Object.assign(dict.hi,{
+    timelineIntro:'यहाँ केवल स्रोत-सत्यापित मौसम पूर्वानुमान दिखता है; कोई बनावटी आँकड़े नहीं दिखाए जाते।',
+    weatherTruthDesc:'FastAPI से स्रोत और समय के साथ Open-Meteo का मौसम पूर्वानुमान आता है।',
+    railFootText:'मौसम और गणना स्रोत सहित दिखते हैं; किसान की जानकारी स्वतंत्र रूप से सत्यापित नहीं है।',
+    simDisclosure:'FastAPI केवल बताए गए संसाधनों और समय का आकलन करता है; यह कृषि सुरक्षा प्रमाणपत्र नहीं है।',
+  });
   // A bounded, working rules-based helper; no external generative AI is claimed.
   canned.weather.en='Page 02 shows live or recently cached Open-Meteo model data when validated by FastAPI. If unavailable, no forecast hour is offered.';
   canned.result.en='On Page 04 click Evaluate using FastAPI after saving a deadline and confirmed resources. Page 05 can compare an eligible conditional package with the actual backend.';
@@ -306,6 +410,7 @@
   for(const [id,msg] of disclaimers)if(here(id))here(id).textContent=msg;
   here('forecastSourceChip').textContent='CONNECTING';
   additional.sampleWeather=false;additional.demoInputs=false;additional.previewResult=null;
+  changeLanguage();
   updateAllNew();
   void boot();
   if(location.pathname==='/interactive-review.html')history.replaceState({},'', '/');

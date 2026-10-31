@@ -44,6 +44,20 @@ test.describe('B-03 genuine FastAPI and browser integration', () => {
       expect(weather.hours).toEqual([]);
     }
 
+    // Genuine backend government-data route: no mocked values in this suite.
+    // NASA may be unreachable; the only accepted degraded output is empty.
+    const govResponse = await request.get('/api/government-climate');
+    expect(govResponse.status()).toBe(200);
+    const gov = await govResponse.json();
+    expect(gov.source).toBe('NASA POWER (US government)');
+    expect(['retrieved_live','cached_recent','unavailable']).toContain(gov.status);
+    if (gov.status === 'unavailable') expect(gov.days).toEqual([]);
+    else {
+      expect(gov.data_kind).toBe('government_gridded_historical');
+      expect(gov.days.length).toBeGreaterThan(0);
+      expect(gov.days.every(d => typeof d.date==='string')).toBe(true);
+    }
+
     const original = baseCase();
     const r = await request.post('/api/evaluate', { data: original });
     expect(r.status()).toBe(200);
