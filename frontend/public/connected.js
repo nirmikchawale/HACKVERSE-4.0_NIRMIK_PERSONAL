@@ -286,7 +286,8 @@
     const evidence={generated_at_utc:new Date().toISOString(),location:state.place,model_scope:'Jalna already-picked cotton preparation only',
       disclosure:'Conditional simulation using user declarations and genuine FastAPI output; not field-validated agricultural advice.',
       forecast:live.forecast,source_registry:live.sources,evaluation:live.evaluation,comparison:live.comparison,
-      replan:live.replan,selected_package:live.selectedPackage,request:live.request};
+      replan:live.replan,selected_package:live.selectedPackage,request:live.request,
+      government_climate_historical:governmentClimateData};
     const b=new Blob([JSON.stringify(evidence,null,2)],{type:'application/json'}),url=URL.createObjectURL(b),a=el('a');
     a.href=url;a.download='agri-foresight-evidence-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
@@ -303,15 +304,52 @@
   govRefresh.id='refreshGovernmentClimate';govRefresh.type='button';
   const govStatus=el('span','gov-source-state','Checking official source…');
   govStatus.id='governmentClimateStatus';govStatus.setAttribute('role','status');
-  govActions.append(govRefresh,govStatus);
+  const govRange=el('select','small-select');
+  govRange.id='governmentClimateRange';govRange.setAttribute('aria-label','Government history display range');
+  const optSeven=el('option','', 'Latest 7 available days');optSeven.value='7';
+  const optAll=el('option','', 'All available days');optAll.value='all';
+  govRange.append(optSeven,optAll);
+  const govDownload=el('button','btn','Download verified NASA JSON');
+  govDownload.id='downloadGovernmentClimate';govDownload.type='button';govDownload.disabled=true;
+  govActions.append(govRefresh,govRange,govDownload,govStatus);
   const govRows=el('div','gov-history-grid');
   govRows.id='governmentClimateRows';
   const govDetail=el('p','gov-source-detail');
   govDetail.id='governmentClimateProvenance';
-  govPanel.append(govTitle,govIntro,govActions,govRows,govDetail);
+  const govSummary=el('p','gov-source-detail');
+  govSummary.id='governmentClimateSummary';
+  govPanel.append(govTitle,govIntro,govActions,govRows,govSummary,govDetail);
   document.querySelector('section.section[data-page="1"]').append(govPanel);
 
+  let governmentClimateData=null;
+  let governmentClimateRequest=0;
+  function renderGovernmentClimate(data){
+    govRows.replaceChildren();
+    const count=govRange.value==='all'?data.days.length:7;
+    const items=data.days.slice(-count);
+    const rain=items.filter(x=>x.precipitation_mm_day!==null);
+    const air=items.filter(x=>x.temperature_c!==null);
+    govSummary.textContent='NASA historical grid, '+items.length+' available calendar days · '+
+      (rain.length?'Rainfall: '+num(rain.reduce((n,x)=>n+x.precipitation_mm_day,0))+
+      ' mm across '+rain.length+'/'+items.length+' days with values':'Rainfall unavailable')+
+      ' · '+(air.length?'Mean of available daily temperatures: '+
+      num(air.reduce((n,x)=>n+x.temperature_c,0)/air.length)+' °C ('+air.length+'/'+items.length+
+      ' days)':'Temperature unavailable')+
+      '. These are arithmetic summaries of historical government grid values, NOT operational forecasts.';
+    for(const item of [...items].reverse()){
+      const card=el('article','gov-day');
+      const date=el('time','',item.date);date.dateTime=item.date;
+      card.append(date,
+        el('b','',item.precipitation_mm_day===null?'Rainfall: unavailable':'Rainfall: '+num(item.precipitation_mm_day)+' mm/day'),
+        el('small','',item.temperature_c===null?'Air temperature: unavailable':'Mean air temperature: '+num(item.temperature_c)+' °C'));
+      govRows.append(card);
+    }
+  }
   async function loadGovernmentClimate(refresh=false){
+    const token=++governmentClimateRequest;
+    governmentClimateData=null;
+    govDownload.disabled=true;
+    govSummary.textContent='';
     govRows.replaceChildren();
     if(!okLocation()){
       govStatus.textContent='Unavailable for selected location';
@@ -323,6 +361,7 @@
     govStatus.textContent='Contacting NASA POWER…';
     try{
       const data=await json('/api/government-climate'+(refresh?'?refresh=true':''));
+      if(token!==governmentClimateRequest||!okLocation())return;
       if(!['retrieved_live','cached_recent','unavailable'].includes(data?.status)||!Array.isArray(data.days)||data.source!=='NASA POWER (US government)'){
         throw new Error('Government climate schema could not be verified.');
       }
@@ -343,27 +382,42 @@
         throw new Error('Government climate values or provenance failed validation.');
       }
       govStatus.textContent=(data.status==='cached_recent'?'Verified recent response':'Verified government response')+' · '+data.days.length+' historical days';
-      const visible=data.days.slice(-7).reverse();
-      for(const item of visible){
-        const card=el('article','gov-day');
-        const date=el('time','',item.date);date.dateTime=item.date;
-        card.append(date,
-          el('b','',item.precipitation_mm_day===null?'Rainfall: unavailable':'Rainfall: '+num(item.precipitation_mm_day)+' mm/day'),
-          el('small','',item.temperature_c===null?'Air temperature: unavailable':'Mean air temperature: '+num(item.temperature_c)+' °C'));
-        govRows.append(card);
-      }
+      governmentClimateData=data;
+      govDownload.disabled=false;
+      renderGovernmentClimate(data);
       govDetail.replaceChildren();
       const link=el('a','','NASA POWER official daily API');link.href='https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
       link.rel='noopener noreferrer';link.target='_blank';
       govDetail.append('Source: ',link,' · Latest provided day: '+data.latest_data_date+
         ' · Retrieved (UTC): '+data.retrieved_at_utc+'. '+data.notice);
     }catch(e){
+      if(token!==governmentClimateRequest)return;
       govStatus.textContent='Could not verify official data';
       govRows.replaceChildren(el('p','gov-intro','No government climate values displayed: '+e.message));
       govDetail.textContent='Only verified NASA POWER responses are eligible; no offline example is substituted.';
-    }finally{govRefresh.disabled=false;}
+    }finally{if(token===governmentClimateRequest)govRefresh.disabled=false;}
   }
   govRefresh.addEventListener('click',()=>{void loadGovernmentClimate(true);});
+  govRange.addEventListener('change',()=>{if(governmentClimateData&&okLocation())renderGovernmentClimate(governmentClimateData);});
+  govDownload.addEventListener('click',()=>{
+    if(!governmentClimateData||!okLocation())return;
+    const exported={...governmentClimateData,exported_at_utc:new Date().toISOString(),
+      disclosure:'NASA POWER historical government grid values only; not future rainfall or farm measurements.'};
+    const blob=new Blob([JSON.stringify(exported,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob),link=el('a');
+    link.href=url;link.download='agri-foresight-nasa-jalna-'+governmentClimateData.latest_data_date+'.json';
+    link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
+  let governmentLocation=state.place.city+'|'+state.place.state;
+  const updateSummaryAndLocation=updateSummaries;
+  updateSummaries=function(){
+    const place=state.place.city+'|'+state.place.state;
+    updateSummaryAndLocation();
+    if(place!==governmentLocation){
+      governmentLocation=place;
+      void loadGovernmentClimate(false);
+    }
+  };
   void loadGovernmentClimate(false);
 
   // Override obsolete offline-prototype copy, including on language changes.
