@@ -1,0 +1,66 @@
+{
+  "version": "1.0",
+  "audit_date": "2026-11-01",
+  "sources": [
+    {
+      "id": "open_meteo_forecast",
+      "kind": "forecast_model",
+      "source_url": "https://open-meteo.com/en/docs",
+      "runtime_url": "https://api.open-meteo.com/v1/forecast?latitude=19.84&longitude=75.89&hourly=precipitation%2Cprecipitation_probability&timezone=Asia%2FKolkata&forecast_days=3",
+      "integration": "existing backend/unlockplan/weather.py",
+      "fields": [
+        "precipitation",
+        "precipitation_probability"
+      ],
+      "units": [
+        "mm",
+        "%"
+      ],
+      "update": "on backend request; cache becomes stale after 2 hours",
+      "status": "LIVE_FETCH_VIA_EXISTING_BACKEND; no live snapshot included in this bundle",
+      "license": "CC BY 4.0 weather data; free API noncommercial terms apply",
+      "required_ui_attribution": "Weather data by Open-Meteo.com; model guidance, not field observations."
+    },
+    {
+      "id": "icar_crida_jalna",
+      "kind": "historical_agronomy_soil_context",
+      "source_url": "https://www.icar-crida.res.in/CP-2012/statewiseplans/Maharastra%28Pdf%29/MAU%2C%20Parbhani/Maharashtra%2033-Jalna-31-12-2011.pdf",
+      "year_indicated": 2011,
+      "integration": "historical context optional evidence panel",
+      "status": "VERIFIED_HISTORICAL_REFERENCE_ONLY; NOT farm-specific and NOT live",
+      "reuse": "Metadata and brief factual paraphrases; full document not republished"
+    },
+    {
+      "id": "india_administrative_names",
+      "kind": "geography_reference",
+      "source_url": "https://www.mea.gov.in/india-at-glance.htm",
+      "additional_source": "https://www.mha.gov.in/index.php/union-territories-divisions",
+      "integration": "state/UT names for searchable UI; 28 + 8",
+      "status": "AVAILABLE_STATIC_REFERENCE",
+      "limitation": "Not an exhaustive district/city/village source"
+    },
+    {
+      "id": "india_lgd_districts",
+      "kind": "future_authoritative_geography",
+      "source_url": "https://data.gov.in/resource/local-government-directory-lgd-districts",
+      "status": "NOT_IMPORTED; requires verified download/API and QA",
+      "integration": "Only for future verified district data support"
+    },
+    {
+      "id": "isric_soilgrids",
+      "kind": "future_modelled_soil_properties",
+      "source_url": "https://docs.isric.org/globaldata/soilgrids/",
+      "status": "REST_API_REPORTED_PAUSED; NOT_IMPORTED",
+      "integration": "Deferred; consider WMS/COG access and separate authorization",
+      "limitation": "Even when accessible this is modelled 250m grid soil, not in-field lab testing."
+    }
+  ],
+  "missing_or_not_claimed": [
+    "Real hourly snapshot for this chat session (outbound fetch unavailable; backend must fetch at runtime)",
+    "Live soil moisture, pH or nutrient values for a specific farm",
+    "All India cities/villages or geocoded farm locations",
+    "Verified agronomic safety thresholds",
+    "Historical farm records or farmer inventory",
+    "AI/voice/translation model"
+  ]
+}

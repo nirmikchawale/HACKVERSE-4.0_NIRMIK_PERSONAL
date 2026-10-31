@@ -1,0 +1,101 @@
+{
+  "version": "1.0",
+  "for": "UnlockPlan P0 existing FastAPI + Vite frontend",
+  "checked_against": "feat/unlockplan-app-deploy backend/unlockplan/api.py, weather.py and frontend/src/contracts.ts",
+  "location": {
+    "location_label": "Jalna district approximate reference, Maharashtra",
+    "latitude": 19.84,
+    "longitude": 75.89,
+    "timezone": "Asia/Kolkata",
+    "other_indian_locations_supported_by_engine": false
+  },
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "purpose": "backend health, no user-specific farm info"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sources",
+      "purpose": "server-maintained source registry and operational-rule provenance"
+    },
+    {
+      "method": "GET",
+      "path": "/api/forecast",
+      "query": "refresh=true optional",
+      "purpose": "attributed live/cached/stale/unavailable Open-Meteo precipitation model forecast",
+      "fields": [
+        "status",
+        "hours[].time",
+        "hours[].precipitation_mm",
+        "hours[].precipitation_probability_pct",
+        "retrieved_at_utc",
+        "forecast_age_hours",
+        "validated.units",
+        "attribution",
+        "request_url",
+        "error",
+        "notice"
+      ],
+      "states": [
+        "retrieved_live",
+        "cached_recent",
+        "stale_cache",
+        "unavailable"
+      ],
+      "rules": [
+        "Only retrieved_live/cached_recent may be used for selectable current forecast hours",
+        "Stale is not current; unavailable is not zero rainfall",
+        "Never show synthetic values as live weather"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/evaluate",
+      "purpose": "Python engine outcome based on farmer-declared constraints",
+      "request_fields": [
+        "target_units",
+        "capacity_units",
+        "required_hours",
+        "unit",
+        "readiness",
+        "now",
+        "deadline",
+        "completed",
+        "baseline_resource_ids",
+        "changes"
+      ],
+      "outcome_states": [
+        "feasible",
+        "blocked",
+        "unknown",
+        "completed"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/compare",
+      "purpose": "compare independently declared before and after cases"
+    },
+    {
+      "method": "POST",
+      "path": "/api/replan",
+      "purpose": "replan using selected source-attested current forecast hour; returns 409 if current forecast unavailable"
+    }
+  ],
+  "frontend_card_connections": {
+    "forecast": "GET /api/forecast",
+    "deadline": "user selected local time; optional forecast hour",
+    "resources": "farmer-declared form only",
+    "feasibility": "POST /api/evaluate",
+    "changes": "packages returned by /api/evaluate; compare via POST /api/compare",
+    "summary": "original and revised backend results, not a fictional history"
+  },
+  "source_caveats": [
+    "No auth or saved farmer accounts",
+    "No provider-backed soil measurement API",
+    "No automatic crop thresholds, guaranteed safety or yield claims",
+    "No real multilingual AI/voice/translation backend in this contract"
+  ]
+}
