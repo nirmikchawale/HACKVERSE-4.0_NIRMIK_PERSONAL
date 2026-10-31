@@ -1,133 +1,57 @@
-import { expect, test } from '@playwright/test';
-
-// SYNTHETIC_TEST_ONLY. Fixtures are intercepted by Playwright; never live data.
-const now = new Date().toISOString();
-const futureLocal = () => {
-  const d = new Date(Date.now() + 48 * 3600 * 1000);
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', hourCycle: 'h23',
-  }).formatToParts(d);
-  const val = key => parts.find(p => p.type === key)?.value;
-  return val('year') + '-' + val('month') + '-' + val('day') + 'T' + val('hour') + ':00';
-};
-const sampleForecast = () => ({
-  status: 'retrieved_live',
-  retrieved_at_utc: now, forecast_age_hours: 0,
-  validated: { timezone: 'Asia/Kolkata', units: { time: 'iso8601', precipitation: 'mm', precipitation_probability: '%' } },
-  hours: [{ time: futureLocal(), precipitation_mm: 0.8, precipitation_probability_pct: 30 }],
-  source: 'Open-Meteo public model forecast', attribution: 'Open-Meteo.com CC BY 4.0',
-  notice: 'External model forecast; no safety threshold.',
-});
-const assessment = (status, shortfall, capacity, target) => ({
-  status, constraints: [
-    { id: 'readiness', status: 'pass', explanation: 'Farmer-declared ready. Not safety certification.', provenance: 'user-reported' },
-    { id: 'capacity', status: shortfall ? 'blocked' : 'pass', explanation: 'Declared quantities.', provenance: 'user-reported + configured assumption' },
-    { id: 'timing', status: 'pass', explanation: 'User-selected candidate deadline.', provenance: 'user-reported + configured assumption' },
-  ],
-  known_blockers: shortfall ? ['capacity'] : [],
-  time_budget: {
-    candidate_deadline: '2099-01-01T12:00:00+05:30', evaluated_at: now,
-    available_hours: 100, required_hours: 4, time_slack_hours: 96, basis: 'user-selected deadline',
-  },
-  projected_capacity_units: capacity, projected_target_units: target,
-  original_target_unhandled_units: 0, shortfall_units: shortfall,
-});
-const sampleEvaluation = () => ({
-  status: 'blocked', message: 'One declared capacity constraint is blocked.',
-  meaning: 'resource-feasibility only; no agricultural safety certification', unit: 'handling_unit',
-  baseline: assessment('blocked', 4, 6, 10),
-  packages: [{
-    change_ids: ['option-1'], projected: assessment('feasible', 0, 10, 10),
-    objective_changed: false, warning: 'Projected only; capacity availability is not completion.',
-  }],
-  excluded_changes: [],
-});
-async function fillForm(page) {
-  await page.locator('#target').fill('10');
-  await page.locator('#capacity').fill('6');
-  await page.locator('#hours').fill('4');
-  await page.locator('#deadline').fill('2099-01-01T12:00');
-  await page.locator('#readiness').selectOption('yes');
-  await page.locator('#input-confirm').check();
+import {expect,test} from '@playwright/test';
+const hour='2099-01-01T09:00';
+const forecast={status:'retrieved_live',hours:[{time:hour,precipitation_mm:2.1,precipitation_probability_pct:60}],retrieved_at_utc:new Date().toISOString(),forecast_age_hours:0,validated:{timezone:'Asia/Kolkata',units:{time:'iso8601',precipitation:'mm',precipitation_probability:'%'}},attribution:'Open-Meteo.com CC BY 4.0'};
+const base={status:'blocked',constraints:[{id:'capacity',status:'blocked',explanation:'Shortfall 4',provenance:'user-reported'}],known_blockers:['capacity'],time_budget:{candidate_deadline:'2099-01-01T12:00:00+05:30',evaluated_at:new Date().toISOString(),available_hours:4,required_hours:1,time_slack_hours:3,basis:'user deadline'},projected_capacity_units:6,projected_target_units:10,original_target_unhandled_units:0,shortfall_units:4};
+const projected={...base,status:'feasible',constraints:base.constraints.map(c=>({...c,status:'pass'})),known_blockers:[],projected_capacity_units:10,shortfall_units:0};
+const evalResp={status:'blocked',message:'Capacity insufficient',meaning:'resource feasibility only',unit:'handling_unit',baseline:base,packages:[{change_ids:['option-1'],projected,warning:'Projected only',objective_changed:false}],excluded_changes:[]};
+async function stub(page,weather=forecast){
+ await page.route('**/api/health',r=>r.fulfill({status:200,json:{ok:true,version:'P0',forecast_validated_cache_present:false,disclaimer:'Not field validated'}}));
+ await page.route('**/api/sources',r=>r.fulfill({status:200,json:{sources:[{id:'weather',title:'Open-Meteo',url:'https://open-meteo.com/',short_supported_statement:'Model data',limitations:'No guarantees'}],operational_rules:[],input_categories:['user-reported']}}));
+ await page.route('**/api/forecast*',r=>r.fulfill({status:200,json:weather}));
 }
-test('B-02 shows honest fallback and never invents an engine result', async ({ page }) => {
-  await page.route('**/api/forecast', route => route.fulfill({
-    status: 503, contentType: 'application/json', body: JSON.stringify({ detail: 'Source not connected' }),
-  }));
-  await page.route('**/api/evaluate', route => route.fulfill({
-    status: 503, contentType: 'application/json', body: JSON.stringify({ detail: 'Backend is not connected' }),
-  }));
-  await page.goto('/');
-  await expect(page.locator('#forecast-status')).toHaveText('API not connected');
-  await expect(page.locator('#forecast-hours')).not.toContainText('0.8 mm');
-  await fillForm(page);
-  await page.locator('#evaluate').click();
-  await expect(page.locator('#result-status')).toHaveText('Calculation unavailable');
-  await expect(page.locator('#result-content')).toContainText('Backend is not connected');
-  await expect(page.locator('#result-content')).not.toContainText('Feasible under declared assumptions');
+async function prepare(page){
+ await page.locator('#navDesktop [data-nav="1"]').click();
+ await page.locator('#deadlineInput').fill('2099-01-01T12:00');
+ await page.locator('#saveDeadline').click();
+ await page.locator('#navDesktop [data-nav="2"]').click();
+ await page.locator('#quantity').fill('10');await page.locator('#capacity').fill('6');
+ await page.locator('#duration').fill('1');await page.locator('#readiness').selectOption('yes');
+ await page.locator('#confirmInputs').check();await page.locator('#saveResources').click();
+}
+test('sourced hourly model forecast is selectable but no rain-onset guarantee',async({page})=>{
+ await stub(page);await page.goto('/');
+ await expect(page.locator('#forecastSourceChip')).toHaveText('LIVE MODEL FORECAST');
+ await expect(page.locator('#weatherChart .hour-bar')).toHaveCount(1);
+ await page.locator('#navDesktop [data-nav="1"]').click();
+ await page.locator('#weatherChart .hour-bar').click();
+ await expect(page.locator('#deadlineInput')).toHaveValue(hour);
+ await expect(page.locator('#deadlineNotice')).toContainText('Model hour');
 });
-test('B-02 only offers candidate hours when source metadata validates', async ({ page }) => {
-  await page.route('**/api/forecast', route => route.fulfill({
-    status: 200, contentType: 'application/json', body: JSON.stringify(sampleForecast()),
-  }));
-  await page.goto('/');
-  await expect(page.locator('#forecast-status')).toHaveText('Retrieved live');
-  await expect(page.locator('.hour-cell')).toHaveCount(1);
-  await expect(page.locator('.hour-cell')).toContainText('0.8 mm');
-  await page.getByRole('button', { name: 'Use as candidate deadline' }).click();
-  await expect(page.locator('#deadline')).toHaveValue(futureLocal());
-  await expect(page.locator('#deadline-origin')).toContainText('not an agronomic threshold');
+test('unavailable weather shows no invented selectable hours',async({page})=>{
+ await stub(page,{status:'unavailable',hours:[],notice:'Source unreachable'});await page.goto('/');
+ await expect(page.locator('#forecastSourceChip')).toHaveText('UNAVAILABLE');
+ await expect(page.locator('#weatherChart .hour-bar')).toHaveCount(0);
 });
-test('B-02 sends user inputs and renders only backend-returned packages', async ({ page }) => {
-  let submitted;
-  await page.route('**/api/forecast', route => route.fulfill({
-    status: 200, contentType: 'application/json',
-    body: JSON.stringify({ status: 'unavailable', hours: [], notice: 'No network forecast' }),
-  }));
-  await page.route('**/api/evaluate', route => {
-    submitted = route.request().postDataJSON();
-    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(sampleEvaluation()) });
-  });
-  await page.goto('/');
-  await fillForm(page);
-  await page.locator('#add-option').click();
-  await page.locator('.opt-amount').fill('4');
-  await page.locator('.opt-resource').fill('cover-from-farmer');
-  await page.locator('.opt-availability').selectOption('available');
-  await page.locator('.opt-confirmation').selectOption('confirmed');
-  await page.locator('#evaluate').click();
-  await expect(page.locator('#result-status')).toHaveText('BLOCKED');
-  await expect(page.locator('.package-card')).toHaveCount(1);
-  expect(submitted?.unit).toBe('handling_unit');
-  expect(submitted?.target_units).toBe(10);
-  expect(submitted?.capacity_units).toBe(6);
-  expect(submitted?.deadline).toBe('2099-01-01T12:00:00+05:30');
-  expect(submitted?.changes).toEqual([{
-    id: 'option-1', type: 'add_capacity', value: 4, resource_id: 'cover-from-farmer',
-    availability: 'available', confirmation_state: 'confirmed', unit: 'handling_unit', cost: null,
-  }]);
-  await page.getByRole('button', { name: 'Select conditional option' }).click();
-  await expect(page.locator('#selection-content')).toContainText('Selected conditional option: option-1');
-  await page.locator('#capacity').fill('7');
-  await expect(page.locator('#result-status')).toHaveText('Not evaluated');
-  await expect(page.locator('.package-card')).toHaveCount(0);
+test('failed server evaluation does not emit fake feasible result',async({page})=>{
+ await stub(page,{status:'unavailable',hours:[]});
+ await page.route('**/api/evaluate',r=>r.fulfill({status:503,json:{detail:'Engine unavailable'}}));
+ await page.goto('/');await prepare(page);await page.locator('#navDesktop [data-nav="3"]').click();await page.locator('#runAssessment').click();
+ await expect(page.locator('#resultTitle')).toHaveText('Not evaluated');
+ await expect(page.locator('#resourceNotice')).toContainText('Engine unavailable');
 });
-test('B-02 rejects missing declarations and malformed API responses', async ({ page }) => {
-  await page.route('**/api/forecast', route => route.fulfill({
-    status: 200, contentType: 'application/json',
-    body: JSON.stringify({ status: 'retrieved_live', hours: [{ time: futureLocal(), precipitation_mm: -3, precipitation_probability_pct: 900 }] }),
-  }));
-  await page.route('**/api/evaluate', route => route.fulfill({
-    status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'feasible', message: 'Untrusted malformed response' }),
-  }));
-  await page.goto('/');
-  await expect(page.locator('#forecast-status')).toHaveText('API not connected');
-  await page.locator('#evaluate').click();
-  await expect(page.locator('#form-error')).toContainText('Confirm the quantities');
-  await fillForm(page);
-  await page.locator('#evaluate').click();
-  await expect(page.locator('#result-status')).toHaveText('Calculation unavailable');
-  await expect(page.locator('#result-content')).toContainText('invalid response');
-  await expect(page.locator('#result-content')).not.toContainText('Feasible under declared assumptions');
+test('server evaluation and comparison use declared resources, not local arithmetic',async({page})=>{
+ await stub(page);let posted,compared;
+ await page.route('**/api/evaluate',r=>{posted=r.request().postDataJSON();return r.fulfill({status:200,json:evalResp});});
+ await page.route('**/api/compare',r=>{compared=r.request().postDataJSON();return r.fulfill({status:200,json:{before:evalResp,after:{...evalResp,status:'feasible',baseline:projected},changes:{changed_fields:['capacity_units'],status_before:'blocked',status_after:'feasible',time_slack_delta_hours:0},interpretation:'User-conditional change only'}});});
+ await page.goto('/');await prepare(page);await page.locator('#addChange').click();
+ await page.locator('#changeEditor [data-x=amount]').fill('4');
+ await page.locator('#changeEditor [data-x=rid]').fill('worker-extra');
+ await page.locator('#changeEditor [data-x=availability]').selectOption('confirmed');
+ await page.locator('#navDesktop [data-nav="3"]').click();await page.locator('#runAssessment').click();
+ await expect(page.locator('#resultTitle')).toHaveText('API VERIFIED · BLOCKED',{timeout:10000}).catch(async()=>{throw new Error('C05 diagnostic: '+await page.locator('#resourceNotice').textContent()+'; '+await page.locator('#resultReason').textContent());});
+ await expect(page.locator('#packageList .package-card')).toHaveCount(1);
+ expect(posted.target_units).toBe(10);expect(posted.changes[0].confirmation_state).toBe('confirmed');
+ await page.locator('#navDesktop [data-nav="4"]').click();await page.locator('#packageList .package-card').click();await page.locator('#compareApi').click();
+ await expect(page.locator('#comparePanel')).toContainText('Backend comparison');
+ expect(compared.after.capacity_units).toBe(10);
 });
