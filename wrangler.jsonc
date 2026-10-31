@@ -1,7 +1,7 @@
 {
   "name": "agri-foresight",
   "main": "worker.py",
-  "compatibility_date": "2026-11-01",
+  "compatibility_date": "2026-10-30",
   "compatibility_flags": [
     "python_workers"
   ],
