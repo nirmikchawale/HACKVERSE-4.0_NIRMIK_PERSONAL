@@ -155,3 +155,9 @@ h1 { max-width: 790px; margin-bottom: 22px; font-size: clamp(39px, 4.8vw, 67px);
 .source-entry .field-help { margin: 9px 0; }
 .source-external { display: inline-block; color: #abefbc; font-size: 12px; margin-top: 8px; }
 @media (max-width: 660px) { .source-register { grid-template-columns: 1fr; } }
+
+/* C04 design preview entrypoint — isolated from the certified backend planner. */
+.review-banner{max-width:1272px;margin:22px auto 0;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;gap:22px;border:1px solid #7aaf9d;border-radius:18px;background:linear-gradient(125deg,#effbf2,#e8f6f8);color:#163d34;}
+.review-banner>div{min-width:0;max-width:830px}.review-banner h2{font:800 clamp(17px,2vw,24px)/1.2 Manrope,sans-serif;margin:5px 0 7px;color:#173c35}.review-banner p{margin:0;line-height:1.55;font-size:14px;color:#3a5d56}.review-banner .review-kicker{color:#176e63;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.review-banner-link{display:inline-flex;justify-content:center;align-items:center;flex-shrink:0;text-align:center;max-width:250px;padding:13px 16px;border-radius:11px;background:#146b5e;color:#fff;font-weight:750;text-decoration:none;line-height:1.35}.review-banner-link:hover{background:#0d544c}.review-banner-link:focus-visible{outline:3px solid #e7a93e;outline-offset:3px}
+@media(max-width:850px){.review-banner{margin:16px 16px 0;padding:18px;flex-direction:column;align-items:stretch}.review-banner-link{max-width:none;min-height:48px}}
