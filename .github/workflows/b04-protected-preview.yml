@@ -13,11 +13,16 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: b04-protected-preview
+  cancel-in-progress: true
+
 jobs:
   b04-protected-preview:
     name: B-04 protected preview exact-SHA browser and POST
     if: github.ref == 'refs/heads/feat/unlockplan-app-deploy'
     runs-on: ubuntu-latest
+    environment: b04-preview-certification
     timeout-minutes: 18
     steps:
       - name: Checkout exact head
