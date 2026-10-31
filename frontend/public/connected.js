@@ -337,7 +337,7 @@
       }
       if(data.data_kind!=='government_gridded_historical'||!data.retrieved_at_utc||
         !data.days.length||data.days.length>40||
-        !data.days.every(x=>/^\\d{4}-\\d{2}-\\d{2}$/.test(x.date)&&
+        !data.days.every(x=>/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&
           (x.precipitation_mm_day===null||(Number.isFinite(x.precipitation_mm_day)&&x.precipitation_mm_day>=0))&&
           (x.temperature_c===null||Number.isFinite(x.temperature_c)))){
         throw new Error('Government climate values or provenance failed validation.');
@@ -369,6 +369,10 @@
   // Override obsolete offline-prototype copy, including on language changes.
   // Model outputs remain labeled; no simulated values appear in the real UI.
   Object.assign(dict.en,{
+    runPreview:'Evaluate using FastAPI',
+    showSample:'Refresh live forecast',
+    clearSample:'Clear forecast view',
+    clearAssessment:'Clear result',
     timelineIntro:'Only source-validated Open-Meteo model hours are displayed. No sample or estimated weather is substituted.',
     weatherTruthDesc:'A live FastAPI service retrieves hourly Open-Meteo model data with source and age labels.',
     noTimeline:'Verified hours appear when the provider is available. No values are fabricated.',
@@ -383,12 +387,18 @@
     selectPackage:'Select a server-returned conditional package.',
   });
   Object.assign(dict.mr,{
+    runPreview:'FastAPI वापरून मूल्यमापन करा',
+    showSample:'हवामान अंदाज पुन्हा मिळवा',
+    clearSample:'हवामान दृश्य रिकामे करा',
     timelineIntro:'इथे फक्त स्रोत-पडताळणी झालेला हवामान अंदाज दाखवला जातो; कृत्रिम आकडे दाखवले जात नाहीत.',
     weatherTruthDesc:'FastAPI द्वारे स्रोत आणि वेळेसह Open-Meteo चा हवामान अंदाज मिळतो.',
     railFootText:'हवामान आणि गणना स्रोतांसह दाखवली जाते; शेतकऱ्याची नोंद स्वतंत्ररीत्या तपासलेली नाही.',
     simDisclosure:'FastAPI फक्त घोषित संसाधने आणि वेळ तपासते; शेती सुरक्षिततेचे प्रमाणपत्र नाही.',
   });
   Object.assign(dict.hi,{
+    runPreview:'FastAPI से मूल्यांकन करें',
+    showSample:'मौसम पूर्वानुमान अपडेट करें',
+    clearSample:'मौसम दृश्य साफ करें',
     timelineIntro:'यहाँ केवल स्रोत-सत्यापित मौसम पूर्वानुमान दिखता है; कोई बनावटी आँकड़े नहीं दिखाए जाते।',
     weatherTruthDesc:'FastAPI से स्रोत और समय के साथ Open-Meteo का मौसम पूर्वानुमान आता है।',
     railFootText:'मौसम और गणना स्रोत सहित दिखते हैं; किसान की जानकारी स्वतंत्र रूप से सत्यापित नहीं है।',
