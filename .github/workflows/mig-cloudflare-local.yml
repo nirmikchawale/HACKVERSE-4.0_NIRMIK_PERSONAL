@@ -29,6 +29,8 @@ jobs:
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: '22'
+      - name: Verify Cloudflare compatibility date is not in the UTC future
+        run: node backend/scripts/verify-cloudflare-compat.mjs
       - name: Build actual frontend assets
         working-directory: frontend
         run: |
