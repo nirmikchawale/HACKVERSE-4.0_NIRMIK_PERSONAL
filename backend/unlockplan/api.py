@@ -10,6 +10,7 @@ from .engine import evaluate, InputError
 from .planning import compare_plans, replan_from_forecast, parse_selected_hour_local
 from .weather import get_forecast, CACHE_FILE, read_cache
 from .sources import REGISTRY,RULES
+from .govclimate import get_government_climate
 
 class CompareRequest(BaseModel):
     """Full, separately user-declared before/after plans (engine validates contents)."""
@@ -69,6 +70,10 @@ def replan_endpoint(payload:ReplanRequest):
 @app.get('/api/forecast')
 def forecast(refresh:bool=False):
     return get_forecast(refresh=refresh)
+
+@app.get('/api/government-climate')
+def government_climate(refresh: bool = False):
+    return get_government_climate(refresh=refresh)
 
 @app.get('/api/sources')
 def sources():return {'sources':REGISTRY,'operational_rules':RULES,
