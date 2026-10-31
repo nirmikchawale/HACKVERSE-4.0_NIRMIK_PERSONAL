@@ -118,7 +118,7 @@ for (const viewport of [{name:'desktop',width:1440,height:900},{name:'mobile',wi
     });
     const cookies = await page.context().cookies(preview.origin);
     const granted = cookies.some(c => c.name === '_vercel_jwt' &&
-      c.secure && c.domain.replace(/^\\./,'') === preview.hostname);
+      c.secure && (c.domain.startsWith('.') ? c.domain.slice(1) : c.domain) === preview.hostname);
     if (!granted) {
       throw new Error('INT03_AUTHORIZATION_DENIED: bypass did not establish the required Vercel browser cookie. '+
         'HTTP '+auth.status()+'; content-type '+(auth.headers()['content-type']||'unknown')+
