@@ -52,6 +52,12 @@ const run=async()=>{
  assert(f.status!=='unavailable'||f.hours.length===0,'Fabricated forecast data returned');
  assert(n.status!=='unavailable'||n.days.length===0,'Fabricated government data returned');
  assert(n.status==='unavailable'||n.data_kind==='government_gridded_historical','NASA provenance missing');
+ if(process.env.REQUIRE_LIVE_CLIMATE==='1'){
+   assert(['retrieved_live','cached_recent'].includes(f.status),
+     'PUBLIC_GATE: verified Open-Meteo future model is not available');
+   assert(['retrieved_live','cached_recent'].includes(n.status) && n.days.length>0,
+     'PUBLIC_GATE: verified NASA POWER historical government data is not available');
+ }
  console.log(JSON.stringify({result:'PASS',host:'local Cloudflare Python Worker',forms:'real FastAPI',
    forecast:f.status,forecast_error_type:f.status==='unavailable'?f.error:null,forecast_error_stage:f.status==='unavailable'?f.error_stage:null,forecast_notice:f.notice,government:n.status,government_days:n.days.length,synthetic_live_data:false}));
 };
