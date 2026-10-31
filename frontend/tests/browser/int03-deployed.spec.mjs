@@ -32,13 +32,15 @@ function testCase() {
 }
 
 test('protected deployed APIs: six real routes and three genuine POSTs', async ({ request }) => {
-  const get = (path) => request.get(preview.origin + path, {headers});
+  // Disable redirects: otherwise Vercel's login HTML can masquerade as HTTP 200.
+  const get = (path) => request.get(preview.origin + path, {headers,maxRedirects:0});
   const post = (path,data) => request.post(preview.origin + path, {headers:jsonHeaders,data});
 
   const health = await get('/api/health');
   // HTTP 200 can mean a Vercel login HTML page; require real JSON as well.
   expect(health.status(), 'Vercel preview protection should accept owner-approved authorization').toBe(200);
-  expect(health.headers()['content-type'] ?? '').toContain('application/json');
+  expect(health.headers()['content-type'] ?? '',
+    'INT03_AUTHORIZATION_DENIED: expected FastAPI JSON; HTML means Vercel protection/login, invalid or stale bypass credential, or an unexpected redirect.').toContain('application/json');
   const h = await health.json();
   expect(h.ok).toBe(true);
   expect(h.disclaimer).toContain('Not field validated');
@@ -107,6 +109,22 @@ for (const viewport of [{name:'desktop',width:1440,height:900},{name:'mobile',wi
     await page.setViewportSize({width:viewport.width,height:viewport.height});
     const errors=[];
     page.on('pageerror',e=>errors.push(e.message));
+    // Vercel's documented browser flow uses a short-lived bypass cookie.
+    // Request only the pinned preview origin; never follow cross-origin redirects
+    // or store an authenticated browser state as an artifact.
+    const auth = await page.context().request.get(preview.origin+'/', {
+      headers: {...headers,'x-vercel-set-bypass-cookie':'true'},
+      maxRedirects:0,
+    });
+    const cookies = await page.context().cookies(preview.origin);
+    const granted = cookies.some(c => c.name === '_vercel_jwt' &&
+      c.secure && c.domain.replace(/^\\./,'') === preview.hostname);
+    if (!granted) {
+      throw new Error('INT03_AUTHORIZATION_DENIED: bypass did not establish the required Vercel browser cookie. '+
+        'HTTP '+auth.status()+'; content-type '+(auth.headers()['content-type']||'unknown')+
+        '. Check the copied Vercel token matches this project and has not been rotated; '+
+        'do not rerun before correcting authorization.');
+    }
     const response=await page.goto(preview.origin+'/');
     expect(response?.status()).toBe(200);
     await expect(page.locator('#api-health')).toContainText('FastAPI /api/health: connected');
