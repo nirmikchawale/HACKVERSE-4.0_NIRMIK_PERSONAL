@@ -33,12 +33,10 @@ jobs:
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v4.4.0
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
       - name: Install pinned dependencies and Chromium before creating OIDC token
         working-directory: frontend
         run: |
-          npm ci
+          npm install
           npx playwright install --with-deps chromium
       - name: Authenticated remote HTTP POST and browser tests
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
