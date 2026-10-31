@@ -20,7 +20,7 @@ test('six-screen prototype loads all routes and keeps standalone sample weather 
   await expect(page.locator('#forecastSourceChip')).toContainText('SAMPLE DATA · NOT LIVE');
   await page.locator('#clearForecast').click();
   await expect(page.locator('#forecastSourceChip')).toContainText('NOT CONNECTED');
-  await expect(page.getByRole('link', {name:/Connected API planner/})).toHaveAttribute('href','/');
+  await expect(page.getByRole('link', {name:/Open connected API planner/})).toHaveAttribute('href','/');
   expect(errors).toEqual([]);
 });
 test('six-screen offline assistant responds to Enter and explicit Send; theme and mobile navigation work', async ({ page }) => {
