@@ -15,7 +15,7 @@
           <span class="identity-name">UnlockPlan</span>
         </div>
         <span class="header-context">HACKVERSE 4.0 <span aria-hidden="true">/</span> Jalna, Maharashtra</span>
-        <span class="environment-pill">Development foundation</span>
+        <span class="environment-pill">Integrated preview candidate</span>
       </header>
 
       <main id="main-content">
@@ -28,10 +28,10 @@
           </div>
           <aside class="intro-side" aria-labelledby="status-title">
             <div class="status-top"><p class="panel-kicker">SYSTEM STATUS</p><span class="status-indicator" aria-hidden="true"></span></div>
-            <h2 id="status-title">Foundation ready for integration</h2>
+            <h2 id="status-title">Planner and API status</h2>
             <p id="runtime-status" class="status-message" role="status" aria-live="polite">Initializing TypeScript interface…</p>
             <div class="status-divider"></div>
-            <p class="status-footer">No live API connection, farmer inventory, or forecast is represented by this screen.</p>
+            <p class="status-footer">Only validated API results may be shown. An unavailable forecast never becomes a simulated rain prediction.</p>
           </aside>
         </section>
 
@@ -170,12 +170,19 @@
           </section>
         </section>
 
+        <section class="planner-panel evidence-register" id="evidence-register" aria-labelledby="evidence-register-title">
+          <div class="panel-head">
+            <div><p class="panel-kicker">SOURCE TRANSPARENCY</p><h3 id="evidence-register-title">API health and evidence register</h3></div>
+          </div>
+          <p id="api-health" class="context-note" role="status">Checking FastAPI health…</p>
+          <div id="source-register" class="source-register" aria-live="polite">Loading backend source register…</div>
+        </section>
         <section class="provenance" aria-label="Data provenance and limitations">
           <span class="provenance-symbol" aria-hidden="true">↗</span>
-          <p><strong>Evidence boundary.</strong> Weather will come from an attributed external Open-Meteo model; ICAR-CRIDA Jalna guidance is historical context. No live values have been fetched or simulated in this foundation.</p>
+          <p><strong>Evidence boundary.</strong> Weather will come from an attributed external Open-Meteo model; ICAR-CRIDA Jalna guidance is historical context. Model forecast values appear only when the Python API retrieves authentic source data; farmer resources are user-reported.</p>
         </section>
       </main>
-      <footer class="site-footer"><span>UnlockPlan / Evidence-aware feasibility prototype</span><span>Phase B-02 · typed interactive frontend</span></footer>
+      <footer class="site-footer"><span>UnlockPlan / Evidence-aware feasibility prototype</span><span>Phase B-03 · FastAPI integration candidate</span></footer>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

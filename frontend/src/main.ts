@@ -1,6 +1,6 @@
 import './style.css';
-import { evaluateCase, loadForecast } from './contracts';
-import type { Assessment, ChangePackage, EvaluationResponse, ForecastHour, ForecastResponse } from './contracts';
+import { checkHealth, compareCases, evaluateCase, loadForecast, loadSources, replanCase } from './contracts';
+import type { Assessment, ChangePackage, EvaluateRequest, EvaluationResponse, ForecastHour, ForecastResponse } from './contracts';
 import { createRequest } from './plan';
 import type { ChangeDraft, PlanDraft } from './plan';
 
@@ -38,6 +38,7 @@ let selectedHour: string | null = null;
 let revision = 0;
 let optionNumber = 0;
 let forecastAttempt = 0;
+let lastAcceptedCase: EvaluateRequest | null = null;
 
 function clearDecision(): void {
   revision++;
@@ -125,7 +126,7 @@ function showForecast(result: ForecastResponse): void {
   if (live) {
     const badge = byId('runtime-status');
     badge.dataset.state = 'connected';
-    badge.textContent = 'Forecast API connected. Feasibility calculation still requires a successful Python evaluate response.';
+    badge.textContent = 'FastAPI has returned a current authentic Open-Meteo model forecast. Farmer choices and resource feasibility remain conditional.';
     document.documentElement.dataset.runtime = 'connected';
   }
 }
@@ -270,11 +271,12 @@ function showSelection(pkg: ChangePackage): void {
     make('p', '', pkg.warning + ' Selecting this option does not obtain resources or certify safe handling.'),
   );
 }
-function showEvaluation(result: EvaluationResponse): void {
+function showEvaluation(result: EvaluationResponse, evidenceNote = ''): void {
   evaluation = result;
   stateTag('result-status', result.status.toUpperCase(), result.status === 'feasible' || result.status === 'completed' ? 'success' : result.status === 'blocked' ? 'failure' : 'pending');
   const root = byId('result-content');
   root.replaceChildren();
+  if (evidenceNote) root.append(make('p', 'context-note', evidenceNote));
   const lead = make('div', 'result-lead');
   lead.append(make('strong', '', statusLabel[result.status]), make('p', '', result.message));
   root.append(lead);
@@ -332,9 +334,37 @@ async function evaluate(event: SubmitEvent): Promise<void> {
   submit.textContent = 'Evaluating…';
   stateTag('result-status', 'Evaluating', 'pending');
   try {
-    const result = await evaluateCase(request);
+    let result: EvaluationResponse;
+    let evidenceNote = '';
+    if (selectedHour !== null) {
+      // The API, not the browser, validates that the forecast hour is still
+      // present, future, and in a recent authentic server-side weather response.
+      const response = await replanCase({
+        before: lastAcceptedCase ?? request,
+        after: request,
+        selected_hour_local: selectedHour,
+      });
+      if (response.forecast_selection.selected_hour_local !== selectedHour) {
+        throw new Error('The Python API returned a mismatched forecast selection.');
+      }
+      result = response.after;
+      evidenceNote = 'Server-attested forecast-hour replan: ' +
+        response.forecast_selection.selected_hour_local.replace('T', ' ') +
+        ' IST. ' + response.forecast_selection.limitation +
+        ' Source: ' + response.forecast_selection.attribution;
+    } else if (lastAcceptedCase !== null) {
+      const response = await compareCases({ before: lastAcceptedCase, after: request });
+      result = response.after;
+      evidenceNote = 'Manual before/after comparison. Changed constraints: ' +
+        (response.changes.changed_fields.join(', ') || 'none') +
+        '. ' + response.interpretation;
+    } else {
+      result = await evaluateCase(request);
+      evidenceNote = 'Computed by the Python deterministic feasibility engine using user-declared constraints. No rainfall safety threshold was inferred.';
+    }
     if (submittedRevision !== revision) return;
-    showEvaluation(result);
+    lastAcceptedCase = request;
+    showEvaluation(result, evidenceNote);
     byId('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) {
     if (submittedRevision !== revision) return;
@@ -345,6 +375,48 @@ async function evaluate(event: SubmitEvent): Promise<void> {
     submit.textContent = 'Evaluate feasibility';
   }
 }
+
+async function connectHealth(): Promise<void> {
+  try {
+    const health = await checkHealth();
+    const node = byId('runtime-status');
+    node.dataset.state = 'connected';
+    node.textContent = 'FastAPI connected (' + health.version + '). ' + health.disclaimer;
+    document.documentElement.dataset.runtime = 'connected';
+    setText('api-health', 'FastAPI /api/health: connected. Cached weather record present: ' +
+      (health.forecast_validated_cache_present ? 'yes (not proof of freshness)' : 'no') + '.');
+  } catch (error) {
+    setText('api-health', 'FastAPI health is unavailable: ' +
+      (error instanceof Error ? error.message : 'connection error'));
+  }
+}
+async function connectSources(): Promise<void> {
+  const container = byId('source-register');
+  try {
+    const response = await loadSources();
+    container.replaceChildren();
+    for (const item of response.sources) {
+      const article = make('article', 'source-entry');
+      article.append(make('strong', '', item.title),
+        make('p', 'field-help', item.short_supported_statement),
+        make('p', 'detail-line', 'Limitations: ' + item.limitations));
+      // All retrieved source URLs are data, not executable instructions.
+      if (item.url.startsWith('https://')) {
+        const a = make('a', 'source-external', 'Read the cited public source');
+        a.href = item.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        article.append(a);
+      }
+      container.append(article);
+    }
+    if (!response.sources.length) container.append(make('p', 'empty-helper', 'No source entries were returned.'));
+  } catch (error) {
+    container.replaceChildren(make('p', 'empty-helper', 'Source registry unavailable: ' +
+      (error instanceof Error ? error.message : 'connection error')));
+  }
+}
+
 function start(): void {
   const badge = byId('runtime-status');
   badge.dataset.state = 'foundation';
@@ -357,6 +429,8 @@ function start(): void {
   input('deadline').addEventListener('input', deadlineOriginManual);
   byId('add-option').addEventListener('click', addOption);
   byId('refresh-forecast').addEventListener('click', () => { void refreshForecast(true); });
+  void connectHealth();
+  void connectSources();
   void refreshForecast();
 }
 start();

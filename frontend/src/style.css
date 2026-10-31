@@ -146,3 +146,12 @@ h1 { max-width: 790px; margin-bottom: 22px; font-size: clamp(39px, 4.8vw, 67px);
 .selection-content strong { color: #e5f8e8; }
 @media (max-width: 900px) { .planner-grid { grid-template-columns: 1fr; } .option-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 660px) { .builder { padding-top: 64px; } .planner-panel { padding: 19px; } .panel-head { flex-wrap: wrap; } .input-grid,.hour-list,.option-grid { grid-template-columns: 1fr; } .options-head { align-items: start; flex-direction: column; } .constraint-row { flex-direction: column; gap: 7px; } }
+
+
+.evidence-register { margin: 18px 0 0; }
+.source-register { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; margin-top: 18px; }
+.source-entry { padding: 17px; border: 1px solid rgba(178,221,200,.17); border-radius: 12px; min-width: 0; }
+.source-entry strong { font: 700 13px Manrope, sans-serif; color: #e3f6e8; }
+.source-entry .field-help { margin: 9px 0; }
+.source-external { display: inline-block; color: #abefbc; font-size: 12px; margin-top: 8px; }
+@media (max-width: 660px) { .source-register { grid-template-columns: 1fr; } }
