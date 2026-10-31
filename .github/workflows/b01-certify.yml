@@ -14,6 +14,9 @@ permissions:
 
 jobs:
   frontend:
+    # The original frontend-only certifier runs for B's own PR.
+    # Consolidated A+B candidates instead use integration.yml with a real API.
+    if: github.event_name != 'pull_request' || github.head_ref == 'feat/unlockplan-app-deploy'
     name: TypeScript, audit, build and Chromium
     runs-on: ubuntu-latest
     timeout-minutes: 15

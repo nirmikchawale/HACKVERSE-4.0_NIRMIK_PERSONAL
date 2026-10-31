@@ -114,9 +114,10 @@ function showForecast(result: ForecastResponse): void {
   const cardFoot = weatherCard?.querySelector<HTMLElement>('.card-foot');
   if (cardState) cardState.textContent = live ? 'Model forecast connected' : 'Current model unavailable';
   if (cardFoot) cardFoot.textContent = live ? 'Model hours: ' + result.hours.length : 'Live data: unavailable';
-  setText('status-footer', live
+  const statusFooter = document.querySelector<HTMLElement>('.status-footer');
+  if (statusFooter) statusFooter.textContent = live
     ? 'Live external model evidence, not farm observation or safety guidance.'
-    : 'No current external model data. Manual resource-only planning remains possible.');
+    : 'No current external model data. Manual resource-only planning remains possible.';
   const message = live ?
     (result.notice ?? 'External model forecast retrieved; no automatic rainfall threshold is applied.') :
     result.status === 'stale_cache' ?
