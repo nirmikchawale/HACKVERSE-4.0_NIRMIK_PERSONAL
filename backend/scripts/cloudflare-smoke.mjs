@@ -28,6 +28,12 @@ const run=async()=>{
  const html=(await get('/')).text;
  assert(html.includes('Agri Foresight')&&html.includes('/agri-typography.css'),
    'Six-page HTML and typography asset must be present');
+ const release=JSON.parse((await get('/_release.json')).text);
+ assert(/^[a-f0-9]{40}$/.test(release.git_commit_sha), 'Deployment revision must be actual 40-char Git SHA');
+ assert(release.app==='Agri Foresight' && release.generated_from==='git', 'Release provenance invalid');
+ if(process.env.EXPECTED_SHA)assert(release.git_commit_sha===process.env.EXPECTED_SHA,
+   'DEPLOYMENT_MISMATCH: live revision '+release.git_commit_sha+
+   ' is not certified commit '+process.env.EXPECTED_SHA);
  const type=(await get('/agri-typography.css')).text;
  assert(type.includes('--af-font'),'System typography asset missing');
  const api=JSON.parse((await get('/api/sources')).text);
