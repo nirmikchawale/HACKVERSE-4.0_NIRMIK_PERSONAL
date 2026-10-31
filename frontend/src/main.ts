@@ -1,6 +1,6 @@
 import './style.css';
-import { evaluateCase, loadForecast } from './contracts';
-import type { Assessment, ChangePackage, EvaluationResponse, ForecastHour, ForecastResponse } from './contracts';
+import { compareCases, evaluateCase, loadForecast, loadHealth, loadSources, replanCase } from './contracts';
+import type { Assessment, ChangePackage, ComparisonResponse, EvaluateRequest, EvaluationResponse, ForecastHour, ForecastResponse } from './contracts';
 import { createRequest } from './plan';
 import type { ChangeDraft, PlanDraft } from './plan';
 
@@ -34,6 +34,7 @@ const statusLabel: Record<string, string> = {
 
 let weather: ForecastResponse | null = null;
 let evaluation: EvaluationResponse | null = null;
+let previousVerifiedRequest: EvaluateRequest | null = null;
 let selectedHour: string | null = null;
 let revision = 0;
 let optionNumber = 0;
@@ -332,9 +333,23 @@ async function evaluate(event: SubmitEvent): Promise<void> {
   submit.textContent = 'Evaluating…';
   stateTag('result-status', 'Evaluating', 'pending');
   try {
-    const result = await evaluateCase(request);
+    // Compare only against the last successfully calculated submission.
+    // Forecast-attributed replanning always passes through the Python server,
+    // which independently verifies selected_hour_local against fresh Open-Meteo data.
+    let comparison: ComparisonResponse | null = null;
+    let result: EvaluationResponse;
+    if (previousVerifiedRequest !== null) {
+      comparison = selectedHour !== null
+        ? await replanCase(previousVerifiedRequest, request, selectedHour)
+        : await compareCases(previousVerifiedRequest, request);
+      result = comparison.after;
+    } else {
+      result = await evaluateCase(request);
+    }
     if (submittedRevision !== revision) return;
     showEvaluation(result);
+    showComparison(comparison);
+    previousVerifiedRequest = request;
     byId('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) {
     if (submittedRevision !== revision) return;
@@ -345,11 +360,47 @@ async function evaluate(event: SubmitEvent): Promise<void> {
     submit.textContent = 'Evaluate feasibility';
   }
 }
+function showComparison(comparison: ComparisonResponse | null): void {
+  const root = byId('comparison-content');
+  root.replaceChildren();
+  if (!comparison) {
+    root.append(make('p', 'empty-helper', 'Evaluate a plan, change its deadline or resources, then re-evaluate to compare the real Python results.'));
+    return;
+  }
+  const changes=comparison.changes;
+  const heading=make('strong','', changes.status_before.toUpperCase() + ' → ' + changes.status_after.toUpperCase());
+  root.append(heading);
+  const slack=changes.time_slack_delta_hours;
+  root.append(make('p','', 'Time-slack change: ' + (slack===null ? 'unknown' : fmt(slack) + ' hours') + '.'));
+  root.append(make('p','', 'Changed declared fields: ' + (changes.changed_fields.length ? changes.changed_fields.join(', ') : 'none') + '.'));
+  root.append(make('p','', 'New blockers: ' + (changes.new_blockers.join(', ') || 'none') +
+                        '; resolved blockers: ' + (changes.resolved_blockers.join(', ') || 'none') + '.'));
+  if (comparison.forecast_selection) {
+    root.append(make('p','context-note','Server-confirmed selected forecast hour: ' +
+      comparison.forecast_selection.selected_hour_local + ' IST. ' +
+      comparison.forecast_selection.limitation));
+  }
+  root.append(make('p','detail-line',comparison.interpretation));
+}
+async function bootstrapAPI(): Promise<void> {
+  try {
+    const [health,sources]=await Promise.all([loadHealth(),loadSources()]);
+    setText('api-health', 'Python API connected ('+health.version+'). Forecast cache presence does not prove freshness.');
+    setText('source-registry', sources.sources.length + ' evidence records and ' +
+      sources.operational_rules.length + ' documented constraint rules. ' +
+      'Historical guidance is context, not validated operational advice.');
+  } catch (error) {
+    setText('api-health','Python API/source registry unavailable: ' +
+      (error instanceof Error ? error.message : 'unknown error'));
+    setText('source-registry','No authoritative source records could be loaded.');
+  }
+}
 function start(): void {
   const badge = byId('runtime-status');
   badge.dataset.state = 'foundation';
   badge.textContent = 'TypeScript screens initialized. Python API and live forecast integration are pending.';
   document.documentElement.dataset.runtime = 'foundation';
+  void bootstrapAPI();
   const form = byId<HTMLFormElement>('plan-form');
   form.addEventListener('submit', event => { void evaluate(event); });
   form.addEventListener('input', clearDecision);

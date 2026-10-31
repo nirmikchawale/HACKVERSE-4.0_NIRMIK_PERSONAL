@@ -168,6 +168,14 @@
             </div>
             <div id="selection-content" class="selection-content" aria-live="polite">No package selected. Selecting a calculated option does not book, acquire, or execute it.</div>
           </section>
+          <section class="planner-panel" id="comparison-panel" aria-labelledby="comparison-title">
+            <div class="panel-head"><div><p class="panel-kicker">05 / EXPLAINABLE REPLANNING</p><h3 id="comparison-title">Before and after</h3></div></div>
+            <p id="api-health" class="detail-line" role="status">Checking FastAPI health…</p>
+            <p id="source-registry" class="detail-line">Checking institutional/source registry…</p>
+            <div id="comparison-content" class="result-content" aria-live="polite">
+              <p class="empty-helper">Evaluate, change a deadline or resources, then re-evaluate to compare engine decisions.</p>
+            </div>
+          </section>
         </section>
 
         <section class="provenance" aria-label="Data provenance and limitations">
@@ -175,7 +183,7 @@
           <p><strong>Evidence boundary.</strong> Weather will come from an attributed external Open-Meteo model; ICAR-CRIDA Jalna guidance is historical context. No live values have been fetched or simulated in this foundation.</p>
         </section>
       </main>
-      <footer class="site-footer"><span>UnlockPlan / Evidence-aware feasibility prototype</span><span>Phase B-02 · typed interactive frontend</span></footer>
+      <footer class="site-footer"><span>UnlockPlan / Evidence-aware feasibility prototype</span><span>Integration candidate · API contract verification</span></footer>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

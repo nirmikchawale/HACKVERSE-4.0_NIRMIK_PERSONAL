@@ -13,3 +13,6 @@ Screens:
 B-02 preview lacks the Python API, so production UI shows an honest degraded state until B-03 establishes same-origin API routing. Live /api/sources, /api/compare and /api/replan integration remain later-phase tasks. Fake fixtures exist only in the Playwright test module and must not be shipped as real forecast or farmer data.
 
 No production merge or release under this phase.
+
+## Cross-workstream integration candidate
+A draft integration branch combines A-05 exact backend and B-02 frontend. During GitHub CI, Vite proxies `/api` to the actual FastAPI process for a real-browser end-to-end test. In an ordinary Vercel Vite-only preview the backend is **not** guaranteed to be deployed; do not interpret a READY static preview as a working production Python service. Server-side `/api/replan` requires a current server-authenticated source hour; manual comparisons use `/api/compare`.

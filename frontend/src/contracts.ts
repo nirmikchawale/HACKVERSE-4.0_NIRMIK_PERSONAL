@@ -191,3 +191,97 @@ export async function evaluateCase(request: EvaluateRequest): Promise<Evaluation
     body: JSON.stringify(request),
   }));
 }
+
+/** A-05 authoritative contract adoption. Network data is untrusted until parsed. */
+export interface HealthResponse {
+  ok: true; version: string; forecast_validated_cache_present: boolean; disclaimer: string;
+}
+export interface SourceItem { id: string; title: string; url: string; limitations: string; }
+export interface SourcesResponse {
+  sources: SourceItem[]; operational_rules: unknown[]; input_categories: string[];
+}
+export interface ComparisonChanges {
+  changed_fields: string[];
+  status_before: DecisionStatus; status_after: DecisionStatus;
+  time_slack_delta_hours: number | null;
+  new_blockers: string[]; resolved_blockers: string[];
+  new_unknowns: string[]; resolved_unknowns: string[];
+  packages_before: string[][]; packages_after: string[][];
+}
+export interface ForecastSelection {
+  source: string;
+  selected_hour_local: string;
+  candidate_deadline: string;
+  retrieved_at_utc: string;
+  forecast_status: 'retrieved_live' | 'cached_recent';
+  request_url: string;
+  attribution: string;
+  limitation: string;
+}
+export interface ComparisonResponse {
+  before: EvaluationResponse; after: EvaluationResponse;
+  changes: ComparisonChanges;
+  interpretation: string;
+  forecast_selection?: ForecastSelection;
+}
+export async function loadHealth(): Promise<HealthResponse> {
+  const result = await jsonRequest('/api/health');
+  if (!record(result) || result.ok !== true || typeof result.version !== 'string' ||
+      typeof result.disclaimer !== 'string' ||
+      typeof result.forecast_validated_cache_present !== 'boolean') {
+    throw new Error('Health API returned an invalid response.');
+  }
+  return result as unknown as HealthResponse;
+}
+export async function loadSources(): Promise<SourcesResponse> {
+  const result = await jsonRequest('/api/sources');
+  if (!record(result) || !Array.isArray(result.sources) ||
+      !result.sources.every((source: unknown) =>
+        record(source) && typeof source.id === 'string' &&
+        typeof source.title === 'string' && typeof source.url === 'string' &&
+        typeof source.limitations === 'string') ||
+      !Array.isArray(result.operational_rules) ||
+      !Array.isArray(result.input_categories)) {
+    throw new Error('Evidence registry API returned an invalid response.');
+  }
+  return result as unknown as SourcesResponse;
+}
+export function parseComparison(result: unknown): ComparisonResponse {
+  if (!record(result) || !record(result.changes) ||
+      !Array.isArray(result.changes.changed_fields) ||
+      !Array.isArray(result.changes.new_blockers) ||
+      !Array.isArray(result.changes.resolved_blockers) ||
+      !finiteOrNull(result.changes.time_slack_delta_hours) ||
+      !oneOf(result.changes.status_before, ['feasible','blocked','unknown','completed']) ||
+      !oneOf(result.changes.status_after, ['feasible','blocked','unknown','completed']) ||
+      typeof result.interpretation !== 'string') {
+    throw new Error('Comparison API returned an invalid response.');
+  }
+  parseEvaluation(result.before);
+  parseEvaluation(result.after);
+  if (result.forecast_selection !== undefined) {
+    const selection=result.forecast_selection;
+    if (!record(selection) || typeof selection.selected_hour_local !== 'string' ||
+        typeof selection.candidate_deadline !== 'string' ||
+        typeof selection.request_url !== 'string' ||
+        typeof selection.retrieved_at_utc !== 'string' ||
+        typeof selection.limitation !== 'string') {
+      throw new Error('Forecast selection evidence is malformed.');
+    }
+  }
+  return result as unknown as ComparisonResponse;
+}
+export async function compareCases(before: EvaluateRequest, after: EvaluateRequest): Promise<ComparisonResponse> {
+  return parseComparison(await jsonRequest('/api/compare', {
+    method:'POST', headers: {'Content-Type':'application/json'}, body:JSON.stringify({before,after}),
+  }));
+}
+export async function replanCase(before: EvaluateRequest, after: EvaluateRequest, selectedHour: string): Promise<ComparisonResponse> {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(selectedHour)) {
+    throw new Error('A current source-native forecast hour is required.');
+  }
+  return parseComparison(await jsonRequest('/api/replan', {
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({before,after,selected_hour_local:selectedHour}),
+  }));
+}
