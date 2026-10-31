@@ -92,7 +92,25 @@ test('backend constraint explanation shows both blocked and unknown statuses wit
   await expect(notes).toContainText('Backend confirmed capacity shortfall of 4');
   await expect(notes).toContainText('Not counted · optional-worker');
   await expect(notes).not.toContainText('Candidate deadline and time · BLOCKED');
+  await page.locator('#navDesktop [data-nav="2"]').click();
   await page.locator('#capacity').fill('10');
+  await page.locator('#navDesktop [data-nav="3"]').click();
   await expect(notes).toContainText('Not evaluated');
   await expect(notes).not.toContainText('Backend confirmed capacity shortfall of 4');
+});
+
+test('location directory provider outage does not throw when optional credit element is absent',async({page})=>{
+  await setup(page);
+  await page.route('**/Indian-Cities-JSON/master/cities.json',r=>r.fulfill({
+    status:503,headers:{'Access-Control-Allow-Origin':'*'},body:'unavailable'
+  }));
+  const errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/');
+  const request=page.waitForResponse(x=>x.url().includes('Indian-Cities-JSON')&&x.status()===503);
+  await page.locator('#locationButton').click();
+  await request;
+  await page.waitForTimeout(100);
+  expect(errors).toEqual([]);
+  await expect(page.locator('#placeDialog')).toBeVisible();
 });
