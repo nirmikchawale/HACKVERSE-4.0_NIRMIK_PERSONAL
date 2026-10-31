@@ -101,13 +101,21 @@
   async function refreshForecast(refresh){
     if(live.forecastLoading)return;
     live.forecastLoading=true;
-    here('toggleForecast').disabled=true;here('forecastSourceChip').textContent='FETCHING';
+    here('toggleForecast').disabled=true;
+    here('toggleForecast').setAttribute('aria-busy','true');
+    here('toggleForecast').textContent='Refreshing forecast…';
+    here('forecastSourceChip').textContent='FETCHING';
     try {
       if(!okLocation())throw new Error('Only Jalna is supported by the current forecast service.');
       live.forecast=validForecast(await json('/api/forecast'+(refresh?'?refresh=true':'')));
       live.selectedHour=null;
     } catch(e){live.forecast=null;here('deadlineNotice').textContent=e.message;}
-    finally{live.forecastLoading=false;here('toggleForecast').disabled=false;renderWeather();}
+    finally{
+      live.forecastLoading=false;
+      here('toggleForecast').disabled=false;
+      here('toggleForecast').removeAttribute('aria-busy');
+      renderWeather();
+    }
   }
   here('toggleForecast').addEventListener('click',e=>{e.stopImmediatePropagation();refreshForecast(true);},true);
   here('clearForecast').addEventListener('click',e=>{e.stopImmediatePropagation();live.forecast=null;live.selectedHour=null;renderWeather();},true);
@@ -186,7 +194,7 @@
   }
   async function assess(){
     if(live.busy)return;
-    live.busy=true;const button=here('runAssessment');button.disabled=true;button.textContent='Evaluating…';
+    live.busy=true;const button=here('runAssessment');button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='Evaluating…';
     clearResult();
     try {
       const req=requestFromForm();
@@ -194,7 +202,7 @@
       live.request=req;live.evaluation=result;
       here('resourceNotice').textContent='Farmer-reported inputs saved for this session; evaluated by FastAPI. Resources are not independently certified.';
     } catch(e){live.error=e.message;here('resourceNotice').textContent=e.message;here('resultReason').textContent=e.message;}
-    finally{live.busy=false;button.disabled=false;button.textContent='Evaluate using FastAPI';renderAssessment();renderPackages();renderSummary();}
+    finally{live.busy=false;button.disabled=false;button.removeAttribute('aria-busy');button.textContent='Evaluate using FastAPI';renderAssessment();renderPackages();renderSummary();}
   }
   updateAssessmentUI=renderAssessment;
   function renderAssessment(){
@@ -352,12 +360,17 @@
     govSummary.textContent='';
     govRows.replaceChildren();
     if(!okLocation()){
+      govRefresh.disabled=false;
+      govRefresh.removeAttribute('aria-busy');
+      govRefresh.textContent='Refresh official data';
       govStatus.textContent='Unavailable for selected location';
       govRows.append(el('p','gov-intro','Official Jalna reference data cannot be applied to the selected place.'));
       govDetail.textContent='Switch to Jalna, Maharashtra to retrieve its government historical context.';
       return;
     }
     govRefresh.disabled=true;
+    govRefresh.setAttribute('aria-busy','true');
+    govRefresh.textContent='Fetching official data…';
     govStatus.textContent='Contacting NASA POWER…';
     try{
       const data=await json('/api/government-climate'+(refresh?'?refresh=true':''));
@@ -395,7 +408,13 @@
       govStatus.textContent='Could not verify official data';
       govRows.replaceChildren(el('p','gov-intro','No government climate values displayed: '+e.message));
       govDetail.textContent='Only verified NASA POWER responses are eligible; no offline example is substituted.';
-    }finally{if(token===governmentClimateRequest)govRefresh.disabled=false;}
+    }finally{
+      if(token===governmentClimateRequest){
+        govRefresh.disabled=false;
+        govRefresh.removeAttribute('aria-busy');
+        govRefresh.textContent='Refresh official data';
+      }
+    }
   }
   govRefresh.addEventListener('click',()=>{void loadGovernmentClimate(true);});
   govRange.addEventListener('change',()=>{if(governmentClimateData&&okLocation())renderGovernmentClimate(governmentClimateData);});

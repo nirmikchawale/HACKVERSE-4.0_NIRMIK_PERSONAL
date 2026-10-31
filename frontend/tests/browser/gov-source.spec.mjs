@@ -54,3 +54,26 @@ test('changing to unsupported location clears government history without leaking
  await expect(page.locator('#governmentClimateRows .gov-day')).toHaveCount(0);
  await expect(page.locator('#downloadGovernmentClimate')).toBeDisabled();
 });
+
+test('source refresh exposes real busy state and restores action after authenticated response', async ({page})=>{
+ let count=0,release;
+ const pending=new Promise(resolve=>{release=resolve});
+ await page.route('**/api/government-climate*',async route=>{
+   count++;
+   if(count>1)await pending;
+   await route.fulfill({status:200,json:verified});
+ });
+ await page.goto('/');
+ await page.locator('#navDesktop [data-nav="1"]').click();
+ await expect(page.locator('#governmentClimateStatus')).toContainText('Verified government response');
+ const action=page.locator('#refreshGovernmentClimate');
+ await action.click();
+ await expect(action).toBeDisabled();
+ await expect(action).toHaveAttribute('aria-busy','true');
+ await expect(action).toHaveText('Fetching official data…');
+ release();
+ await expect(page.locator('#governmentClimateStatus')).toContainText('Verified government response');
+ await expect(action).toBeEnabled();
+ await expect(action).not.toHaveAttribute('aria-busy','true');
+ await expect(action).toHaveText('Refresh official data');
+});
