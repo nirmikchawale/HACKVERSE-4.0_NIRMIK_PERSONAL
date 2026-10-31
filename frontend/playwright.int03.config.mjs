@@ -2,11 +2,11 @@ import { defineConfig } from '@playwright/test';
 
 const baseURL=process.env.VERCEL_PREVIEW_URL;
 if (!baseURL || new URL(baseURL).protocol !== 'https:' ||
-    !new URL(baseURL).hostname.endsWith('.vercel.app')) {
+    new URL(baseURL).hostname !== 'hackverse-40nirmikpersonal-idw14reli-nirmikchawale1-4179.vercel.app') {
   throw new Error('INT-03 requires a pinned HTTPS Vercel preview URL.');
 }
-if (!process.env.VERCEL_OIDC_TOKEN) {
-  throw new Error('INT-03 requires a fresh GitHub OIDC token; do not disable authentication.');
+if (!process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {
+  throw new Error('INT-03 requires a reviewer-approved GitHub environment bypass secret, never committed to source.');
 }
 export default defineConfig({
   testDir: './tests/browser',

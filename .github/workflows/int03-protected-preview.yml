@@ -6,13 +6,17 @@ on:
 
 permissions:
   contents: read
-  id-token: write
+  # No OIDC: Vercel rejected the narrowly scoped Trusted Sources API setup.
+  # A reviewer-approved GitHub environment secret is required instead.
 
 jobs:
   protected-preview:
     name: Authenticated POST and desktop/mobile on frozen preview SHA
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # Owner-reviewed, branch-restricted environment already used by B-04.
+    # Allow only feat/unlockplan-app-deploy and cert/unlockplan-int03-remote.
+    environment: b04-preview-certification
     env:
       # Frozen, already-certified application commit; this workflow does not deploy.
       INT03_SOURCE_SHA: c83290b99eaaa89bdc5afd6956ee3a38fcbf908d
@@ -33,27 +37,33 @@ jobs:
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v4.4.0
         with:
           node-version: '22'
-      - name: Install pinned dependencies and Chromium before creating OIDC token
+      - name: Install dependencies and Chromium before reading protected credentials
         working-directory: frontend
         run: |
           npm install
           npx playwright install --with-deps chromium
       - name: Authenticated remote HTTP POST and browser tests
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          # Supplied only after an authorized owner has reviewed and unlocked
+          # the protected GitHub environment; never committed to repository.
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         with:
           script: |
             const { spawnSync } = require('node:child_process');
             const { resolve } = require('node:path');
-            // Short-lived GitHub OIDC token: no persistent bypass secret, no SSO changes.
-            const token = await core.getIDToken();
-            core.setSecret(token);
-            const env = { ...process.env, VERCEL_OIDC_TOKEN: token };
+            const secret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '';
+            if (!secret) {
+              core.setFailed('INT-03 BLOCKED: B-04 protected environment has no VERCEL_AUTOMATION_BYPASS_SECRET. Owner must configure the reviewed, branch-restricted environment before rerun. No production release.');
+              return;
+            }
+            core.setSecret(secret);
             const result = spawnSync(process.execPath, [
               resolve('frontend/node_modules/@playwright/test/cli.js'), 'test',
               '--config', 'frontend/playwright.int03.config.mjs',
               'int03-deployed.spec.mjs'
-            ], { cwd: process.cwd(), env, stdio: 'inherit', timeout: 540000 });
+            ], { cwd: process.cwd(), env:process.env, stdio:'inherit', timeout:540000 });
             if (result.error) throw result.error;
             if (result.status !== 0) core.setFailed(
-              'INT-03 remote gate failed. Check whether GitHub OIDC is trusted by Vercel preview or whether a real endpoint/browser regression occurred. Do not release.'
+              'INT-03 protected preview browser/POST gate failed. Diagnose an actual scoped error before another run. Do not release.'
             );

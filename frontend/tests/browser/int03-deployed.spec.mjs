@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 const preview = new URL(process.env.VERCEL_PREVIEW_URL);
-const token = process.env.VERCEL_OIDC_TOKEN;
-if (!token) throw new Error('Missing ephemeral OIDC token. No SSO bypass.');
-const headers = { 'x-vercel-trusted-oidc-idp-token': token };
+const secret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+if (!secret) throw new Error('Missing reviewer-approved preview credential.');
+const headers = { 'x-vercel-protection-bypass': secret };
 const jsonHeaders = { ...headers, 'Content-Type': 'application/json' };
 
-// Inject OIDC only for the exact preview origin. Never send it to external sources.
+// Restrict the bypass header to this exact HTTPS preview origin; never send it to external sources.
 test.beforeEach(async ({ page }) => {
   await page.route('**/*', async route => {
     if (new URL(route.request().url()).origin !== preview.origin) {
@@ -36,8 +36,9 @@ test('protected deployed APIs: six real routes and three genuine POSTs', async (
   const post = (path,data) => request.post(preview.origin + path, {headers:jsonHeaders,data});
 
   const health = await get('/api/health');
-  // A 401/403 here means missing Trusted Sources authorization, NOT app failure.
-  expect(health.status(), 'Vercel protection must accept authorized GitHub OIDC').toBe(200);
+  // HTTP 200 can mean a Vercel login HTML page; require real JSON as well.
+  expect(health.status(), 'Vercel preview protection should accept owner-approved authorization').toBe(200);
+  expect(health.headers()['content-type'] ?? '').toContain('application/json');
   const h = await health.json();
   expect(h.ok).toBe(true);
   expect(h.disclaimer).toContain('Not field validated');
