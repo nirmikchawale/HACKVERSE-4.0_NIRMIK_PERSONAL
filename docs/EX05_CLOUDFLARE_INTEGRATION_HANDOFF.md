@@ -1,6 +1,6 @@
 # Cloudflare + EX-04/EX-05 unified integration candidate
 
-**No public deploy or release is claimed.** This integration branch begins from migration candidate `0984f83c66d1cfdbb38855e3799e8af2f1ae4e6e` and brings in the source-native EX-04 and EX-05 frontend enhancements from `5fc815ace8fd5ac7c5958dfd9fe41cd81b0db7fb`.
+**No public deploy or release is claimed.** This integration branch begins from migration candidate `3c8517d4d64a884f0c6dc3a19862210f2c754bf8` and brings in the source-native EX-04 and EX-05 frontend enhancements from `5fc815ace8fd5ac7c5958dfd9fe41cd81b0db7fb`.
 
 ## What is preserved
 - One existing six-page Agri Foresight app with original green/gold brand, all old navigation, assist FAQ, farmer forms, weather rendering and real FastAPI evaluation.
@@ -21,3 +21,7 @@
 - Cloudflare Free account permission/token **not connected** in this chat. Do NOT run `pywrangler deploy`, guess a `workers.dev` URL, or claim a public deployment until actual connection and owner approval.
 - Before new public cutover, independent exact-SHA deployment + API probes, mobile/desktop visual tests, source freshness, security, rollback plan and separate release authorization. Keep Vercel backup until certified.
 - This branch is a sibling review candidate; do not overwrite or force push `migration/cloudflare-typography-01` or the EX-04/05 feature branches.
+
+## Migration recovery reconciliation
+
+The separate Cloudflare migration branch advanced to `3c8517d4d64a884f0c6dc3a19862210f2c754bf8` and genuinely PASSed its B-01, B-03 and local Cloudflare Worker CI. This combined candidate now adopts the full latest migration tree, including its corrected `2026-10-30` compatibility date and its tested startup workflow, instead of preserving the redundant older UTC preflight script introduced during a separate diagnostic attempt. Required checks must be rerun on THIS new two-parent exact merge commit. No Cloudflare public deployment or URL is claimed.
