@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 const baseURL=process.env.VERCEL_PREVIEW_URL;
 if (!baseURL || new URL(baseURL).protocol !== 'https:' ||
-    new URL(baseURL).hostname !== 'hackverse-40nirmikpersonal-idw14reli-nirmikchawale1-4179.vercel.app') {
+    new URL(baseURL).hostname !== 'hackverse-40nirmikpersonal-gbnb4yijo-nirmikchawale1-4179.vercel.app') {
   throw new Error('INT-03 requires a pinned HTTPS Vercel preview URL.');
 }
 if (!process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {

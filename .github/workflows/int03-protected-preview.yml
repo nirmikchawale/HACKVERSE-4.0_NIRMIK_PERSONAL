@@ -19,8 +19,8 @@ jobs:
     environment: b04-preview-certification
     env:
       # Frozen, already-certified application commit; this workflow does not deploy.
-      INT03_SOURCE_SHA: c83290b99eaaa89bdc5afd6956ee3a38fcbf908d
-      VERCEL_PREVIEW_URL: https://hackverse-40nirmikpersonal-idw14reli-nirmikchawale1-4179.vercel.app
+      INT03_SOURCE_SHA: c8550aa45def8a69fda0e6d2bc0beb69815c65eb
+      VERCEL_PREVIEW_URL: https://hackverse-40nirmikpersonal-gbnb4yijo-nirmikchawale1-4179.vercel.app
       CI: 'true'
     steps:
       - name: Checkout certification branch (application source identical to frozen preview)
