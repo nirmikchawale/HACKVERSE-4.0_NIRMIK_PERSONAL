@@ -147,7 +147,7 @@
       live.forecast=validForecast(await json('/api/forecast'+(refresh?'?refresh=true':'')));
       live.selectedHour=null;
     } catch(e){live.forecast=null;here('deadlineNotice').textContent=e.message;}
-    finally{live.forecastLoading=false;here('toggleForecast').disabled=false;renderWeather();renderSourceMatrix();}
+    finally{live.forecastLoading=false;here('toggleForecast').disabled=false;renderWeather();renderSourceMatrix();renderPrintEvidence();}
   }
   here('toggleForecast').addEventListener('click',e=>{e.stopImmediatePropagation();refreshForecast(true);},true);
   here('clearForecast').addEventListener('click',e=>{e.stopImmediatePropagation();live.forecast=null;live.selectedHour=null;renderWeather();renderSourceMatrix();},true);
@@ -357,6 +357,58 @@
     }catch(e){here('changeValidation').textContent='Comparison unavailable: '+e.message;}
     finally{compareButton.disabled=false;compareButton.textContent='Compare / replan with FastAPI';}
   });
+  // EX-05C: a print-safe, source-separated record of *actual* current state.
+  const printReceipt=el('section','panel print-evidence-receipt');
+  printReceipt.id='printEvidenceReceipt';
+  printReceipt.setAttribute('aria-label','Printable source and decision evidence receipt');
+  printReceipt.append(el('h2','','Evidence receipt · model, history, declarations and decision'));
+  const printReceiptRows=el('div','print-evidence-rows');
+  printReceiptRows.id='printEvidenceReceiptRows';
+  printReceipt.append(printReceiptRows);
+  printReceipt.append(el('small','',
+    'Not a crop-safety certificate, rainfall observation, executed resource action, or guarantee. Data comes only from the current browser session.'));
+  document.querySelector('section.section[data-page="5"]').append(printReceipt);
+  function renderPrintEvidence(){
+    printReceiptRows.replaceChildren();
+    const add=(label,value)=>{
+      const row=el('div','print-evidence-row');
+      row.append(el('strong','',label),el('span','',value));
+      printReceiptRows.append(row);
+    };
+    const supported=okLocation();
+    const forecast=live.forecast,history=governmentClimateData;
+    const evaluated=live.evaluation;
+    add('Geographic scenario',supported?
+      'Jalna, Maharashtra · already-picked cotton rain preparedness (district reference, not a farm geolocation)':
+      'Current location unsupported by the Jalna-only model/engine');
+    add('FastAPI resource decision',evaluated?
+      'Server result: '+evaluated.status.toUpperCase()+' · conditional resource/time feasibility only':
+      'Not evaluated · no verified result to report');
+    const declared=live.request;
+    add('Farmer-declared inputs',declared?
+      'Target '+num(declared.target_units)+' handling units; capacity '+
+      num(declared.capacity_units)+' handling units; required time '+
+      num(declared.required_hours)+' h · unverified user declarations':
+      'No completed API-backed farmer input submission in this session');
+    add('Current forecast',supported&&isCurrent()?
+      'Open-Meteo NON-GOVERNMENT-HOSTED MODEL · '+forecast.hours.length+
+      ' source hours · retrieved '+forecast.retrieved_at_utc+
+      ' · not observed rain or certified rain-onset':
+      'No eligible current model forecast for this location/session');
+    add('Government climate evidence',supported&&history&&
+      ['retrieved_live','cached_recent'].includes(history.status)?
+      'NASA POWER US-GOVERNMENT HISTORICAL GRID · latest supplied date '+
+      history.latest_data_date+' · retrieved '+history.retrieved_at_utc+
+      ' · not farm-measured rainfall':
+      'No validated NASA POWER historical grid available for this location/session');
+    add('Official IMD warnings','Not connected · official authorized API data not available; no warning is inferred');
+    const outstanding=evaluated?.baseline?.constraints?.filter(c=>c.status!=='pass')||[];
+    add('Open constraints',evaluated?
+      (outstanding.length?outstanding.map(c=>c.id+'='+c.status).join(', '):
+      'No backend-reported blocked/unknown baseline constraints')+' · based on declared inputs only':
+      'Unknown until FastAPI evaluates the farmer-declared scenario');
+    add('Source and action caveat','Confirmed optional resources are conditional proposals, not proof of completed work. Do not use this receipt as agricultural safety advice.');
+  }
   updateSummaryUI=renderSummary;
   function renderSummary(){
     const r=live.evaluation,b=r?.baseline,p=live.selectedPackage===null?null:r?.packages[live.selectedPackage];
@@ -372,6 +424,7 @@
     addCheck('FastAPI evaluation returned verified schema',!!r);
     addCheck('Optional package is a confirmed completed action',false);
     if(live.replan)addCheck('Forecast-hour replan attested by backend',true);
+    renderPrintEvidence();
   }
   const download=el('button','btn','Download evidence JSON');download.type='button';download.id='downloadEvidence';
   here('printSummary').insertAdjacentElement('afterend',download);
@@ -508,7 +561,7 @@
     govRows.replaceChildren();
     if(!okLocation()){
       govStatus.textContent='Unavailable for selected location';
-      renderSourceMatrix();
+      renderSourceMatrix();renderPrintEvidence();
       govRows.append(el('p','gov-intro','Official Jalna reference data cannot be applied to the selected place.'));
       govDetail.textContent='Switch to Jalna, Maharashtra to retrieve its government historical context.';
       return;
@@ -551,7 +604,7 @@
       govStatus.textContent='Could not verify official data';
       govRows.replaceChildren(el('p','gov-intro','No government climate values displayed: '+e.message));
       govDetail.textContent='Only verified NASA POWER responses are eligible; no offline example is substituted.';
-    }finally{if(token===governmentClimateRequest){govRefresh.disabled=false;renderSourceMatrix();}}
+    }finally{if(token===governmentClimateRequest){govRefresh.disabled=false;renderSourceMatrix();renderPrintEvidence();}}
   }
   govRefresh.addEventListener('click',()=>{void loadGovernmentClimate(true);});
   govRange.addEventListener('change',()=>{if(governmentClimateData&&okLocation())renderGovernmentClimate(governmentClimateData);});
