@@ -35,7 +35,7 @@ Browser / Agri Foresight
           └── httpx AsyncClient → NASA POWER (historical US government)
 ```
 
-The original Vercel routes and engine remain untouched; `backend/unlockplan/edge.py` is an alternative async transport. `backend/worker.py` holds Cloudflare's `workers.asgi.entrypoint` and `backend/wrangler.jsonc` maps `/api/*` to Python Worker, while other requests use the static CDN. The assets remain on the same origin (no CORS credentials). External API addresses are allowlisted and response size/units/date/region validated. Tests use synthetic payloads only inside test code.
+To avoid pywrangler's prohibition on a requirements.txt next to pyproject.toml, Cloudflare's three deployment entry files are at the REPOSITORY ROOT. Vercel's backend/requirements.txt stays unchanged. The original Vercel routes and engine remain untouched; `backend/unlockplan/edge.py` is an alternative async transport. `worker.py` holds Cloudflare's `workers.asgi.entrypoint` and `wrangler.jsonc` maps `/api/*` to Python Worker, while other requests use the static CDN. The assets remain on the same origin (no CORS credentials). External API addresses are allowlisted and response size/units/date/region validated. Tests use synthetic payloads only inside test code.
 
 **Cloudflare compatibility risk**: Python Worker uses Pyodide 3.13 and the full `httpx` package. Existing Vercel adapter's `urllib.request.urlopen` and writable temp-file caches are NOT used in Cloudflare; those remain for the old deployment. The alternative uses async provider requests and per-isolate, best-effort memory cache, never storage treated as durable. Do not claim a real network forecast or CPU compliance before real Worker execution.
 
@@ -77,10 +77,10 @@ Inter: https://github.com/rsms/inter/ (SIL OFL 1.1).
 cd frontend && npm ci && npm run build && npm test && npm run test:browser
 cd ../backend && python -m pip install -r requirements.txt && python -m pytest -q
 # Use Python 3.13 and uv as per Cloudflare official docs:
-cd backend && uv run pywrangler dev
+uv run pywrangler dev
 # test http://127.0.0.1:8787/api/health and real POSTs before remote publish.
 # Only after explicit deployment authorization and secret installation:
-cd backend && uv run pywrangler deploy
+uv run pywrangler deploy
 ```
 
 *Do not interpret these commands as executed unless actual tool/test results say so.*

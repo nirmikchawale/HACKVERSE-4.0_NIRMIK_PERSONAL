@@ -41,7 +41,6 @@ jobs:
         run: |
           set -euo pipefail
           (
-            cd backend
             uv run pywrangler dev --ip 127.0.0.1 --port 8787
           ) > /tmp/agri-cloudflare-pywrangler.log 2>&1 &
           echo $! > /tmp/agri-cloudflare-worker.pid
