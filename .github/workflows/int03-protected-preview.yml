@@ -1,0 +1,72 @@
+name: INT-03 Protected Deployed Preview Certification
+on:
+  push:
+    branches: [cert/unlockplan-int03-remote]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # No OIDC: Vercel rejected the narrowly scoped Trusted Sources API setup.
+  # A reviewer-approved GitHub environment secret is required instead.
+
+jobs:
+  protected-preview:
+    name: Authenticated POST and desktop/mobile on frozen preview SHA
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Owner-reviewed, branch-restricted environment already used by B-04.
+    # Allow only feat/unlockplan-app-deploy and cert/unlockplan-int03-remote.
+    environment: b04-preview-certification
+    env:
+      # Frozen, already-certified application commit; this workflow does not deploy.
+      INT03_SOURCE_SHA: c8550aa45def8a69fda0e6d2bc0beb69815c65eb
+      VERCEL_PREVIEW_URL: https://hackverse-40nirmikpersonal-gbnb4yijo-nirmikchawale1-4179.vercel.app
+      CI: 'true'
+    steps:
+      - name: Checkout certification branch (application source identical to frozen preview)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # Base SHA is required for immutable source comparison.
+      - name: Check application code did not change from certified preview
+        run: |
+          set -euo pipefail
+          git diff --exit-code "$INT03_SOURCE_SHA" HEAD -- backend frontend/src frontend/index.html frontend/package.json frontend/package-lock.json frontend/tsconfig.json frontend/vite.config.ts vercel.json
+          echo 'Application source unchanged from preview SHA.'
+      - name: Setup Node 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Install only pinned Playwright test runner and Chromium
+        working-directory: frontend
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/int03-playwright"
+          npm --prefix "$RUNNER_TEMP/int03-playwright" install --no-save --ignore-scripts @playwright/test@1.64.1
+          ln -s "$RUNNER_TEMP/int03-playwright/node_modules" node_modules
+          "$RUNNER_TEMP/int03-playwright/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Authenticated remote HTTP POST and browser tests
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          # Supplied only after an authorized owner has reviewed and unlocked
+          # the protected GitHub environment; never committed to repository.
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        with:
+          script: |
+            const { spawnSync } = require('node:child_process');
+            const { resolve } = require('node:path');
+            const secret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '';
+            if (!secret) {
+              core.setFailed('INT-03 BLOCKED: B-04 protected environment has no VERCEL_AUTOMATION_BYPASS_SECRET. Owner must configure the reviewed, branch-restricted environment before rerun. No production release.');
+              return;
+            }
+            core.setSecret(secret);
+            const result = spawnSync(process.execPath, [
+              resolve('frontend/node_modules/@playwright/test/cli.js'), 'test',
+              '--config', 'frontend/playwright.int03.config.mjs',
+              'int03-deployed.spec.mjs'
+            ], { cwd: process.cwd(), env:process.env, stdio:'inherit', timeout:540000 });
+            if (result.error) throw result.error;
+            if (result.status !== 0) core.setFailed(
+              'INT-03 protected preview browser/POST gate failed. Diagnose an actual scoped error before another run. Do not release.'
+            );
