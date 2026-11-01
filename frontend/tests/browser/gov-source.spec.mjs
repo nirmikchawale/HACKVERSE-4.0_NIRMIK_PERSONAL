@@ -70,7 +70,7 @@ test('source refresh exposes real busy state and restores action after authentic
  await action.click();
  await expect(action).toBeDisabled();
  await expect(action).toHaveAttribute('aria-busy','true');
- await expect(action).toHaveText('Fetching official data…');
+ await expect(action).toHaveText('Contacting NASA POWER…');
  release();
  await expect(page.locator('#governmentClimateStatus')).toContainText('Verified government response');
  await expect(action).toBeEnabled();
