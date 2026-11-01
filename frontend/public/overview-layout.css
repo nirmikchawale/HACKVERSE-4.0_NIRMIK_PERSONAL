@@ -29,3 +29,16 @@
 .section[data-page="0"] .kpis > .kpi > .kpi-value{
  margin-top:0;
 }
+
+/* CF-OV-KPI-02: shared rows handle source-dependent label wrapping, too.
+   If weather falls back to a two-line message, its caption and the other three
+   captions still start on the same shared grid row. This leaves the actual
+   value fully readable (no clipping/ellipsis) and preserves card buttons.
+   Subgrid is progressive enhancement; legacy browsers keep top-aligned values. */
+@supports (grid-template-rows:subgrid){
+ .section[data-page="0"] .kpis > .kpi{
+  display:grid;
+  grid-row:span 3;
+  grid-template-rows:subgrid;
+ }
+}
