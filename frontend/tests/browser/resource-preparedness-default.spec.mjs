@@ -37,6 +37,7 @@ test('farm resources initially displays one editable unknown alternative, not a 
   await expect(page.locator('#resourceCheckBadge')).toHaveText('0/6');
   await expect(page.locator('#resourceCoverageValue')).toHaveText('Enter quantities');
   await expect(page.locator('#resourceGapValue')).toHaveText('Enter quantities');
+  await expect(page.locator('#resourceMarginValue')).toHaveText('Select deadline and hours');
   await expect(page.locator('#checkSiteValue')).toHaveText('Unknown');
   await expect(page.locator('#resourceTreeAssess')).toHaveText('Complete your declaration');
 });
@@ -51,6 +52,7 @@ test('only measured form completeness and arithmetic capacity indicators appear'
   await gotoResources(page);
   await expect(page.locator('#resourceCheckBadge')).toHaveText('6/6');
   await expect(page.locator('#resourceTreeAssess')).toHaveText('Ready for FastAPI evaluation');
+  await expect(page.locator('#resourceMarginValue')).toHaveText(/^\+\d+(?:\.\d)? h$/);
   await expect(page.locator('.resource-evidence')).toContainText('Not independently verified');
   await expect(page.locator('.resource-method')).toContainText('not success probabilities');
   await page.locator('#capacity').fill('120');
