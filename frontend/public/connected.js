@@ -764,6 +764,10 @@
   }
   window.addEventListener('online',()=>{renderConnectivity();renderEvidenceContrast();renderWeather();});
   window.addEventListener('offline',()=>{renderConnectivity();renderEvidenceContrast();renderWeather();});
+  // WXR-02: view state changes only presentation of authenticated forecast hours.
+  let forecastMetric='precipitation_mm';
+  let forecastDay='all';
+  let forecastOffset=0;
   function renderWeather(){
     renderSourceMatrix();
     renderConnectivity();
@@ -790,9 +794,55 @@
     const provenance=el('p','live-provenance','Retrieved '+f.retrieved_at_utc+' · age '+num(f.forecast_age_hours)+' h · '+(f.attribution||'Open-Meteo')+'. Model output, not observed rain or safe crop timing.');
     chart.append(provenance);
     renderForecastWindows(chart,f);
+    const future=f.hours.filter(h=>{
+      const stamp=Date.parse(h.time+':00+05:30');
+      return Number.isFinite(stamp)&&stamp>Date.now()+60000;
+    }).sort((a,b)=>a.time.localeCompare(b.time));
+    const selectable=future.length?future:[]; // no fallback to past times as planning choices
+    const dates=[...new Set(selectable.map(h=>h.time.slice(0,10)))];
+    if(forecastDay!=='all'&&!dates.includes(forecastDay)){forecastDay='all';forecastOffset=0;}
+    const filtered=selectable.filter(h=>forecastDay==='all'||h.time.startsWith(forecastDay));
+    if(forecastOffset>=filtered.length)forecastOffset=0;
+    const sample=filtered.slice(forecastOffset,forecastOffset+24);
+    const explorer=el('div','wx-explorer');
+    explorer.id='forecastExplorerControls';
+    const explorerLabel=el('div','wx-explorer-title','Explore verified future model hours');
+    const metricField=el('label','wx-explorer-field');
+    metricField.append(el('span','','Show model measure'));
+    const metricSelect=el('select','hourly-evidence-select');metricSelect.id='forecastExploreMetric';
+    for(const [v,label] of [['precipitation_mm','Modeled rainfall · mm'],['precipitation_probability_pct','Hourly rain probability · %']]){
+      const op=el('option','',label);op.value=v;metricSelect.append(op);
+    }
+    metricSelect.value=forecastMetric;metricSelect.addEventListener('change',()=>{
+      forecastMetric=metricSelect.value;renderWeather();
+    });metricField.append(metricSelect);
+    const dayField=el('label','wx-explorer-field');
+    dayField.append(el('span','','Model day · IST'));
+    const daySelect=el('select','hourly-evidence-select');daySelect.id='forecastExploreDay';
+    const all=el('option','','All upcoming dates');all.value='all';daySelect.append(all);
+    for(const day of dates){const op=el('option','',day);op.value=day;daySelect.append(op);}
+    daySelect.value=forecastDay;daySelect.addEventListener('change',()=>{
+      forecastDay=daySelect.value;forecastOffset=0;renderWeather();
+    });dayField.append(daySelect);
+    const prev=el('button','btn wx-explorer-page','Previous 24 h');
+    prev.type='button';prev.id='forecastExplorePrev';
+    prev.disabled=forecastOffset===0;
+    prev.addEventListener('click',()=>{forecastOffset=Math.max(0,forecastOffset-24);renderWeather();});
+    const next=el('button','btn wx-explorer-page','Next 24 h');
+    next.type='button';next.id='forecastExploreNext';
+    next.disabled=forecastOffset+24>=filtered.length;
+    next.addEventListener('click',()=>{forecastOffset+=24;renderWeather();});
+    explorer.append(explorerLabel,metricField,dayField,prev,next);
+    chart.append(explorer);
+    const metricValues=sample.map(h=>h[forecastMetric]).filter(v=>v!==null&&Number.isFinite(v));
+    const summary=el('p','wx-explorer-summary',selectable.length?
+      'Showing '+sample.length+' of '+filtered.length+' future source hours · '+metricValues.length+
+      ' numerical values · '+(sample.length-metricValues.length)+' missing. Select a bar to draft a deadline; save it separately.':
+      'No future model hour is eligible. Review prior evidence below or enter a manual deadline; neither determines safe rainfall timing.');
+    chart.append(summary);
     const bars=el('div','weather-bars');
-    const sample=f.hours.slice(0,24);
-    const max=Math.max(0.1,...sample.map(h=>h.precipitation_mm??0));
+    const max=forecastMetric==='precipitation_probability_pct'?100:
+      Math.max(0.1,...metricValues);
     for(const h of sample){
       const b=el('button','hour-bar');b.type='button';b.dataset.time=h.time;b.setAttribute('aria-label','Use '+h.time+' IST model hour as proposed deadline');
       b.title=h.time+' IST • '+(h.precipitation_mm===null?'Unknown':h.precipitation_mm+' mm')+' • '+(h.precipitation_probability_pct===null?'Unknown':h.precipitation_probability_pct+'%')+' probability';
@@ -800,8 +850,16 @@
       const candidateFuture=Number.isFinite(at)&&at>Date.now()+60_000;
       b.disabled=!candidateFuture;
       if(!candidateFuture)b.title='Past/current model hour · for evidence only, not a future planning deadline.';
-      const time=el('span','bar-time',h.time.slice(11));const fill=el('span','bar-fill');fill.style.height=Math.max(5,Math.round(95*(h.precipitation_mm??0)/max))+'%';
-      const value=el('span','bar-value',(h.precipitation_mm??'—')+' mm');const chance=el('small','',h.precipitation_probability_pct===null?'Probability unknown':h.precipitation_probability_pct+'%');
+      const time=el('span','bar-time',h.time.slice(11));
+      const reading=h[forecastMetric];
+      const fill=el('span','bar-fill');
+      fill.style.height=reading===null?'0%':Math.round(95*reading/max)+'%';
+      if(reading===null)b.classList.add('bar-missing');
+      const value=el('span','bar-value',reading===null?'Unavailable':
+        num(reading)+(forecastMetric==='precipitation_mm'?' mm':'%'));
+      const chance=el('small','',forecastMetric==='precipitation_mm'?
+        (h.precipitation_probability_pct===null?'Probability unknown':h.precipitation_probability_pct+'% probability'):
+        (h.precipitation_mm===null?'Rainfall unknown':num(h.precipitation_mm)+' mm rainfall'));
       b.append(time,fill,value,chance);b.addEventListener('click',()=>{
         const then=Date.parse(h.time+':00+05:30');
         if(!isCurrent()||!live.forecast?.hours.some(row=>row.time===h.time)||
@@ -812,11 +870,14 @@
         }
         here('deadlineInput').value=h.time;live.selectedHour=h.time;additional.deadlineSource='model';
         here('deadlineOriginPreview').textContent='Candidate hour chosen from verified Open-Meteo forecast; not a rain-onset threshold.';
-        here('deadlineNotice').textContent='Model hour chosen. Click Save candidate deadline to apply it.';
+        here('deadlineNotice').textContent='Future model hour selected. Review its source context, then Save candidate deadline to confirm.';
+        renderDeadlineGuide();
+        here('deadlineInput').scrollIntoView({behavior:'smooth',block:'center'});
       });bars.append(b);
     }
     chart.append(bars);
-    if(f.hours.length>24)chart.append(el('small','', 'Showing the first 24 of '+f.hours.length+' forecast hours.'));
+    if(filtered.length>24)chart.append(el('small','wx-explorer-summary',
+      'Explore all '+filtered.length+' matching upcoming hours using the Previous/Next buttons. Historical hours remain in the full evidence table.'));
     here('weatherValue').textContent=f.status==='retrieved_live'?'Latest model forecast':'Recent model cache';
   }
   async function refreshForecast(refresh){
