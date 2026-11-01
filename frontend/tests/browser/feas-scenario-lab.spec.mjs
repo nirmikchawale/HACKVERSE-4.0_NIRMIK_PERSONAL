@@ -23,7 +23,7 @@ test('scenario lab prioritizes compact working controls and disclosed source lim
   await expect(page.locator('.fw-about')).not.toHaveAttribute('open');
   await page.locator('.fw-about summary').click();
   await expect(page.locator('.fw-about')).toHaveAttribute('open','');
-  await expect(page.locator('.fw-about')).toContainText('not farmer records');
+  await expect(page.locator('.fw-about')).toContainText('not actual farmer records');
   await page.locator('#fwCheckAPI').click();
   await expect(page.locator('#fwDiagnostic')).toBeVisible();
 });
