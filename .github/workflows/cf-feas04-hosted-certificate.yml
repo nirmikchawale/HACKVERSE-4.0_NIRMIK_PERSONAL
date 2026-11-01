@@ -1,0 +1,52 @@
+name: CF-FEAS-04 Hosted Cloudflare Certificate
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/cf_feas04_hosted_certificate.mjs'
+      - '.github/workflows/cf-feas04-hosted-certificate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    name: Preview immutable Cloudflare release certificate
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: production-feature-preview
+            origin: https://d15bcff1-agri-foresight.nirmikchawale1.workers.dev
+            sha: b378c88c41b93375e0b1503470dc46d3f722680b
+          - label: current-design-preview
+            origin: https://2fb68eef-agri-foresight.nirmikchawale1.workers.dev
+            sha: dfa6797b810f916123756b5adc3cc67fe076cb1b
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '22'
+      - name: Compare public Cloudflare revision and authentic APIs
+        env:
+          EDGE_URL: ${{ matrix.origin }}
+          EXPECTED_SHA: ${{ matrix.sha }}
+        run: node scripts/cf_feas04_hosted_certificate.mjs
+  production:
+    name: Production hostname check (report-only until exact SHA is deployed)
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '22'
+      - name: Verify current main commit on production Worker, fail visibly if not yet served
+        env:
+          EDGE_URL: https://agri-foresight.nirmikchawale1.workers.dev
+          EXPECTED_SHA: 9617a47192e7e1f0caa5e224da64bfd3cffdc43b
+        run: node scripts/cf_feas04_hosted_certificate.mjs
