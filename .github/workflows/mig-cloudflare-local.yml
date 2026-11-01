@@ -40,6 +40,19 @@ jobs:
           npm install
           node ../scripts/prepare-cloudflare-release.mjs
           npm run build
+      - name: Check Cloudflare repository package builds without auto-discovery
+        run: |
+          python -m pip wheel --no-deps --wheel-dir /tmp/agri-cloudflare-root-wheel .
+          python - <<'PY'
+          import glob,zipfile
+          paths=glob.glob('/tmp/agri-cloudflare-root-wheel/*.whl')
+          assert len(paths)==1, f'Expected one candidate wheel; got {paths}'
+          with zipfile.ZipFile(paths[0]) as wheel:
+              names=wheel.namelist()
+          assert 'backend/unlockplan/edge.py' in names, 'Cloudflare API code not packaged'
+          assert not any(s.startswith(('frontend/','contrib/','backend/tests/')) for s in names), 'Non-Python packages leaked into wheel'
+          print('Cloudflare Python root wheel packaging PASS')
+          PY
       - name: Install official Python Worker CLI runner
         run: python -m pip install 'uv>=0.8,<1'
       - name: Start real Cloudflare Python Worker locally
