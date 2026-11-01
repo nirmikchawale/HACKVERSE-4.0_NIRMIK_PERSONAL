@@ -2951,6 +2951,12 @@
   renderConnectivity();renderEvidenceContrast();
   renderSourceMatrix();renderDecisionDiagnostics();renderPrintEvidence();
   window.setInterval(()=>{if(!document.hidden){renderSourceMatrix();renderPrintEvidence();}},60000);
+  // Read-only snapshot for the farmer-language layer; no client-side decision calculation.
+  window.agriFarmerSnapshot=()=>({
+    request:live.request,evaluation:live.evaluation,
+    selectedPackage:live.selectedPackage,busy:Boolean(live.busy),
+    error:live.error,forecastStatus:live.forecast?.status??null
+  });
   void boot();
   if(location.pathname==='/interactive-review.html')history.replaceState({},'', '/');
 })();
