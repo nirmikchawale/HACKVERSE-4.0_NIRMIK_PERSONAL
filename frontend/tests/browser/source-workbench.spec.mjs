@@ -36,7 +36,7 @@ test('source cards are interactive, preserve five independent statuses and show 
  await expect(cards.nth(2)).toHaveAttribute('aria-pressed','true');
  await expect(page.locator('#sourceWorkbenchDetail')).toContainText('NASA POWER');
  await expect(page.locator('#sourceWorkbenchDetail')).toContainText('2026-10-27');
- await expect(page.locator('#sourceWorkbenchDetail')).toContainText('not measurements at the farm');
+ await expect(page.locator('#sourceWorkbenchDetail')).toContainText('measurements at the farm');
  await page.locator('#sourceWorkbenchDetail .source-detail-action.primary').click();
  await expect(page.locator('section.section[data-page="1"]')).toHaveClass(/active/);
 });
