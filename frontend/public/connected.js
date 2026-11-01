@@ -855,7 +855,9 @@
       const stamp=Date.parse(h.time+':00+05:30');
       return Number.isFinite(stamp)&&stamp>Date.now()+60000;
     }).sort((a,b)=>a.time.localeCompare(b.time));
-    const selectable=future.length?future:[]; // no fallback to past times as planning choices
+    // Short source responses stay fully visible as chronological evidence.
+    // Past bars remain disabled; normal multi-day responses prioritize future planning.
+    const selectable=f.hours.length<=24?[...f.hours].sort((a,b)=>a.time.localeCompare(b.time)):future;
     const dates=[...new Set(selectable.map(h=>h.time.slice(0,10)))];
     if(forecastDay!=='all'&&!dates.includes(forecastDay)){forecastDay='all';forecastOffset=0;}
     const filtered=selectable.filter(h=>forecastDay==='all'||h.time.startsWith(forecastDay));
@@ -863,7 +865,7 @@
     const sample=filtered.slice(forecastOffset,forecastOffset+24);
     const explorer=el('div','wx-explorer');
     explorer.id='forecastExplorerControls';
-    const explorerLabel=el('div','wx-explorer-title','Explore verified future model hours');
+    const explorerLabel=el('div','wx-explorer-title','Explore authenticated model hours · future hours are actionable');
     const metricField=el('label','wx-explorer-field');
     metricField.append(el('span','','Show model measure'));
     const metricSelect=el('select','hourly-evidence-select');metricSelect.id='forecastExploreMetric';
@@ -893,7 +895,7 @@
     chart.append(explorer);
     const metricValues=sample.map(h=>h[forecastMetric]).filter(v=>v!==null&&Number.isFinite(v));
     const summary=el('p','wx-explorer-summary',selectable.length?
-      'Showing '+sample.length+' of '+filtered.length+' future source hours · '+metricValues.length+
+      'Showing '+sample.length+' of '+filtered.length+' source hours · '+metricValues.length+
       ' numerical values · '+(sample.length-metricValues.length)+' missing. Select a bar to draft a deadline; save it separately.':
       'No future model hour is eligible. Review prior evidence below or enter a manual deadline; neither determines safe rainfall timing.');
     chart.append(summary);
@@ -927,7 +929,7 @@
         }
         here('deadlineInput').value=h.time;live.selectedHour=h.time;additional.deadlineSource='model';
         here('deadlineOriginPreview').textContent='Candidate hour chosen from verified Open-Meteo forecast; not a rain-onset threshold.';
-        here('deadlineNotice').textContent='Future model hour selected. Review its source context, then Save candidate deadline to confirm.';
+        here('deadlineNotice').textContent='Model hour selected (future). Review its source context, then Save candidate deadline to confirm.';
         renderDeadlineGuide();
         here('deadlineInput').scrollIntoView({behavior:'smooth',block:'center'});
       });bars.append(b);
