@@ -42,7 +42,7 @@
   const climateText={
     en:{
       contrastTitle:'Model forecast and historical grid · different periods',
-      contrastIntro:'These sources cover different dates and places. Their rain totals do not prove safety.',
+      contrastIntro:'These sources cover different dates and places. Their totals do not validate the model or prove safety.',
       forecastTitle:'Next 24 forecast hours · Open-Meteo MODEL',historicalTitle:'Up to 20 historical days · NASA POWER GRID',
       modelData:'Known modeled rainfall',historyData:'Available historical gridded rainfall',
       modelMissing:'No verified future model hours',historyMissing:'No verified historical grid',
@@ -169,7 +169,7 @@
    historyDetail:'Latest historical day ',historyTail:' · not a field measurement or a future forecast.',historyMissing:'No verified NASA historical grid available.',
    imdDetail:'Official live warning data is not connected; no warning or clearance may be inferred.',
    assessmentDetail:'Computed from farmer declarations only, not verified physical availability or crop safety.',assessmentMissing:'Requires farmer declarations and a real FastAPI evaluation.',
-   backend:'Backend assessment: ',diag:'Why did FastAPI return this result?',notassessed:'Save resources and a deadline, then run FastAPI.',
+   backend:'Backend assessment: ',diag:'Why did FastAPI return this result?',notassessed:'Not evaluated. Save resources and a deadline, then run FastAPI.',
    outcome:'Server result: ',outcomeFoot:'. Declared-resource/time feasibility only, not a crop-safety certificate.',
    readiness:'Handling-location readiness',capacity:'Declared handling capacity',timing:'Candidate deadline and time',
    provenance:'Backend provenance: ',none:'No blocked/unknown constraints returned. This does not prove field safety.',completed:'Completed is farmer-declared, not physically verified.',

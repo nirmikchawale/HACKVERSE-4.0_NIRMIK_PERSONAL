@@ -40,7 +40,7 @@ test('F05 shows period-separated source rainfall, missing coverage and non-equiv
   await expect(cards.nth(1)).toContainText('Up to 20 historical days');
   await expect(cards.nth(1)).toContainText('13/14');
   await expect(cards.nth(1)).toContainText('2026-10-13');
-  await expect(page.locator('#historicalModelComparison')).toContainText('must not be treated as a model validation');
+  await expect(page.locator('#historicalModelComparison')).toContainText('do not validate the model');
 });
 test('F05 fails closed for stale Open-Meteo while preserving independently valid NASA history',async({page})=>{
   await setup(page,{f:forecast(240)});await weatherPage(page);
@@ -109,7 +109,7 @@ test('F27 offline indicator is truthful and identifies previous source values as
   const network=page.locator('#networkEvidenceStatus');
   await expect(network).toContainText('Browser reports offline');
   await expect(page.locator('#forecastSourceChip')).toContainText('OFFLINE');
-  await expect(network).toContainText('Only source timestamps are retained locally');
+  await expect(network).toContainText('Only source times are saved locally');
   await page.context().setOffline(false);
   await expect(network).toContainText('Browser reports online; provider connectivity unverified');
 });
