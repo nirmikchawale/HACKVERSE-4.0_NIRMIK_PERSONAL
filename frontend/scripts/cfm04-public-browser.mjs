@@ -127,6 +127,59 @@ try{
   for(const key of selectors){
     await page.locator(key).waitFor({state:'attached',timeout:20000});
   }
+  // WXR-03: public exact-SHA behavioral certificate for the actual Weather page.
+  // Source values may be genuinely unavailable; never use test fixtures here.
+  const weatherCSS=await page.request.get(origin+'/weather-workspace.css',{timeout:15000});
+  assert(weatherCSS.status()===200&&(await weatherCSS.text()).includes('qc-hour-grid'),
+    'WXR-03 coverage visualization stylesheet is missing from public Cloudflare');
+  assert(source.includes('qcHourGrid')&&source.includes('qcExceptions')&&source.includes('qc-receipt'),
+    'Public connected.js does not contain the certified weather workbench');
+  await page.locator('#navDesktop [data-nav="1"]').click();
+  const weatherPage=page.locator('section.section[data-page="1"]');
+  await weatherPage.waitFor({state:'visible',timeout:20000});
+  assert(await weatherPage.locator('.insight-row').count()===0,
+    'The three passive Weather summary cards are still present');
+  await page.locator('#forecastQualityInspector').waitFor({state:'attached',timeout:20000});
+  await page.waitForFunction(()=>{
+    const metrics=document.querySelectorAll('#forecastQualityMetrics button.source-qc-item');
+    const empty=document.querySelector('#forecastQualityMetrics .source-qc-empty');
+    const status=document.querySelector('#apiConnectionStatus')?.textContent||'';
+    const button=document.querySelector('#toggleForecast');
+    const chip=document.querySelector('#forecastSourceChip')?.textContent||'';
+    return status.startsWith('FastAPI connected') && button && !button.disabled &&
+      chip!=='FETCHING' && (metrics.length===8||Boolean(empty));
+  },null,{timeout:30000});
+  let certifiedQualityMode='unavailable';
+  const publicMetrics=page.locator('#forecastQualityMetrics button.source-qc-item');
+  if(await publicMetrics.count()===8){
+    certifiedQualityMode='source-current';
+    await page.locator('[data-quality="reported"]').click();
+    assert(await page.locator('[data-quality="reported"]').getAttribute('aria-expanded')==='true',
+      'The data-quality metric did not open its evidence inspection');
+    const modelHours=page.locator('#qcHourGrid button.qc-hour-chip');
+    assert(await modelHours.count()>0,'No selectable real model-hour completeness cells');
+    await modelHours.first().click();
+    assert((await page.locator('#qcHourDetail').textContent()).includes('IST'),
+      'Model-hour selection does not show its exact authenticated time');
+    await page.locator('[data-qc-view="issues"]').click();
+    await page.locator('#qcIssueFilter').selectOption('gap');
+    assert((await page.locator('#qcWorkbenchContent').textContent()).length>20,
+      'Anomaly inspection failed to render a truthful source-derived state');
+    await page.locator('[data-qc-view="receipt"]').click();
+    assert((await page.locator('#qcWorkbenchContent').textContent()).includes('Asia/Kolkata'),
+      'Current model source receipt does not expose the validated timezone');
+    assert(await page.locator('#exportForecastEvidence').isEnabled(),
+      'Current authenticated model CSV unexpectedly unavailable');
+  }else{
+    assert(!(await page.locator('#exportForecastEvidence').isEnabled()),
+      'Unavailable model evidence must not enable a misleading CSV');
+    assert((await page.locator('#forecastQualityInspector').textContent()).includes('No current validated'),
+      'Unavailable model data must display an honest recovery explanation');
+  }
+  console.log('WXR03_PUBLIC_WEATHER_PASS '+JSON.stringify({
+    removedSummaryCards:true,workbench:certifiedQualityMode,sourceNativeOnly:true
+  }));
+
   const leadKeys=['heroBody','weatherLead','resourceLead','feasLead','changesLead','summaryLead'];
   for(let index=0;index<6;index++){
     await page.locator('#navDesktop [data-nav="'+index+'"]').click();
