@@ -27,8 +27,12 @@ html[data-farmer-view="on"] section.section[data-page="2"] .resource-layout>.res
 html[data-farmer-view="on"] .farmer-advanced-resource{display:none!important}
 html[data-farmer-view="on"][data-farmer-resource-detail="on"] .farmer-advanced-resource{display:block!important}
 html[data-farmer-view="on"] section.section[data-page="3"] #resultTitle,
-html[data-farmer-view="on"] section.section[data-page="3"] #resultReason,
 html[data-farmer-view="on"] section.section[data-page="3"] .farm-eval-title>.section-label{display:none!important}
+/* Keep visible API failures and input errors; only conceal redundant verified-English copy. */
+html[data-farmer-view="on"] #resultHero[data-kind="blocked"] #resultReason,
+html[data-farmer-view="on"] #resultHero[data-kind="feasible"] #resultReason,
+html[data-farmer-view="on"] #resultHero[data-kind="unknown"] #resultReason,
+html[data-farmer-view="on"] #resultHero[data-kind="completed"] #resultReason{display:none!important}
 html[data-farmer-view="on"] section.section[data-page="3"] #farmResultMetrics,
 html[data-farmer-view="on"] section.section[data-page="3"] #farmResultPanel{display:none!important}
 html[data-farmer-view="on"][data-farmer-details="on"] section.section[data-page="3"] #farmResultMetrics:not([hidden]){display:grid!important}
