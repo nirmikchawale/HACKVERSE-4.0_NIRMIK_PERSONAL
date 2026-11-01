@@ -137,7 +137,14 @@
     if(!f.hours.every(h=>/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(h.time||'')&&(h.precipitation_mm===null||(Number.isFinite(h.precipitation_mm)&&h.precipitation_mm>=0))&&(h.precipitation_probability_pct===null||(Number.isFinite(h.precipitation_probability_pct)&&h.precipitation_probability_pct>=0&&h.precipitation_probability_pct<=100))))throw new Error('Forecast hours invalid.');
     return f;
   }
-  const isCurrent=()=>okLocation()&&['retrieved_live','cached_recent'].includes(live.forecast?.status);
+  // The Python backend's STALE_AFTER_HOURS is 2. A stale-but-mislabeled
+  // response must never make interactive forecast deadlines look current.
+  const forecastAgeMilliseconds=()=>Date.now()-Date.parse(live.forecast?.retrieved_at_utc||'');
+  const isCurrent=()=>{
+    if(!okLocation()||!['retrieved_live','cached_recent'].includes(live.forecast?.status))return false;
+    const age=forecastAgeMilliseconds();
+    return Number.isFinite(age)&&age>=0&&age<=2*60*60*1000;
+  };
   async function boot(){
     try {
       const [health,sources]=await Promise.all([json('/api/health'),json('/api/sources')]);
@@ -384,8 +391,10 @@
     const f=live.forecast;
     if(!f){chip.textContent='NOT CONNECTED';mode.textContent='No authenticated model forecast';chart.append(el('div','weather-empty','No real forecast is loaded. Use Refresh live forecast to request Open-Meteo through the backend.'));here('weatherValue').textContent='Not loaded';return;}
     if(!isCurrent()){
-      chip.textContent=f.status==='stale_cache'?'STALE · DO NOT USE':'UNAVAILABLE';
-      mode.textContent=f.notice||f.error||'No current verified forecast available';
+      const old=Number.isFinite(forecastAgeMilliseconds())&&forecastAgeMilliseconds()>2*60*60*1000;
+      chip.textContent=f.status==='stale_cache'||old?'STALE · DO NOT USE':'UNAVAILABLE';
+      mode.textContent=old?'Model forecast age exceeds the backend two-hour current-data limit. Refresh to retrieve genuine evidence.':
+        f.notice||f.error||'No current verified forecast available';
       chart.append(el('div','weather-empty','No current forecast hours can be selected. Manual deadlines remain possible.'));
       here('weatherValue').textContent=f.status;return;
     }
@@ -399,9 +408,20 @@
     for(const h of sample){
       const b=el('button','hour-bar');b.type='button';b.dataset.time=h.time;b.setAttribute('aria-label','Use '+h.time+' IST model hour as proposed deadline');
       b.title=h.time+' IST • '+(h.precipitation_mm===null?'Unknown':h.precipitation_mm+' mm')+' • '+(h.precipitation_probability_pct===null?'Unknown':h.precipitation_probability_pct+'%')+' probability';
+      const at=Date.parse(h.time+':00+05:30');
+      const candidateFuture=Number.isFinite(at)&&at>Date.now()+60_000;
+      b.disabled=!candidateFuture;
+      if(!candidateFuture)b.title='Past/current model hour · for evidence only, not a future planning deadline.';
       const time=el('span','bar-time',h.time.slice(11));const fill=el('span','bar-fill');fill.style.height=Math.max(5,Math.round(95*(h.precipitation_mm??0)/max))+'%';
       const value=el('span','bar-value',(h.precipitation_mm??'—')+' mm');const chance=el('small','',h.precipitation_probability_pct===null?'Probability unknown':h.precipitation_probability_pct+'%');
       b.append(time,fill,value,chance);b.addEventListener('click',()=>{
+        const then=Date.parse(h.time+':00+05:30');
+        if(!isCurrent()||!live.forecast?.hours.some(row=>row.time===h.time)||
+          !Number.isFinite(then)||then<=Date.now()+60_000){
+          renderWeather();
+          here('deadlineNotice').textContent='That model hour is no longer an eligible future candidate. Refresh genuine weather evidence.';
+          return;
+        }
         here('deadlineInput').value=h.time;live.selectedHour=h.time;additional.deadlineSource='model';
         here('deadlineOriginPreview').textContent='Candidate hour chosen from verified Open-Meteo forecast; not a rain-onset threshold.';
         here('deadlineNotice').textContent='Model hour chosen. Click Save candidate deadline to apply it.';
