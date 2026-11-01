@@ -70,9 +70,8 @@ test('mobile retains all six interactive pages without horizontal overflow',asyn
   await page.setViewportSize({width:390,height:844});
   await page.goto('/');
   for(let i=0;i<6;i++){
-    // page controls and hash navigation remain connected after copy reductions.
-    await page.evaluate(n=>window.location.hash='#/'+n,i);
-    await page.waitForTimeout(80);
+    // This app uses the real mobile nav state machine, not hash routing.
+    await page.locator('#navMobile [data-nav="'+i+'"]').click();
     const active=page.locator('section.section.active');
     await expect(active).toHaveCount(1);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),
