@@ -1,0 +1,46 @@
+name: Cloudflare current-main parity observation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/cf-current-main-parity-observation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare-public-release:
+    name: Bounded live SHA parity check (read-only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Snapshot current main HEAD
+        shell: bash
+        run: |
+          set -euo pipefail
+          MAIN_SHA="$(git ls-remote 'https://github.com/nirmikchawale/HACKVERSE-4.0_NIRMIK_PERSONAL.git' refs/heads/main | awk '{print $1}')"
+          [[ "$MAIN_SHA" =~ ^[a-f0-9]{40}$ ]] || exit 2
+          echo "EXPECTED_MAIN_SHA=$MAIN_SHA" >> "$GITHUB_ENV"
+          echo "SOURCE_MAIN_SHA: $MAIN_SHA"
+      - name: Observe automatic Cloudflare Git-connected delivery (up to 5 minutes)
+        shell: bash
+        env:
+          EDGE_URL: https://agri-foresight.nirmikchawale1.workers.dev
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error --max-time 10 "$EDGE_URL/_release.json" --output /tmp/cf-main-release.json; then
+              CURRENT_SHA="$(node -e 'try{let r=require("/tmp/cf-main-release.json");console.log(r.git_commit_sha||"MISSING")}catch{console.log("INVALID")}' )"
+              echo "PUBLIC_SHA attempt $attempt/30 = $CURRENT_SHA ; EXPECTED_MAIN_SHA = $EXPECTED_MAIN_SHA"
+              if [ "$CURRENT_SHA" = "$EXPECTED_MAIN_SHA" ]; then
+                echo "PUBLIC_MAIN_PARITY_PASS $EXPECTED_MAIN_SHA"
+                exit 0
+              fi
+            else
+              echo "PUBLIC_RECEIPT_UNAVAILABLE attempt $attempt/30"
+            fi
+            sleep 10
+          done
+          echo "::error::Cloudflare did not reach sampled GitHub main revision after bounded checks. Farm Resources may already be publicly certified on an earlier SHA."
+          exit 1
