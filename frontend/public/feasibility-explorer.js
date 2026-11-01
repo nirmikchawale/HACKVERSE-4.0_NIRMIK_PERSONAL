@@ -68,7 +68,7 @@
   for(const [key,title] of [['all','All cases'],['feasible','Feasible'],['blocked','Blocked'],['unknown','Unknown'],['packages','With changes']]){
     const item = node('button', 'fw-stat fw-stat-action fw-facet');
     item.type='button';
-    item.dataset.filter=key;
+    item.dataset.outcome=key;
     item.setAttribute('aria-pressed', String(key==='all'));
     item.setAttribute('aria-label', 'Filter: '+title);
     const name=node('span','',title);
@@ -492,10 +492,10 @@
       }
       setCount('packages', records.filter(item => item.result.packages.length > 0).length);
       sourceLabel.textContent=provenance==='live_fastapi'?'FastAPI · live calculations':'Python snapshot · not live';
-      statusLine.textContent= '100 checked cases · '+
-        (provenance==='live_fastapi'?'engine refreshed ':'snapshot built ')+
-        (provenance==='live_fastapi'?result.evaluated_at_utc:result.snapshot_generated_at_utc)+
-        ' · configured examples, not farm records';
+      statusLine.textContent= provenance==='live_fastapi'
+        ? '100 checked cases · engine refreshed '+result.evaluated_at_utc+' · not farm records'
+        : '100 checked cases · Python snapshot from Cloudflare build '+result.snapshot_generated_at_utc+
+          ' · NOT a personal evaluation';
       diagnosticInfo.textContent=provenance==='live_fastapi'
         ? 'Example API is responding. Your farm assessment still requires separate declared inputs.'
         : 'Live example API unavailable ('+liveError+'). Only the source-verified build-time cases are shown. Run Check API for details.';
