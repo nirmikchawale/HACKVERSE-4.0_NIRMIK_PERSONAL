@@ -7,6 +7,7 @@
   let experience=savedMode(),advanced=false;
   const words={
     en:{
+      introWeather:'Check the model forecast, then choose when you want to finish.',introFarm:'Answer six short questions to describe your available help.',introCheck:'See what the Python calculation found from your answers.',introAction:'See possible changes and work still left to do.',
       farmer:'Farmer View',detailed:'Detailed View',home:'Home',weather:'Check Weather',farm:'My Farm Details',check:'Check My Plan',action:'My Action Plan',help:'Help',
       workQ:'1. How much picked cotton needs attention?',capacityQ:'2. How much can you manage right now?',hoursQ:'3. How many hours will the work take?',deadlineQ:'4. When do you want to finish?',readyQ:'5. Is your work area ready?',confirmQ:'6. Have you checked your answers?',
       workHint:'Enter the total work in your own consistent counting units.',capacityHint:'Use exactly the same counting units as question 1. Count only capacity you can confirm.',hoursHint:'For example, 2.5 means two and a half hours of work.',deadlineHint:'Choose the time you want to finish (Indian time). This is your choice, not a guaranteed rain time.',readyHint:'Answer for your handling place. This does not separately verify people or equipment.',confirmHint:'These are your own entries. We have not independently checked them.',
@@ -19,6 +20,7 @@
       errorTime:'Save a valid finish time on the Weather page.',errorConfirm:'Tick question 6 before checking your plan.',errorAmount:'Enter a valid number for each required amount.',errorScope:'Only Jalna, Maharashtra is supported in this pilot.'
     },
     mr:{
+      introWeather:'हवामानाचा अंदाज पाहा. मग काम कधी संपवायचं ते ठरवा.',introFarm:'सहा सोप्या प्रश्नांत तुमची माहिती भरा.',introCheck:'तुमच्या उत्तरांवर संगणकाने काय सांगितलं ते पाहा.',introAction:'शक्य बदल आणि उरलेलं काम पाहा.',
       farmer:'शेतकऱ्यांसाठी',detailed:'सविस्तर माहिती',home:'मुख्य पान',weather:'हवामान पाहा',farm:'माझ्या शेताची माहिती',check:'माझा बेत तपासा',action:'आता काय करायचं?',help:'मदत',
       workQ:'१. वेचलेला किती कापूस हाताळायचा आहे?',capacityQ:'२. सध्या किती कापसाचं काम करू शकता?',hoursQ:'३. हे काम करायला किती तास लागतील?',deadlineQ:'४. काम कधीपर्यंत संपवायचं आहे?',readyQ:'५. कामाची जागा तयार आहे का?',confirmQ:'६. भरलेली माहिती तपासली का?',
       workHint:'किती काम आहे ते एकाच मोजमापात लिहा.',capacityHint:'पहिल्या प्रश्नातलं तेच मोजमाप वापरा. खात्रीचीच क्षमता लिहा.',hoursHint:'उदा. २.५ म्हणजे अडीच तास.',deadlineHint:'काम संपवायची वेळ तुम्ही ठरवा. पाऊस नक्की कधी येईल हे यातून कळत नाही.',readyHint:'कापूस हाताळायची जागा तयार आहे का ते सांगा. माणसं व साधनांची वेगळी खात्री यात होत नाही.',confirmHint:'ही माहिती तुम्ही दिली आहे. आम्ही शेतावर येऊन तपासलेली नाही.',
@@ -31,6 +33,7 @@
       errorTime:'हवामानाच्या पानावर काम संपवायची योग्य वेळ जतन करा.',errorConfirm:'बेत तपासण्याआधी सहाव्या प्रश्नाला खूण करा.',errorAmount:'सगळ्या आवश्यक प्रश्नांत योग्य अंक भरा.',errorScope:'सध्या फक्त जालना, महाराष्ट्रासाठी हा बेत तपासता येतो.'
     },
     hi:{
+      introWeather:'मौसम का अनुमान देखें। फिर काम पूरा करने का समय चुनें।',introFarm:'छह आसान सवालों में अपने खेत की जानकारी भरें।',introCheck:'आपके जवाबों से सिस्टम ने क्या पाया, देखें।',introAction:'संभव बदलाव और बाकी काम देखें.',
       farmer:'किसान के लिए',detailed:'पूरी जानकारी',home:'मुख्य पेज',weather:'मौसम देखें',farm:'मेरे खेत की जानकारी',check:'मेरी योजना जाँचें',action:'अब क्या करूँ?',help:'मदद',
       workQ:'१. चुनी हुई कितनी कपास सँभालनी है?',capacityQ:'२. अभी कितनी कपास का काम कर सकते हैं?',hoursQ:'३. काम में कितने घंटे लगेंगे?',deadlineQ:'४. काम कब तक पूरा करना है?',readyQ:'५. काम करने की जगह तैयार है?',confirmQ:'६. क्या आपने अपने जवाब जाँच लिए?',
       workHint:'कुल काम एक ही तरह की इकाई में भरें।',capacityHint:'पहले सवाल वाली इकाई ही इस्तेमाल करें। पक्की क्षमता ही भरें।',hoursHint:'जैसे २.५ का मतलब ढाई घंटे है।',deadlineHint:'काम पूरा करने का समय आप चुनें। यह बारिश आने का पक्का समय नहीं है।',readyHint:'कपास सँभालने की जगह तैयार है या नहीं बताएं। लोगों और उपकरणों की अलग जाँच इसमें नहीं हुई है।',confirmHint:'जानकारी आपने दी है। खेत पर इसकी अलग जाँच नहीं हुई है।',
@@ -52,6 +55,10 @@
     const rail=document.querySelector('.rail');
     if(rail&&!byId('experienceSwitch')){
       const w=node('div','experience-switch');w.id='experienceSwitch';w.setAttribute('role','group');w.setAttribute('aria-label','Choose farmer or detailed experience');rail.querySelector('.brand').insertAdjacentElement('afterend',w);
+    }
+    if(!byId('mobileExperienceSwitch')){
+      const w=node('div','experience-switch mobile-experience-switch');w.id='mobileExperienceSwitch';w.setAttribute('role','group');w.setAttribute('aria-label','Choose farmer or detailed experience');
+      document.querySelector('.barcontrols').prepend(w);
     }
     if(!byId('farmerDeadlineRow')){
       const form=document.querySelector('section[data-page="2"] .form-grid');
@@ -109,8 +116,9 @@
     byId('railSearchFeedback').textContent=names.length+' pages';
   }
   function paintSwitch(){
-    const root=byId('experienceSwitch');root.replaceChildren();
-    for(const view of ['farmer','detailed']){
+    for(const root of [byId('experienceSwitch'),byId('mobileExperienceSwitch')]){
+      root.replaceChildren();
+      for(const view of ['farmer','detailed']){
       const b=button(t(view),()=>{
         if(experience===view)return;
         experience=view;advanced=false;
@@ -119,6 +127,7 @@
       },'experience-choice'+(experience===view?' is-active':''));
       b.setAttribute('aria-pressed',String(experience===view));
       root.append(b);
+      }
     }
   }
   function paintLabels(){
@@ -243,10 +252,29 @@
     root.append(button(t('helpAsk'),()=>byId('assistantLaunch')?.click(),'btn primary'));
     root.append(node('p','farmer-limitation',t('helpLimit')));
   }
+  function paintPageCopy(){
+    const fields=[
+      ['pageWeather','weather','weatherLead','introWeather'],
+      ['pageResources','farm','resourceLead','introFarm'],
+      ['pageFeasibility','check','feasLead','introCheck'],
+      ['pageChanges','action','changesLead','introAction']
+    ];
+    for(const [titleKey,farmerKey,introKey,introFarmer] of fields){
+      for(const el of document.querySelectorAll('[data-i18n="'+titleKey+'"]'))
+        el.textContent=experience==='farmer'?t(farmerKey):tr(titleKey);
+      for(const el of document.querySelectorAll('[data-i18n="'+introKey+'"]'))
+        el.textContent=experience==='farmer'?t(introFarmer):tr(introKey);
+    }
+    const run=byId('runAssessment');
+    if(run&&experience==='farmer'){
+      const wanted=run.disabled?t('statusBusy'):t('run');
+      if(run.textContent!==wanted)run.textContent=wanted;
+    }else if(run&&!run.disabled&&run.textContent!==tr('runPreview'))run.textContent=tr('runPreview');
+  }
   function paint(){
     createOnce();document.body.dataset.experience=experience;
     document.body.dataset.advanced=advanced?'open':'closed';
-    paintSwitch();paintLabels();paintNav();paintResources();
+    paintSwitch();paintLabels();paintPageCopy();paintNav();paintResources();
     explanationInfo();paintAction();paintHelp();
   }
   const originalGoto=goto;
@@ -257,8 +285,10 @@
     if(['quantity','capacity','duration','readiness','confirmInputs','deadlineInput'].includes(e.target?.id))paintResources();
   }));
   for(const id of ['resultTitle','packageCount','summaryOutcome','resultReason']){
-    const el=byId(id);if(el)new MutationObserver(()=>{explanationInfo();paintAction();}).observe(el,{childList:true,characterData:true,subtree:true});
+    const el=byId(id);if(el)new MutationObserver(()=>{paintPageCopy();explanationInfo();paintAction();paintResources();}).observe(el,{childList:true,characterData:true,subtree:true});
   }
-  document.addEventListener('agri:farmer-update',()=>{explanationInfo();paintAction();});
+  document.addEventListener('agri:farmer-update',()=>{paintPageCopy();explanationInfo();paintAction();paintResources();});
+  const run=byId('runAssessment');
+  if(run)new MutationObserver(()=>paintPageCopy()).observe(run,{attributes:true,attributeFilter:['disabled'],childList:true});
   paint();
 })();
