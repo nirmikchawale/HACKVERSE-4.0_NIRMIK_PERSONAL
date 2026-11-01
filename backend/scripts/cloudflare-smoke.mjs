@@ -49,6 +49,16 @@ const run=async()=>{
   before:caseData,after:caseData,selected_hour_local:'bad'
  });
  assert(badReplan.status===422,'Malformed forecast hour was not rejected');
+ const scenarios=JSON.parse((await get('/api/feasibility-scenarios')).text);
+ assert(scenarios.count===100 && scenarios.records?.length===100,
+   'Cloudflare Worker did not calculate all 100 scenarios');
+ assert(scenarios.data_kind==='illustrative_planning_cases' &&
+   scenarios.records.every(x=>x.input_kind==='configured_example_not_farm_observation'),
+   'Scenario provenance missing or mislabeled');
+ assert(new Set(scenarios.records.map(x=>x.id)).size===100,
+   'Scenario IDs must be unique');
+ assert(['feasible','blocked','unknown'].every(status=>scenarios.records.some(x=>x.result?.status===status)),
+   'Scenario status coverage incomplete');
  const [f,n]=await Promise.all([
    get('/api/forecast').then(x=>JSON.parse(x.text)),
    get('/api/government-climate').then(x=>JSON.parse(x.text))

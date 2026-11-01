@@ -1,6 +1,6 @@
 {
   "name": "agri-foresight",
-  "main": "worker.py",
+  "main": "backend/worker.py",
   "compatibility_date": "2026-10-30",
   "compatibility_flags": [
     "python_workers"

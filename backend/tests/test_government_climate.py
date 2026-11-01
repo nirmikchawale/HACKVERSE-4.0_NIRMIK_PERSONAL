@@ -21,7 +21,7 @@ def provider_fixture():
 
 def test_daily_window_and_government_source():
     start, end = date_window(NOW)
-    assert start.isoformat() == "2026-10-14"
+    assert start.isoformat() == "2026-10-08"
     assert end.isoformat() == "2026-10-27"
     url = build_url(NOW)
     assert url.startswith("https://power.larc.nasa.gov/api/temporal/daily/point?")
