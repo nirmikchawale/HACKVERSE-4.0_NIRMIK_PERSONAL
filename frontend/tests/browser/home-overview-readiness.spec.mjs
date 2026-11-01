@@ -132,3 +132,39 @@ test('all At a Glance values and captions share vertical anchors even when one c
     expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
   }
 });
+
+test('KPI captions stay aligned with a multiline weather fallback, without truncating the message',async({page})=>{
+  await sources(page,forecast());
+  for(const width of [1545,1440,1024,390]){
+    await page.setViewportSize({width,height:900});
+    await page.goto('/');
+    await expect(page.locator('#resourcesValue')).toHaveText('4 planning inputs');
+    // UI-only text fixture: simulate a longer unavailable-source explanation,
+    // not an actual or fabricated forecast measurement.
+    await page.locator('#weatherValue').evaluate(el=>{
+      el.textContent='Refresh weather evidence — source temporarily unavailable';
+    });
+    const cards=await page.locator('section[data-page="0"] .kpis > .kpi').evaluateAll(elements=>
+      elements.map(card=>{
+        const value=card.querySelector('.kpi-value'),sub=card.querySelector('.kpi-sub');
+        return {valueY:value.getBoundingClientRect().y,
+          captionY:sub.getBoundingClientRect().y,
+          valueText:value.textContent?.trim(),
+          margin:getComputedStyle(value).marginTop,
+          layout:getComputedStyle(card).display,
+          subgrid:getComputedStyle(card).gridTemplateRows};
+      }));
+    expect(cards).toHaveLength(4);
+    expect(cards.every(c=>c.margin==='0px')).toBe(true);
+    const groups=width<=1050?[cards.slice(0,2),cards.slice(2)]:[cards];
+    for(const group of groups){
+      const valueY=group[0].valueY,captionY=group[0].captionY;
+      expect(group.every(item=>Math.abs(item.valueY-valueY)<=2)).toBe(true);
+      expect(group.every(item=>Math.abs(item.captionY-captionY)<=2),
+        'Multiline weather fallback must not displace neighboring captions at '+width+'px').toBe(true);
+    }
+    const text=await page.locator('#weatherValue').textContent();
+    expect(text).toContain('source temporarily unavailable');
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1)).toBe(false);
+  }
+});
