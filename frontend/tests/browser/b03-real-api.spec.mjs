@@ -105,7 +105,8 @@ test('unified desktop uses genuine FastAPI and returns minimal packages',async({
  await page.locator('#navDesktop [data-nav="2"]').click();await page.locator('#quantity').fill('10');await page.locator('#capacity').fill('6');
  await page.locator('#duration').fill('1');await page.locator('#readiness').selectOption('yes');
  await page.locator('#confirmInputs').check();await page.locator('#saveResources').click();
- await page.locator('#addChange').click();await page.locator('#changeEditor [data-x=amount]').fill('4');
+ await expect(page.locator('#changeEditor .change-row')).toHaveCount(1);
+ await page.locator('#changeEditor [data-x=amount]').fill('4');
  await page.locator('#changeEditor [data-x=rid]').fill('genuine-extra');
  await page.locator('#changeEditor [data-x=availability]').selectOption('confirmed');
  await page.locator('#navDesktop [data-nav="3"]').click();await page.locator('#runAssessment').click();
