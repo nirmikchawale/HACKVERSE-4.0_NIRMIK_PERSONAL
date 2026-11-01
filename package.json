@@ -4,7 +4,7 @@
   "private": true,
   "description": "Dependency-free root build entry for the Agri Foresight Cloudflare full-stack Worker",
   "scripts": {
-    "build": "node scripts/prepare-cloudflare-release.mjs && npm --prefix frontend install && npm --prefix frontend run build",
+    "build": "node scripts/prepare-cloudflare-release.mjs && npm --prefix frontend install && npm --prefix frontend run build && uv run pywrangler sync && node scripts/assert-cloudflare-sdk.mjs",
     "deploy:cloudflare": "uv run pywrangler deploy",
     "preview:cloudflare": "uv run pywrangler preview"
   }

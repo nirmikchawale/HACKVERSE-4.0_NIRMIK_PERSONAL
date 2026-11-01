@@ -70,6 +70,7 @@ jobs:
           print("Cloudflare pywrangler and SDK versions PASS:", cli, sdk)
           PY
           uv run pywrangler deploy --dry-run --outdir /tmp/agri-foresight-bundle
+          node scripts/assert-cloudflare-sdk.mjs
           python - <<'PYCODE'
           from pathlib import Path
           bundle=Path('/tmp/agri-foresight-bundle')

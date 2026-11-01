@@ -1,0 +1,21 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+import {dirname,resolve} from 'node:path';
+const dir=dirname(fileURLToPath(import.meta.url));
+const root=resolve(dir,'..','..');
+test('Cloudflare build creates real vendored SDK before preview deployment',()=>{
+  const pkg=JSON.parse(readFileSync(resolve(root,'package.json'),'utf8'));
+  const script=pkg.scripts.build;
+  assert.match(script,/uv run pywrangler sync/);
+  assert.match(script,/node scripts\/assert-cloudflare-sdk\.mjs/);
+  assert(script.indexOf('npm --prefix frontend run build')<script.indexOf('uv run pywrangler sync'));
+  assert(script.indexOf('uv run pywrangler sync')<script.indexOf('assert-cloudflare-sdk.mjs'));
+  const check=readFileSync(resolve(root,'scripts','assert-cloudflare-sdk.mjs'),'utf8');
+  assert.match(check,/python_modules/);
+  assert.match(check,/workers/);
+  assert.match(check,/__init__\.py/);
+  assert.match(check,/CF-SDK-MISSING/);
+  assert.doesNotMatch(check,/disable_python_external_sdk/);
+});
