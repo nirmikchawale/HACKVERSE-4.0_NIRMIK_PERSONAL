@@ -65,6 +65,7 @@
     if(previousPlace!==place){previousPlace=place;live.forecast=null;live.selectedHour=null;clearResult();}
     oldSummaries();
     renderForecastQuality();
+    renderHourlyEvidence();
     here('weatherValue').textContent=live.forecast?(isCurrent()?'Model forecast '+(live.forecast.hours.length)+' h':live.forecast.status.toUpperCase()):'No verified forecast';
   };
   updateWeatherUI=renderWeather;
@@ -103,6 +104,95 @@
       rainCount:f.hours.filter(h=>h.precipitation_mm!==null).length,
       chanceCount:f.hours.filter(h=>h.precipitation_probability_pct!==null).length,
       duplicateHours:f.hours.length-unique.size,gapCount};
+  }
+
+  // EX-09: inspect every returned model hour, not just the first 24 bars.
+  // Values are already validated by FastAPI; no local weather prediction.
+  const hourlyPanel=el('section','panel hourly-evidence-panel');
+  hourlyPanel.id='hourlyEvidencePanel';
+  hourlyPanel.setAttribute('aria-label','All verified modeled forecast hours');
+  const hourlyTitle=el('h2','','Full model-hour timeline');
+  const hourlyIntro=el('p','hourly-evidence-note',
+    'Source-native modeled rain in millimeters and hourly probability, not observed rain or a crop-safety threshold.');
+  const hourlyControls=el('div','hourly-evidence-controls');
+  const hourlyLabel=el('label','hourly-evidence-filter');
+  hourlyLabel.append(el('span','','Filter by model date (IST)'));
+  const hourlyDate=el('select','hourly-evidence-select');hourlyDate.id='hourlyEvidenceDate';
+  hourlyDate.setAttribute('aria-label','Filter hourly model evidence by Indian date');
+  hourlyLabel.append(hourlyDate);hourlyControls.append(hourlyLabel);
+  const hourlySummary=el('p','hourly-evidence-summary','No current verified model hours.');
+  hourlySummary.id='hourlyEvidenceStatus';hourlySummary.setAttribute('role','status');
+  hourlyControls.append(hourlySummary);
+  const hourlyTableContainer=el('div','hourly-evidence-scroll');
+  hourlyTableContainer.id='hourlyEvidenceTable';
+  hourlyTableContainer.setAttribute('tabindex','0');
+  hourlyTableContainer.setAttribute('aria-label','Horizontally scrollable forecast hour table');
+  hourlyPanel.append(hourlyTitle,hourlyIntro,hourlyControls,hourlyTableContainer);
+  qcPanel.insertAdjacentElement('afterend',hourlyPanel);
+  hourlyDate.addEventListener('change',renderHourlyEvidence);
+  function renderHourlyEvidence(){
+    hourlyTableContainer.replaceChildren();
+    const evidence=forecastCoverage(),source=evidence?.source;
+    const hours=source?.hours||[];
+    const distinctDates=[...new Set(hours.map(h=>h.time.slice(0,10)))];
+    const retained=hourlyDate.value;
+    hourlyDate.replaceChildren();
+    const all=el('option','','All available model dates');all.value='all';hourlyDate.append(all);
+    for(const date of distinctDates){
+      const option=el('option','',date+' (IST)');option.value=date;hourlyDate.append(option);
+    }
+    hourlyDate.value=distinctDates.includes(retained)?retained:'all';
+    hourlyDate.disabled=!evidence;
+    if(!evidence){
+      hourlySummary.textContent=okLocation()?
+        'No eligible current model forecast. Refresh weather to inspect genuine source hours.':
+        'Hourly model data is unavailable for locations outside the Jalna pilot.';
+      hourlyTableContainer.append(el('p','hourly-evidence-note','Unavailable, expired and unsupported sources never display sample data.'));
+      return;
+    }
+    const filtered=hours.filter(h=>hourlyDate.value==='all'||h.time.startsWith(hourlyDate.value));
+    hourlySummary.textContent='Displaying '+filtered.length+' of '+hours.length+
+      ' authenticated model hour record(s); all times are IST. Each selected hour is only a proposed planning deadline.';
+    const table=el('table','hourly-evidence-table');
+    const head=el('thead'),heading=el('tr');
+    for(const value of ['Model hour · IST','Modeled rain · mm','Model rain probability · %','Planning action']){
+      const th=el('th','',value);th.scope='col';heading.append(th);
+    }
+    head.append(heading);table.append(head);
+    const body=el('tbody');
+    for(const hour of filtered){
+      const tr=el('tr');
+      const timeCell=el('th','',hour.time.replace('T',' '));timeCell.scope='row';
+      tr.append(timeCell);
+      tr.append(el('td','',hour.precipitation_mm===null?'Unavailable':num(hour.precipitation_mm)+' mm'));
+      tr.append(el('td','',hour.precipitation_probability_pct===null?'Unavailable':
+        num(hour.precipitation_probability_pct)+'%'));
+      const actionCell=el('td');
+      const action=el('button','btn hourly-evidence-action','Use as proposed deadline');
+      action.type='button';action.dataset.hour=hour.time;
+      const validFuture=Number.isFinite(Date.parse(hour.time+':00+05:30'))&&
+        Date.parse(hour.time+':00+05:30')>Date.now()+60000;
+      action.disabled=!validFuture;
+      action.setAttribute('aria-label','Use '+hour.time.replace('T',' ')+' IST as a proposed, not verified-safe, planning deadline');
+      if(!validFuture)action.title='Past/current model hours cannot be selected as future deadlines.';
+      action.addEventListener('click',()=>{
+        const fresh=forecastCoverage();
+        const stamp=Date.parse(hour.time+':00+05:30');
+        if(!fresh||!fresh.source.hours.some(h=>h.time===hour.time)||
+          !Number.isFinite(stamp)||stamp<=Date.now()+60000){
+          renderWeather();
+          here('deadlineNotice').textContent='The model hour is no longer valid. Refresh the forecast before selecting another.';
+          return;
+        }
+        here('deadlineInput').value=hour.time;
+        live.selectedHour=hour.time;
+        additional.deadlineSource='model';
+        here('deadlineOriginPreview').textContent='Proposed hour chosen from source-validated Open-Meteo model evidence. Not a safe-rain threshold.';
+        here('deadlineNotice').textContent='Model hour selected. Click Save candidate deadline to confirm this assumption.';
+      });
+      actionCell.append(action);tr.append(actionCell);body.append(tr);
+    }
+    table.append(body);hourlyTableContainer.append(table);
   }
   function renderForecastQuality(){
     qcMetrics.replaceChildren();
@@ -154,6 +244,7 @@
   });
   function renderWeather(){
     renderForecastQuality();
+    renderHourlyEvidence();
     const chart=here('weatherChart'),mode=here('weatherChartMode'),chip=here('forecastSourceChip');
     chart.replaceChildren();here('toggleForecast').textContent='Refresh live forecast';here('clearForecast').textContent='Clear forecast view';
     if(!okLocation()){chip.textContent='UNSUPPORTED LOCATION';mode.textContent='Jalna-only data coverage';chart.append(el('div','weather-empty','Forecast for this location is not supported. Return to Jalna, Maharashtra; no other-location data is fabricated.'));here('weatherValue').textContent='Unsupported';return;}
