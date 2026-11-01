@@ -11,6 +11,7 @@ from .planning import compare_plans, replan_from_forecast, parse_selected_hour_l
 from .weather import get_forecast, CACHE_FILE, read_cache
 from .sources import REGISTRY,RULES
 from .govclimate import get_government_climate
+from .scenarios import get_scenarios
 
 class CompareRequest(BaseModel):
     """Full, separately user-declared before/after plans (engine validates contents)."""
@@ -74,6 +75,10 @@ def forecast(refresh:bool=False):
 @app.get('/api/government-climate')
 def government_climate(refresh: bool = False):
     return get_government_climate(refresh=refresh)
+
+@app.get('/api/feasibility-scenarios')
+def feasibility_scenarios():
+    return get_scenarios()
 
 @app.get('/api/sources')
 def sources():return {'sources':REGISTRY,'operational_rules':RULES,
