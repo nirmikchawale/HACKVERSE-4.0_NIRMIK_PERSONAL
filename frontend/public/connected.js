@@ -747,6 +747,13 @@
   const qcExport=el('button','btn','Export verified modeled hours (CSV)');
   qcExport.id='exportForecastEvidence';qcExport.type='button';qcExport.disabled=true;
   qcPanel.append(qcExport);
+  // The optional evidence receipt stays available, but outside the two decision cards.
+  const networkFold=el('details','wx-network-disclosure');
+  networkFold.id='weatherNetworkDetails';
+  networkFold.append(el('summary','wx-network-toggle',
+    state.lang==='mr'?'नेटवर्क पावत्या तपासा':state.lang==='hi'?'नेटवर्क रसीद देखें':'Inspect network receipts'));
+  networkFold.append(connectivity);
+  qcPanel.append(networkFold);
   qcPanel.append(el('small','source-qc-disclosure',
     'Export is available only for the supported Jalna pilot and a validated current model response. No farmer declarations are included.'));
   document.querySelector('section.section[data-page="1"]').append(qcPanel);
@@ -2663,7 +2670,10 @@
   };
   void loadGovernmentClimate(false);
 
-  here('language').addEventListener('change',()=>{renderForecastQuality();renderHourlyEvidence();renderWeather();});
+  here('language').addEventListener('change',()=>{
+    networkFold.querySelector('summary').textContent=state.lang==='mr'?'नेटवर्क पावत्या तपासा':state.lang==='hi'?'नेटवर्क रसीद देखें':'Inspect network receipts';
+    renderForecastQuality();renderHourlyEvidence();renderWeather();
+  });
 
   // Override obsolete offline-prototype copy, including on language changes.
   // Model outputs remain labeled; no simulated values appear in the real UI.
