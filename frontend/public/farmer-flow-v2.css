@@ -118,3 +118,6 @@ body[data-experience="farmer"] .fv2-purpose{display:block!important;margin:0 0 1
 body[data-experience="farmer"] .fv2-crop{margin:0 0 18px}
 
 .fv2-extra .field[hidden],.fv2-extra small[hidden]{display:none!important}
+
+/* Do not leak Farmer View marketing blocks into the original Detailed View. */
+body[data-experience="detailed"] .fv2-crop{display:none!important}
