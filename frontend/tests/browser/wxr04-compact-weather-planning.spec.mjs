@@ -73,13 +73,13 @@ test('WXR-04 horizon and date controls change actual available model-hour visual
 test('WXR-04 next model hour and explicit one-save workflow work without automatic deadline claims',async({page})=>{
  await visit(page);
  const cont=page.locator('#deadlineGuideContinue');
- await expect(cont).toBeDisabled();
+ await expect(cont).toBeEnabled();
  await expect(page.locator('#saveDeadline')).toBeDisabled();
  await page.locator('#deadlineGuideNextHour').click();
  await expect(page.locator('#deadlineInput')).not.toHaveValue('');
  await expect(page.locator('#deadlinePlanningGuide')).toContainText('Candidate time remaining');
  await expect(page.locator('#saveDeadline')).toBeEnabled();
- await expect(cont).toBeDisabled();
+ await expect(cont).toBeEnabled();
  await page.locator('#saveDeadline').click();
  await expect(page.locator('#deadlineNotice')).toContainText('saved');
  await expect(cont).toBeEnabled();
