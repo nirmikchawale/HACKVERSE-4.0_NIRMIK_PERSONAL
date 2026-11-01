@@ -59,7 +59,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          uv run python - <<'PY'
+          uv run --with packaging python - <<'PY'
           import importlib.metadata as md
           from packaging.version import Version
           cli=md.version("workers-py")
