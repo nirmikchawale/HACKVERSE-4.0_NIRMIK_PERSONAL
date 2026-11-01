@@ -37,7 +37,7 @@ try{
   }
   const cssFiles=['/model-evidence.css','/forecast-windows.css',
     '/source-intelligence.css','/source-print.css','/ex18-climate.css',
-    '/agri-typography.css','/agri-sidebar.css'];
+    '/agri-typography.css','/agri-sidebar.css','/source-workbench.css'];
   for(const path of cssFiles){
     const result=await page.request.get(origin+path,{timeout:15000});
     assert(result.status()===200,'Missing current theme/feature stylesheet '+path);
@@ -75,6 +75,20 @@ try{
   assert(await page.locator('#navDesktop button[data-nav]:visible').count()===6,
     'Esc must restore all workspace routes');
 
+  // Interactive Cloudflare workbench must work on the exact deployed production SHA.
+  await page.locator('#evidenceSourceGrid [data-source-id="imd"]').waitFor({state:'attached',timeout:25000});
+  assert(await page.locator('#evidenceSourceGrid .source-matrix-card').count()===5,'Five source choices missing');
+  await page.locator('#evidenceSourceGrid [data-source-id="imd"]').click();
+  assert((await page.locator('#sourceWorkbenchDetail').textContent()).includes('no validated live IMD feed'),'Do not imply live IMD connection');
+  const official=page.locator('#sourceWorkbenchDetail a.source-detail-action.primary');
+  assert(await official.getAttribute('href')==='https://mausam.imd.gov.in/responsive/districtWiseWarning.php','Official IMD handoff missing');
+  await page.locator('[data-filter="available"]').click();
+  const responsive=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
+  await page.locator('[data-filter="attention"]').click();
+  const missing=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
+  assert(responsive+missing===5,'Source filters do not represent exactly five independent statuses');
+  await page.locator('[data-filter="all"]').click();
+  assert(await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count()===5,'All sources not restored');
   // Guard core planning controls as well as the newer evidence modules. This
   // frontend-path change also causes the mandatory real-backend gate to run.
   const selectors=['#apiConnectionStatus','#sourceLedger','#deadlineInput',
@@ -117,7 +131,7 @@ try{
   console.log(JSON.stringify({
     result:'PUBLIC_BROWSER_PASS',url:origin,commit:expected,
     sourceMarkers:Object.keys(features),sixPages:true,desktop:true,mobile:true,
-    languages:['en','mr','hi'],print:true,realBackendSeparateSmoke:true
+    languages:['en','mr','hi'],print:true,realBackendSeparateSmoke:true,interactiveSourceWorkbench:true
   }));
   await mobile.close();await desktop.close();
 }finally{
