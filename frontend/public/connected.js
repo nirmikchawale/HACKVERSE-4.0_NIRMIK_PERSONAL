@@ -11,10 +11,11 @@
   // Original palette, layout and source-native data remain untouched.
   const typographyStyle=document.createElement('link');
   typographyStyle.rel='stylesheet';typographyStyle.href='/agri-typography.css';
-  document.head.append(typographyStyle);
+  if(!document.querySelector('link[href="/agri-typography.css"]'))document.head.append(typographyStyle);
   const deadlineStyles=document.createElement('link');
   deadlineStyles.rel='stylesheet';deadlineStyles.href='/deadline-comparisons.css';
   document.head.append(deadlineStyles);
+  const css04=document.createElement('link');css04.rel='stylesheet';css04.href='/evidence-04.css';document.head.append(css04);
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;};
   const num=n=>Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'Unknown';
   const okLocation=()=>state.place?.state==='Maharashtra'&&state.place?.city?.trim().toLowerCase()==='jalna';
@@ -393,6 +394,42 @@
       new Date().toISOString().slice(0,10)+'.csv';
     link.click();setTimeout(()=>URL.revokeObjectURL(uri),1000);
   });
+  // Descriptive sums of genuine future model hours, never a safety cutoff.
+  function renderForecastWindows(chart,forecast){
+    const now=Date.now(),seen=new Set();
+    const future=forecast.hours.filter(h=>{
+      const at=Date.parse(h.time+':00+05:30');
+      if(!Number.isFinite(at)||at<now||seen.has(h.time))return false;
+      seen.add(h.time);return true;
+    }).sort((a,b)=>a.time.localeCompare(b.time));
+    if(!future.length){
+      chart.append(el('p','forecast-window-label','No future source-native hourly records available; no model totals calculated.'));
+      return;
+    }
+    const start=Date.parse(future[0].time+':00+05:30');
+    const byHour=new Map(future.map(h=>[Date.parse(h.time+':00+05:30'),h]));
+    chart.append(el('p','forecast-window-label','Upcoming model hours beginning '+
+      future[0].time.replace('T',' ')+' IST · descriptive precipitation sums only; no safe-action rainfall threshold.'));
+    const grid=el('div','forecast-window-grid');grid.id='forecastWindowSummary';
+    for(const n of [6,12,24]){
+      const rows=Array.from({length:n},(_,i)=>byHour.get(start+i*3_600_000)).filter(Boolean),
+        rain=rows.filter(h=>h.precipitation_mm!==null),
+        prob=rows.filter(h=>h.precipitation_probability_pct!==null),
+        complete=rows.length===n&&rain.length===n;
+      const card=el('article','forecast-window-card');
+      card.append(el('strong','','Next '+n+' forecast hours'));
+      card.append(el('span','window-value',rain.length?
+        (complete?'Modeled rainfall: ':'Known partial rainfall: ')+
+        num(rain.reduce((total,h)=>total+h.precipitation_mm,0))+' mm':'Rainfall unavailable'));
+      card.append(el('small','','Rainfall coverage: '+rain.length+'/'+n+' hourly values. '+
+        (complete?'All requested hours reported.':'Incomplete; missing hours are not dry hours.')));
+      card.append(el('small','','Highest individual-hour model probability: '+
+        (prob.length?num(Math.max(...prob.map(h=>h.precipitation_probability_pct)))+'%':'Unavailable')+
+        '. Not a probability for the whole window.'));
+      grid.append(card);
+    }
+    chart.append(grid);
+  }
   function renderWeather(){
     renderCandidateComparisonChoices();
     renderForecastQuality();
@@ -414,6 +451,7 @@
     mode.textContent='Open-Meteo • '+(f.hours.length)+' model hours • precipitation (mm), probability (%) • IST';
     const provenance=el('p','live-provenance','Retrieved '+f.retrieved_at_utc+' · age '+num(f.forecast_age_hours)+' h · '+(f.attribution||'Open-Meteo')+'. Model output, not observed rain or safe crop timing.');
     chart.append(provenance);
+    renderForecastWindows(chart,f);
     const bars=el('div','weather-bars');
     const sample=f.hours.slice(0,24);
     const max=Math.max(0.1,...sample.map(h=>h.precipitation_mm??0));
@@ -446,13 +484,21 @@
   async function refreshForecast(refresh){
     if(live.forecastLoading)return;
     live.forecastLoading=true;
-    here('toggleForecast').disabled=true;here('forecastSourceChip').textContent='FETCHING';
+    here('toggleForecast').disabled=true;
+    here('toggleForecast').setAttribute('aria-busy','true');
+    here('toggleForecast').textContent='Refreshing forecast…';
+    here('forecastSourceChip').textContent='FETCHING';
     try {
       if(!okLocation())throw new Error('Only Jalna is supported by the current forecast service.');
       live.forecast=validForecast(await json('/api/forecast'+(refresh?'?refresh=true':'')));
       live.selectedHour=null;
     } catch(e){live.forecast=null;here('deadlineNotice').textContent=e.message;}
-    finally{live.forecastLoading=false;here('toggleForecast').disabled=false;renderWeather();}
+    finally{
+      live.forecastLoading=false;
+      here('toggleForecast').disabled=false;
+      here('toggleForecast').removeAttribute('aria-busy');
+      renderWeather();
+    }
   }
   here('toggleForecast').addEventListener('click',e=>{e.stopImmediatePropagation();refreshForecast(true);},true);
   here('clearForecast').addEventListener('click',e=>{e.stopImmediatePropagation();live.forecast=null;live.selectedHour=null;renderWeather();},true);
@@ -542,7 +588,7 @@
   }
   async function assess(){
     if(live.busy)return;
-    live.busy=true;const button=here('runAssessment');button.disabled=true;button.textContent='Evaluating…';
+    live.busy=true;const button=here('runAssessment');button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='Evaluating…';
     clearResult();
     try {
       const req=requestFromForm();
@@ -550,7 +596,7 @@
       live.request=req;live.evaluation=result;
       here('resourceNotice').textContent='Farmer-reported inputs saved for this session; evaluated by FastAPI. Resources are not independently certified.';
     } catch(e){live.error=e.message;here('resourceNotice').textContent=e.message;here('resultReason').textContent=e.message;}
-    finally{live.busy=false;button.disabled=false;button.textContent='Evaluate using FastAPI';renderAssessment();renderPackages();renderSummary();}
+    finally{live.busy=false;button.disabled=false;button.removeAttribute('aria-busy');button.textContent='Evaluate using FastAPI';renderAssessment();renderPackages();renderSummary();}
   }
   updateAssessmentUI=renderAssessment;
   function renderAssessment(){
@@ -984,7 +1030,9 @@
   govRange.append(optSeven,optAll);
   const govDownload=el('button','btn','Download verified NASA JSON');
   govDownload.id='downloadGovernmentClimate';govDownload.type='button';govDownload.disabled=true;
-  govActions.append(govRefresh,govRange,govDownload,govStatus);
+  const govCSV=el('button','btn','Download verified NASA CSV');
+  govCSV.id='downloadGovernmentCSV';govCSV.type='button';govCSV.disabled=true;
+  govActions.append(govRefresh,govRange,govDownload,govCSV,govStatus);
   const govRows=el('div','gov-history-grid');
   govRows.id='governmentClimateRows';
   const govDetail=el('p','gov-source-detail');
@@ -1065,16 +1113,20 @@
     const token=++governmentClimateRequest;
     governmentClimateData=null;governmentClimateVisibleState='loading';governmentClimateErrorMessage='';
     govDownload.disabled=true;
+    govCSV.disabled=true;
     govSummary.textContent='';
     govRows.replaceChildren();
     if(!okLocation()){
+      govRefresh.disabled=false;govRefresh.removeAttribute('aria-busy');
+      govRefresh.textContent=historyText('refresh');
       governmentClimateVisibleState='unsupported';
       govStatus.textContent=historyText('unsupported');
       govRows.append(el('p','gov-intro',historyText('unsupportedIntro')));
       govDetail.textContent=historyText('unsupportedDetail');
       return;
     }
-    govRefresh.disabled=true;
+    govRefresh.disabled=true;govRefresh.setAttribute('aria-busy','true');
+    govRefresh.textContent=historyText('fetching');
     govStatus.textContent=historyText('fetching');
     try{
       const data=await json('/api/government-climate'+(refresh?'?refresh=true':''));
@@ -1103,7 +1155,7 @@
       governmentClimateVisibleState='verified';
       governmentClimateData=data;
       govDownload.disabled=false;
-      renderGovernmentClimate(data);
+       govCSV.disabled=false;      renderGovernmentClimate(data);
       govDetail.replaceChildren();
       const link=el('a','','NASA POWER official daily API');link.href='https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
       link.rel='noopener noreferrer';link.target='_blank';
@@ -1115,7 +1167,10 @@
       govStatus.textContent=historyText('invalid');
       govRows.replaceChildren(el('p','gov-intro',historyText('invalidIntro')+': '+e.message));
       govDetail.textContent=historyText('invalidDetail');
-    }finally{if(token===governmentClimateRequest)govRefresh.disabled=false;}
+    }finally{if(token===governmentClimateRequest){
+      govRefresh.disabled=false;govRefresh.removeAttribute('aria-busy');
+      govRefresh.textContent=historyText('refresh');
+    }}
   }
   govRefresh.addEventListener('click',()=>{void loadGovernmentClimate(true);});
   govRange.addEventListener('change',()=>{if(governmentClimateData&&okLocation())renderGovernmentClimate(governmentClimateData);});
@@ -1129,6 +1184,25 @@
     link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
   here('language').addEventListener('change',translateGovernmentPanel);
+  govCSV.addEventListener('click',()=>{
+    if(!governmentClimateData||!okLocation()||govCSV.disabled)return;
+    const d=governmentClimateData;
+    const columns=['date','precipitation_mm_day','temperature_c','source','data_kind','retrieved_at_utc','source_url'];
+    const txt=value=>{
+      let out=String(value??'');
+      if(/^\s*[=+\-@\t\r]/.test(out))out="'"+out;
+      return '"'+out.replace(/"/g,'""')+'"';
+    };
+    const n=value=>typeof value==='number'&&Number.isFinite(value)?String(value):'';
+    const lines=d.days.map(day=>[txt(day.date),n(day.precipitation_mm_day),n(day.temperature_c),
+      txt(d.source),txt(d.data_kind),txt(d.retrieved_at_utc),
+      txt(d.source_url||'https://power.larc.nasa.gov/docs/services/api/temporal/daily/')].join(','));
+    const content='\uFEFF'+columns.join(',')+'\r\n'+lines.join('\r\n')+'\r\n';
+    const blob=new Blob([content],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob),anchor=el('a');
+    anchor.href=url;anchor.download='agri-foresight-nasa-jalna-'+d.latest_data_date+'.csv';
+    anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
   let governmentLocation=state.place.city+'|'+state.place.state;
   const updateSummaryAndLocation=updateSummaries;
   updateSummaries=function(){

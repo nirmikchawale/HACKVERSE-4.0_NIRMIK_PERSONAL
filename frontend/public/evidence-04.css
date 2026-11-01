@@ -1,0 +1,8 @@
+/* EX-04 source-native evidence cards; existing Agri Foresight tokens. */
+.forecast-window-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0 20px}
+.forecast-window-card{padding:16px;min-width:0;border:1px solid var(--border);border-radius:14px;background:var(--card);color:var(--ink)}
+.forecast-window-card strong{display:block;font-size:14px;line-height:1.4}
+.forecast-window-card .window-value{display:block;margin:8px 0;font-size:18px;font-weight:750;color:var(--teal)}
+.forecast-window-card small{display:block;font-size:var(--m3-body-small, .75rem);line-height:1.35;color:var(--muted)}
+.forecast-window-label{margin:13px 0 7px;font-size:var(--m3-label-medium, .75rem);line-height:1.35;color:var(--muted)}
+@media(max-width:720px){.forecast-window-grid{grid-template-columns:1fr}.forecast-window-card{padding:13px}}

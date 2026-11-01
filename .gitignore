@@ -7,3 +7,12 @@ dist/
 __pycache__/
 .pytest_cache/
 .venv/
+frontend/public/_release.json
+python_modules/
+node_modules/.cache/
+*.local.log
+.wrangler/
+
+.venv-workers/
+*.egg-info/
+frontend/test-results/
