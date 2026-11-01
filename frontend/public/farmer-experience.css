@@ -43,3 +43,18 @@ html[lang="mr"] .farmer-info-card,html[lang="hi"] .farmer-info-card{font-family:
 @media(max-width:900px){.farmer-top-toggle{display:inline-flex!important} .farmer-view-switch{margin-inline:4px}}
 @media(max-width:650px){.farmer-info-card{padding:15px 14px;border-radius:14px}.farmer-info-card p{font-size:13px}.farmer-simple-counts{grid-template-columns:1fr}html[data-farmer-view="on"] section.section[data-page="2"] .form-grid{grid-template-columns:1fr}html[data-farmer-view="on"] #navMobile button{font-size:10px;line-height:1.2;min-width:0}}
 @media(prefers-reduced-motion:reduce){.farmer-nav-link,.farmer-view-option{transition:none!important}}
+
+/* Farmer View makes only the actionable controls primary. Details remain in Detailed View. */
+.farmer-input-tip{display:none;margin-top:6px;font-size:12px;font-weight:450;line-height:1.55;color:var(--muted)}
+html[data-farmer-view="on"] .farmer-input-tip{display:block}
+.farmer-quick-packages{display:none;flex-direction:column;gap:10px}
+html[data-farmer-view="on"] .farmer-quick-packages{display:flex}
+.farmer-package-btn{border:1px solid var(--border);color:var(--ink);background:var(--card);border-radius:14px;min-height:68px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;padding:13px 15px;cursor:pointer;text-align:start;max-width:100%}
+.farmer-package-btn:hover,.farmer-package-btn.selected{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 10%,var(--card))}
+.farmer-package-btn strong{font-size:14px}.farmer-package-btn small{font-size:12px;line-height:1.55;color:var(--muted)}
+html[data-farmer-view="on"] #packageList{display:none!important}
+html[data-farmer-view="on"] #feasibilityWorkbench,
+html[data-farmer-view="on"] #forecastQualityPanel{display:none!important}
+html[data-farmer-view="on"] section.section[data-page="4"] .guidance-grid{display:none!important}
+html[data-farmer-view="on"] section.section[data-page="4"] .package-list+.farmer-disclaimer{display:block}
+.farmer-package-btn:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
