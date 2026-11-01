@@ -14,6 +14,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict
 
 from .engine import InputError, evaluate, validate
+from .scenarios import get_scenarios
 from .planning import compare_plans, parse_selected_hour_local, replan_from_forecast
 from .sources import REGISTRY, RULES
 from .weather import (
@@ -227,6 +228,10 @@ async def forecast(refresh: bool = False):
 @app.get("/api/government-climate")
 async def government_climate(refresh: bool = False):
     return await edge_government_climate(refresh=refresh)
+
+@app.get("/api/feasibility-scenarios")
+async def feasibility_scenarios():
+    return get_scenarios()
 
 
 @app.get("/api/sources")
