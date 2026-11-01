@@ -59,6 +59,14 @@ const run=async()=>{
    'Scenario IDs must be unique');
  assert(['feasible','blocked','unknown'].every(status=>scenarios.records.some(x=>x.result?.status===status)),
    'Scenario status coverage incomplete');
+ const snapshot=JSON.parse((await get('/feasibility-examples-snapshot.json')).text);
+ assert(snapshot.catalog_source==='prebuilt_python_engine_snapshot' &&
+   snapshot.count===100 && snapshot.records?.length===100,
+   'Python-built snapshot must contain 100 genuine engine-calculated cases');
+ assert(snapshot.records.every(row=>row.input_kind==='configured_example_not_farm_observation'),
+   'Snapshot may not imply actual farmer observations');
+ if(process.env.EXPECTED_SHA)assert(snapshot.snapshot_source_sha===process.env.EXPECTED_SHA,
+   'Snapshot source SHA does not match the certified release');
  const [f,n]=await Promise.all([
    get('/api/forecast').then(x=>JSON.parse(x.text)),
    get('/api/government-climate').then(x=>JSON.parse(x.text))
