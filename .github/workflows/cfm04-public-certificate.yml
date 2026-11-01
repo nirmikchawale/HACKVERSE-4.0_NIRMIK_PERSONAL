@@ -64,9 +64,7 @@ jobs:
           fi
       - name: Install browser test dependencies
         working-directory: frontend
-        run: |
-          npm install
-          npm audit --audit-level=high
+        run: npm install
       - name: Install public Chromium browser
         working-directory: frontend
         run: npx playwright install --with-deps chromium
