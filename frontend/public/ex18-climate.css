@@ -1,0 +1,39 @@
+/* EX-18: F05 period comparison, F11 NASA historical plot, F27 offline receipts. */
+/* Inherit Agri Foresight six-page gold/green glass design tokens and typography. */
+.evidence-contrast{margin:15px 0 18px;padding:14px;border:1px solid var(--border);border-radius:16px;background:var(--soft)}
+.evidence-contrast h3,.nasa-history-plot h3,.network-evidence h3{font-size:var(--af-card-title,17px);line-height:1.35;letter-spacing:-.015em;color:var(--ink);margin:0 0 7px}
+.evidence-disclosure{color:var(--muted);font-size:12px;line-height:1.5;display:block;margin:5px 0 10px}
+.evidence-contrast-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:11px 0}
+.evidence-contrast-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:13px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.evidence-contrast-card strong{font-size:13px;line-height:1.4;color:var(--ink)}
+.evidence-contrast-card small{color:var(--muted);line-height:1.5;overflow-wrap:anywhere}
+.evidence-contrast-card .contrast-value{font-weight:750;font-variant-numeric:tabular-nums;color:var(--teal);font-size:16px;overflow-wrap:anywhere}
+.nasa-history-plot{border:1px solid var(--border);border-radius:16px;padding:15px;background:var(--card);margin:12px 0}
+.nasa-history-plot[hidden]{display:none!important}
+.nasa-history-plot h4{font-size:13px;line-height:1.4;color:var(--ink);margin:12px 0 6px}
+.nasa-bars{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;align-items:stretch;padding:3px 2px 9px}
+.nasa-bar-day{min-width:36px;flex:1 0 36px;max-width:55px;text-align:center;display:flex;flex-direction:column;gap:5px}
+.nasa-bar-day small{font-size:10px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.nasa-bar-track{height:114px;display:flex;flex-direction:column;justify-content:flex-end;border-radius:7px;background:var(--soft);border:1px solid var(--border);overflow:hidden}
+.nasa-bar-fill{background:var(--teal);border-radius:4px 4px 0 0;min-height:0}
+.nasa-bar-gap{display:block;font-weight:700;font-size:14px;color:var(--muted);padding:5px 0}
+.nasa-temperature-wrap{width:100%;min-width:0;overflow-x:auto;border-radius:9px;background:var(--soft);border:1px solid var(--border)}
+.nasa-temperature-wrap svg{color:var(--teal);width:100%;min-width:320px;height:auto;display:block;max-height:155px}
+.nasa-chart-data{border:1px solid var(--border);border-radius:11px;margin-top:13px;overflow:hidden}
+.nasa-chart-data summary{cursor:pointer;padding:11px 13px;font-size:13px;font-weight:650;color:var(--ink)}
+.nasa-chart-data summary:focus-visible{outline:2px solid var(--focus,var(--teal));outline-offset:-2px}
+.nasa-chart-data table{width:100%;border-collapse:collapse;font-size:12px;line-height:1.5}
+.nasa-chart-data th,.nasa-chart-data td{padding:7px 9px;text-align:left;border-top:1px solid var(--border);font-variant-numeric:tabular-nums}
+.nasa-chart-data th{font-weight:650;color:var(--ink)}
+.nasa-chart-data td{color:var(--muted)}
+.network-evidence{border:1px solid var(--border);border-radius:14px;background:var(--card);margin:12px 0 18px;padding:14px;min-width:0}
+.network-evidence[data-network=offline]{border-style:dashed}
+.network-state{font-size:13px;color:var(--ink);display:block;line-height:1.45}
+.network-details,.network-receipt-line{font-size:12px;color:var(--muted);margin:6px 0;line-height:1.5;overflow-wrap:anywhere}
+.network-disclosure{font-size:11px;line-height:1.5;color:var(--muted);display:block}
+@media(max-width:760px){
+ .evidence-contrast-grid{grid-template-columns:1fr}
+ .nasa-history-plot,.evidence-contrast,.network-evidence{padding:12px}
+ .nasa-data-table th,.nasa-data-table td{padding:7px 5px;font-size:11px}
+}
+@media print{.evidence-contrast,.nasa-history-plot,.network-evidence{display:none!important}}
