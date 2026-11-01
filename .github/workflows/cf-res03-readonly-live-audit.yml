@@ -1,0 +1,124 @@
+name: CF-RES-03 read-only live Cloudflare audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/cf-res03-readonly-live-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Compare main SHA with live Cloudflare and exercise Page 03
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      EDGE_URL: https://agri-foresight.nirmikchawale1.workers.dev
+      SOURCE_REPO: nirmikchawale/HACKVERSE-4.0_NIRMIK_PERSONAL
+    steps:
+      - name: Checkout audit script (never modifies production)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Get live default-branch SHA without guessing PR merge SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          MAIN_SHA="$(git ls-remote "https://github.com/$SOURCE_REPO.git" refs/heads/main | awk '{print $1}')"
+          [[ "$MAIN_SHA" =~ ^[a-f0-9]{40}$ ]] || { echo "::error::Could not read main SHA"; exit 1; }
+          echo "EXPECTED_MAIN_SHA=$MAIN_SHA" >> "$GITHUB_ENV"
+          echo "GitHub main: $MAIN_SHA"
+      - name: Read public release receipt, health API and source asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          const origin=process.env.EDGE_URL;
+          const expected=process.env.EXPECTED_MAIN_SHA;
+          const get=async path=>{
+            const url=origin+path;
+            const response=await fetch(url,{signal:AbortSignal.timeout(20000)});
+            const body=await response.text();
+            console.log('PUBLIC',path,'HTTP',response.status,'bytes',body.length);
+            return {status:response.status,body};
+          };
+          try{
+            const receipt=await get('/_release.json');
+            if(receipt.status!==200)throw Error('Release receipt HTTP '+receipt.status);
+            let manifest;
+            try{manifest=JSON.parse(receipt.body);}catch{throw Error('Release receipt is not JSON');}
+            const published=manifest.git_commit_sha;
+            console.log('PUBLIC_RELEASE_SHA',published||'MISSING','EXPECTED_MAIN_SHA',expected);
+            console.log('PUBLIC_RELEASE_BUILT_AT_UTC',manifest.built_at_utc||'UNKNOWN');
+            if(manifest.app!=='Agri Foresight'||manifest.generated_from!=='git')
+              throw Error('Release receipt provenance fields invalid');
+            if(published!==expected)
+              throw Error('PUBLIC_SHA_MISMATCH: Live Worker does not serve current GitHub main. No deployment certification.');
+            const health=await get('/api/health');
+            if(health.status!==200)throw Error('Public health API not HTTP 200');
+            let parsed;
+            try{parsed=JSON.parse(health.body);}catch{throw Error('Health response not JSON');}
+            if(parsed.ok!==true)throw Error('Public health API is not healthy');
+            const html=await get('/');
+            if(html.status!==200||!html.body.includes('resourceCompletenessProgress')||
+               !html.body.includes('resourceMarginValue')||
+               !html.body.includes('resourceTreeAssess'))throw Error('Missing Page 03 source markers in production HTML');
+            const js=await get('/connected.js');
+            if(js.status!==200||!js.body.includes('uiChanges.filter(c=>!('))
+              throw Error('Live API option-empty-draft safeguard missing');
+            console.log('PUBLIC_RESOURCE_SOURCE_PASS',expected);
+          }catch(error){console.error('PUBLIC_RELEASE_GATE_FAILED',error.message);process.exitCode=1;}
+          JS
+      - name: Install pinned browser dependencies
+        working-directory: frontend
+        run: npm install
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Exercise live desktop/mobile Page 03 without submitting farmer data
+        working-directory: frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import {chromium} from '@playwright/test';
+          const origin=process.env.EDGE_URL;
+          const assert=(c,m)=>{if(!c)throw Error('PUBLIC_PAGE03_FAIL: '+m);};
+          const browser=await chromium.launch({headless:true});
+          try{
+            for(const size of [{width:1365,height:850},{width:390,height:844}]){
+              const context=await browser.newContext({viewport:size});
+              const page=await context.newPage();
+              const errors=[];
+              page.on('pageerror',e=>errors.push(e.message));
+              const response=await page.goto(origin+'/',{waitUntil:'domcontentloaded',timeout:30000});
+              assert(response?.status()===200,'Root HTTP 200');
+              const mobile=size.width<600;
+              await page.locator((mobile?'#navMobile':'#navDesktop')+' [data-nav="2"]').click();
+              const row=page.locator('#changeEditor .change-row');
+              await row.waitFor({state:'visible',timeout:20000});
+              assert(await row.count()===1,'Exactly one default editable row');
+              assert(await row.locator('[data-x="type"]').inputValue()==='add_capacity','Default change type');
+              assert(await row.locator('[data-x="availability"]').inputValue()==='unknown','Default availability must be unknown');
+              assert(await row.locator('[data-x="amount"]').inputValue()==='','Default amount must not be fabricated');
+              assert(await row.locator('[data-x="rid"]').inputValue()==='','Default resource ID must be blank');
+              assert((await page.locator('#resourceCheckBadge').textContent())==='0/6','No fake complete inputs');
+              await page.locator('#quantity').fill('80');
+              await page.locator('#capacity').fill('60');
+              await page.locator('#duration').fill('2');
+              assert((await page.locator('#resourceCoverageValue').textContent())==='75%','Coverage ratio calculation');
+              assert((await page.locator('#resourceGapValue').textContent())==='20 units','Capacity shortfall calculation');
+              assert((await page.locator('.resource-tree-node').count())===4,'Interactive pathway');
+              assert(!(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)),'Horizontal overflow at '+size.width);
+              assert(errors.length===0,'Browser JS errors '+errors.slice(0,2).join('; '));
+              console.log('PUBLIC_PAGE03_PASS',size.width,process.env.EXPECTED_MAIN_SHA);
+              await context.close(); // Isolated fixture values are discarded; no API writes.
+            }
+          }finally{await browser.close();}
+          JS
