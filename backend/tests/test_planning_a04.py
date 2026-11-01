@@ -225,7 +225,9 @@ def test_forecast_replan_api_rejects_unlisted_hour(monkeypatch):
     import unlockplan.api as api
     client=TestClient(app)
     case=_feasible()
-    # Test the unlisted-hour branch against a fixed pre-deadline clock.
+    # Hold the clock before the fixed synthetic forecast hour. Otherwise the
+    # test starts failing once calendar time passes 10:00 IST on 1 November.
+    # Only the API test clock is patched; real endpoint validation is unchanged.
     fixed_now=datetime(2026,10,31,17,30,tzinfo=timezone.utc)
     class FixedClock(datetime):
         @classmethod
