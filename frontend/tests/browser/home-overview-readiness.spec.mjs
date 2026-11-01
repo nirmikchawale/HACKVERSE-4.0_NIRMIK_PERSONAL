@@ -23,7 +23,7 @@ function forecast({missing=false,stale=false}={}){
   };
 }
 async function sources(page,model){
-  await page.addInitScript(()=>localStorage.clear());
+  await page.addInitScript(()=>(localStorage.clear(),localStorage.setItem('agri-experience-v1','detailed')));
   await page.route('**/api/health',route=>route.fulfill({json:{ok:true,version:'test',disclaimer:'No field validation'}}));
   await page.route('**/api/sources',route=>route.fulfill({json:{sources:[],input_categories:['USER_REPORTED']}}));
   await page.route('**/api/forecast*',route=>route.fulfill({json:model}));

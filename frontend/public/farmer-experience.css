@@ -1,0 +1,82 @@
+/* FE-01: Accessible farmer-first presentation; never changes API or mathematical inputs. */
+.experience-switch{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:0 4px 15px;background:var(--soft);border:1px solid var(--border);border-radius:14px}
+.mobile-experience-switch{display:none}
+.experience-choice{border:0;border-radius:10px;background:transparent;color:var(--muted);font:600 12px/1.4 inherit;min-height:39px;padding:8px 6px;cursor:pointer}
+.experience-choice.is-active{background:var(--card);color:var(--ink);box-shadow:0 1px 7px rgba(0,0,0,.09)}
+.experience-choice:focus-visible,.farmer-package-option:focus-visible,.farmer-help-step:focus-visible,.farmer-nav:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.farmer-field-hint,.farmer-confirm-hint{display:block;font-size:.77rem;line-height:1.55;color:var(--muted);font-weight:400;margin-top:5px}
+.farmer-confirm-hint{margin-left:26px}
+.farmer-deadline-row{display:none;padding:14px;border:1px solid var(--border);border-radius:15px;background:var(--soft);gap:12px;align-items:center;justify-content:space-between;margin:14px 0}
+.farmer-deadline-row strong,.farmer-deadline-row small{display:block}
+.farmer-deadline-row small{color:var(--muted);font-size:.8rem;line-height:1.5;margin-top:6px}
+.farmer-advanced-toggle{display:none;margin:12px 0}
+.farmer-progress,.farmer-decision,.farmer-action,.farmer-help{display:none;min-width:0}
+.farmer-progress h2,.farmer-decision h2,.farmer-action h2,.farmer-help h1{font-size:clamp(1.15rem,2vw,1.6rem);line-height:1.25;margin:0 0 12px}
+.farmer-progress-count{display:block;font-size:1.8rem;line-height:1.2;color:var(--teal);font-variant-numeric:tabular-nums;margin:14px 0}
+.farmer-progress p,.farmer-decision p,.farmer-action p,.farmer-help p{color:var(--muted);line-height:1.6;overflow-wrap:anywhere}
+.farmer-progress p,.farmer-action p{font-size:.9rem}
+.farmer-cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.farmer-cta .btn{min-height:43px}
+.farmer-options-note{font-size:.8rem;padding:10px;border-left:3px solid var(--teal);background:var(--soft);border-radius:8px}
+.farmer-weather-note{display:none;background:var(--soft);padding:12px;border-radius:12px;border-left:3px solid var(--gold);color:var(--muted);font-size:.82rem;line-height:1.6;margin:12px 0 0}
+.farmer-answer{padding:13px 0;border-top:1px solid var(--border);max-width:76ch}
+.farmer-answer strong{display:block;color:var(--ink);margin-bottom:4px;font-size:.98rem}
+.farmer-answer p{margin:0}
+.farmer-decision-state{font-size:1.12rem;line-height:1.45;color:var(--teal);margin:0 0 12px}
+.farmer-limitation{font-size:.8rem!important;padding:10px 12px;background:var(--soft);border-radius:10px}
+.farmer-package-buttons{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px;margin:14px 0}
+.farmer-package-option{cursor:pointer;text-align:left;min-width:0;min-height:52px;border:1px solid var(--border);border-radius:13px;padding:13px;background:var(--card);color:var(--ink);font:600 .88rem/1.5 inherit;overflow-wrap:anywhere}
+.farmer-package-option.selected{outline:2px solid var(--teal);background:var(--soft)}
+.farmer-action-result{font-weight:700;color:var(--ink)!important}
+.farmer-help-step{width:100%;display:block;text-align:left;font:600 .94rem/1.55 inherit;cursor:pointer;padding:15px;margin:10px 0;border:1px solid var(--border);border-radius:14px;background:var(--soft);color:var(--ink)}
+.farmer-help-step:hover,.farmer-package-option:hover{border-color:var(--teal)}
+.farmer-step-link{display:none;margin-top:16px;min-height:43px}
+body[data-experience="farmer"] .farmer-progress,
+body[data-experience="farmer"] .farmer-decision,
+body[data-experience="farmer"] .farmer-action,
+body[data-experience="farmer"] .farmer-help,
+body[data-experience="farmer"] .farmer-deadline-row{display:block}
+body[data-experience="farmer"] .farmer-deadline-row{display:flex}
+body[data-experience="farmer"] .farmer-advanced-toggle{display:inline-flex}
+body[data-experience="farmer"] .farmer-weather-note{display:block}
+body[data-experience="farmer"] .farmer-step-link{display:inline-flex}
+body[data-experience="farmer"] .rail-search,
+body[data-experience="farmer"] .rail-footer,
+body[data-experience="farmer"] .rail-caption{display:none!important}
+body[data-experience="farmer"] section[data-page="2"] .resource-side > :not(#farmerResourceSummary),
+body[data-experience="farmer"] section[data-page="2"] .resource-layout > .panel .panel-head .status-chip{display:none!important}
+body[data-experience="farmer"] section[data-page="2"] .resource-layout{grid-template-columns:minmax(0,1.6fr) minmax(260px,.72fr);align-items:start}
+body[data-experience="farmer"][data-advanced="closed"] section[data-page="2"] label:has(#baseline),
+body[data-experience="farmer"][data-advanced="closed"] section[data-page="2"] .options-panel{display:none!important}
+body[data-experience="farmer"] section[data-page="3"] .farm-eval-title,
+body[data-experience="farmer"] section[data-page="3"] .farm-eval-disclosure,
+body[data-experience="farmer"] section[data-page="3"] #farmResultMetrics,
+body[data-experience="farmer"] section[data-page="3"] #farmResultPanel{display:none!important}
+body[data-experience="farmer"] section[data-page="3"] #resultHero{padding:12px 15px}
+body[data-experience="farmer"] section[data-page="3"] .farm-eval-head{display:none}
+body[data-experience="farmer"] section[data-page="4"] > .feature-stripe,
+body[data-experience="farmer"] section[data-page="4"] > .grid2,
+body[data-experience="farmer"] section[data-page="4"] > .panel:not(#farmerActionCard){display:none!important}
+body[data-experience="farmer"] section[data-page="5"] > :not(#farmerHelpPanel){display:none!important}
+body[data-experience="farmer"] section[data-page="5"] > #farmerHelpPanel{display:block!important}
+body[data-experience="detailed"] .farmer-help-panel{display:none}
+@media(max-width:980px){body[data-experience="farmer"] section[data-page="2"] .resource-layout{grid-template-columns:1fr}}
+@media(max-width:740px){
+ .mobile-experience-switch{display:grid;width:100%;grid-template-columns:1fr 1fr;order:-1;margin:0 0 7px;flex-basis:100%;}
+ .barcontrols{flex-wrap:wrap}
+ .mobile-experience-switch .experience-choice{min-height:39px;font-size:.78rem}
+
+ .experience-switch{position:relative;max-width:340px;margin:8px auto 12px}
+ body[data-experience="farmer"] .mobile-nav{display:flex;gap:2px;overflow-x:auto;scroll-snap-type:x mandatory}
+ body[data-experience="farmer"] .mobile-nav button{flex:0 0 16.66%;min-width:56px;padding:5px 1px;scroll-snap-align:center}
+ body[data-experience="farmer"] .mobile-nav .farmer-nav-label{font-size:clamp(8px,1.8vw,10px);line-height:1.15;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+ body[data-experience="farmer"] section[data-page="2"] .resource-layout{grid-template-columns:1fr}
+ .farmer-deadline-row{flex-direction:column;align-items:stretch}
+ .farmer-deadline-row .btn{width:100%}
+ .farmer-cta .btn{flex:1 1 150px}
+}
+@media print{
+ body[data-experience="farmer"] section[data-page="5"] > :not(#farmerHelpPanel){display:block!important}
+ body[data-experience="farmer"] section[data-page="5"] > #farmerHelpPanel{display:none!important}
+ .experience-switch,.farmer-step-link,.farmer-advanced-toggle{display:none!important}
+}
