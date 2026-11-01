@@ -60,6 +60,11 @@ try{
     'Regional context must remain independent from resource feasibility');
   const jalnaAsset=await page.request.get(origin+'/jalna-context.js',{timeout:20000});
   assert(jalnaAsset.status()===200,'Farmer Jalna context client asset missing');
+  for(const asset of ['/farmer-weather-v2.js','/farmer-plan-v2.js','/farmer-flow-v2.css']){
+    const response=await page.request.get(origin+asset,{timeout:20000});
+    assert(response.status()===200,'Missing farmer-first release asset '+asset);
+    assert((await response.text()).length>100,'Empty farmer-first release asset '+asset);
+  }
 
   // FE-01: the clean public app now opens a farmer-focused navigation.
   // Certify that default before switching to the original Detailed workspace
@@ -74,6 +79,14 @@ try{
          farmerLabels.some(x=>x.includes('Help')),
     'Farmer View lost weather, farm details or help navigation');
   await page.locator('#navDesktop [data-nav="1"]').click();
+  // FE-02 Farmer View keeps the sourced soil panel available under an optional disclosure.
+  assert(await page.locator('#farmerWeatherV2').isVisible(),
+    'Farmer weather page did not show the simplified real-data journey');
+  assert(await page.locator('#farmerFinishTime').isVisible(),
+    'Farmer must be able to choose an explicit finish time');
+  assert(await page.locator('.weather-layout').isHidden(),
+    'Complex weather workbench must remain in Detailed View only');
+  await page.locator('#farmerJalnaMore > summary').click();
   await page.locator('#jalnaContext .jalna-soil-type').first()
     .waitFor({state:'visible',timeout:25000});
   assert((await page.locator('#jalnaContext').textContent()).includes('Jalna'),

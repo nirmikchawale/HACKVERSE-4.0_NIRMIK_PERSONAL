@@ -31,9 +31,11 @@ test('six-answer progress updates without equating handling units with bags or q
   await page.locator('#navDesktop [data-nav="2"]').click();
   const summary=page.locator('#farmerResourceSummary');
   await expect(summary).toContainText('0 of 6');
-  await expect(summary).toContainText('NOT automatically interchangeable');
-  await page.locator('#quantity').fill('90');
-  await page.locator('#capacity').fill('70');
+  await expect(page.locator('#farmerWeightForm')).toContainText('1 quintal = 100 kg');
+  await page.locator('#farmerTargetWeight').fill('9');
+  await page.locator('#farmerCapacityWeight').fill('7');
+  await expect(page.locator('#quantity')).toHaveValue('900');
+  await expect(page.locator('#capacity')).toHaveValue('700');
   await page.locator('#duration').fill('2.5');
   await expect(summary).toContainText('3 of 6');
   await page.locator('#readiness').selectOption('no');
@@ -47,19 +49,19 @@ test('six-answer progress updates without equating handling units with bags or q
 test('navigation and language changes never erase farmer-entered numbers',async({page})=>{
   await page.goto('/');
   await page.locator('#navDesktop [data-nav="2"]').click();
-  await page.locator('#quantity').fill('90');
-  await page.locator('#capacity').fill('70');
+  await page.locator('#farmerTargetWeight').fill('9');
+  await page.locator('#farmerCapacityWeight').fill('7');
   await page.locator('#duration').fill('3.5');
   await page.locator('#language').selectOption('mr');
   await expect(page.locator('#farmerResourceSummary')).toContainText('पैकी ६');
   await expect(page.locator('#navDesktop [data-nav="3"]')).toContainText('माझा बेत तपासा');
   await page.locator('#navDesktop [data-nav="1"]').click();
   await page.locator('#navDesktop [data-nav="2"]').click();
-  await expect(page.locator('#quantity')).toHaveValue('90');
-  await expect(page.locator('#capacity')).toHaveValue('70');
+  await expect(page.locator('#farmerTargetWeight')).toHaveValue('9');
+  await expect(page.locator('#farmerCapacityWeight')).toHaveValue('7');
   await page.locator('#language').selectOption('hi');
   await expect(page.locator('section[data-page="2"] [data-i18n="quantity"]')).toContainText('कपास');
-  await expect(page.locator('#quantity')).toHaveValue('90');
+  await expect(page.locator('#farmerTargetWeight')).toHaveValue('9');
   await page.locator('#experienceSwitch button').nth(1).click();
   await page.locator('#experienceSwitch button').first().click();
   await expect(page.locator('#duration')).toHaveValue('3.5');
@@ -80,9 +82,9 @@ test('mobile switch and Help work without hiding the only navigation controls',a
 test('no invented feasibility result is shown before a real server assessment',async({page})=>{
   await page.goto('/');
   await page.locator('#navDesktop [data-nav="3"]').click();
-  await expect(page.locator('#farmerCheckCard')).toBeVisible();
-  await expect(page.locator('#farmerCheckCard')).toContainText('has not been checked');
+  await expect(page.locator('#farmerDecisionV2')).toBeVisible();
+  await expect(page.locator('#farmerDecisionV2')).toContainText('has not been checked');
   await expect(page.locator('#farmResultMetrics')).toBeHidden();
   await page.locator('#navDesktop [data-nav="4"]').click();
-  await expect(page.locator('#farmerActionCard')).toContainText('Check your plan first');
+  await expect(page.locator('#farmerActionV2')).toContainText('First check your plan');
 });
