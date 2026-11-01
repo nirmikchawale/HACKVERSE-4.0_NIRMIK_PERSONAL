@@ -622,7 +622,7 @@
       refresh:'Refresh official data',fetching:'Contacting NASA POWER…',
       range:'Government history display range',seven:'Latest 7 available days',all:'All available days',
       download:'Download verified NASA JSON',
-      grid:'NASA historical grid',days:'available calendar days',rain:'Rainfall',rainUnknown:'Rainfall unavailable',
+      grid:'NASA historical grid',days:'available calendar days',rain:'Rainfall',rainUnknown:'Rainfall: unavailable',
       air:'Mean air temperature',airUnknown:'Air temperature unavailable',dayUnit:'days with values',
       avg:'Mean of available daily temperatures',dayRain:'mm/day',historic:'These are arithmetic summaries of historical government grid values, NOT operational forecasts.',
       retrieved:'Verified government response',cached:'Verified recent response',historyDays:'historical days',
