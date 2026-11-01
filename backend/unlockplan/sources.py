@@ -1,6 +1,15 @@
 """Verified source registry, provenance, and interpretation limitations."""
 from datetime import date
 REGISTRY=[
+ {'id':'jalna_district_official_climate','title':'Jalna District Administration: climate description',
+  'url':'https://jalna.gov.in/en/about-district/demography/',
+  'publication_date':None,'access_date':'2026-11-01',
+  'page_section':'Climate',
+  'short_supported_statement':'The district administration describes historical average annual rainfall around 650–750 mm and southwest monsoon concentration.',
+  'geographic_applicability':'District-wide Jalna context; not a farm or current-season observation.',
+  'verification_state':'Official Jalna district page verified on 2026-11-01.',
+  'reuse_status':'Attributed summary with link to original public government page.',
+  'limitations':'Annual climate description only, not a 20-day observation, forecast, current rainfall, or resource-feasibility decision.'},
  {'id':'nasa_power_agroclimate','title':'NASA POWER government daily agroclimate API',
   'url':'https://power.larc.nasa.gov/docs/services/api/temporal/daily/',
   'publication_date':None,'access_date':'2026-11-01',
