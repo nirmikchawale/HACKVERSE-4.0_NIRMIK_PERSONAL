@@ -36,6 +36,26 @@ const run=async()=>{
    ' is not certified commit '+process.env.EXPECTED_SHA);
  const stylesheet=(await get('/model-evidence.css')).text;
  assert(stylesheet.length>20,'Main UI evidence stylesheet missing');
+ const jalna=JSON.parse((await get('/api/jalna-agri-context')).text);
+ assert(jalna?.location?.startsWith('Jalna'),'Jalna region label absent');
+ assert(jalna.soil.status==='historical_reference' && jalna.soil.reference_year===2011,
+   'Jalna soil record must be marked as historical district reference');
+ assert(jalna.soil.classes?.map(x=>x.reported_percent).join(',')==='13.37,21.36,65.27',
+   'ICAR Jalna sourced percentages changed');
+ assert(jalna.soil.soil_type_for_individual_field===null &&
+   jalna.soil.soil_ph_for_individual_field===null,
+   'District data must not infer a specific farmer soil type or pH');
+ assert(['retrieved_live','cached_recent','unavailable'].includes(jalna.conditions.status),
+   'New Jalna model response has invalid evidence status');
+ if(jalna.conditions.status==='unavailable'){
+   assert(jalna.conditions.model===null,'Unavailable model must not invent current readings');
+ }else{
+   assert(jalna.conditions.model?.values &&
+     typeof jalna.conditions.model.valid_time_local==='string',
+     'Model readings must have source-native time and schema');
+ }
+ assert(jalna.decision_integration==='context_only_not_used_by_feasibility_engine',
+   'Jalna regional data must not silently modify feasibility decisions');
  const api=JSON.parse((await get('/api/sources')).text);
  assert(api.sources.some(x=>x.id==='nasa_power_agroclimate'),'Official NASA source missing');
  const e=await post('/api/evaluate',caseData);
