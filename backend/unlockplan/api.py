@@ -12,6 +12,7 @@ from .weather import get_forecast, CACHE_FILE, read_cache
 from .sources import REGISTRY,RULES
 from .govclimate import get_government_climate
 from .scenarios import get_scenarios
+from .jalna_context import get_jalna_context
 
 class CompareRequest(BaseModel):
     """Full, separately user-declared before/after plans (engine validates contents)."""
@@ -75,6 +76,10 @@ def forecast(refresh:bool=False):
 @app.get('/api/government-climate')
 def government_climate(refresh: bool = False):
     return get_government_climate(refresh=refresh)
+
+@app.get('/api/jalna-agri-context')
+def jalna_agri_context(refresh: bool = False):
+    return get_jalna_context(refresh=refresh)
 
 @app.get('/api/feasibility-scenarios')
 def feasibility_scenarios():

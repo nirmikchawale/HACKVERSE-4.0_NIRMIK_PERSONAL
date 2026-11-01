@@ -44,6 +44,23 @@ try{
     assert((await result.text()).length>100,'Empty CSS asset '+path);
   }
 
+  // JALNA-DATA-01: inspect the actual deployed agricultural-context API and UI.
+  const jalnaResponse=await page.request.get(origin+'/api/jalna-agri-context',{timeout:24000});
+  assert(jalnaResponse.status()===200,'Jalna agricultural data endpoint must respond');
+  const jalna=await jalnaResponse.json();
+  assert(jalna.soil?.reference_year===2011 &&
+    jalna.soil?.classes?.length===3 &&
+    jalna.soil?.soil_type_for_individual_field===null,
+    'Historical district soil cannot be substituted for a farmer plot soil test');
+  assert(['retrieved_live','cached_recent','unavailable'].includes(jalna.conditions?.status),
+    'Model status must be explicit');
+  if(jalna.conditions.status==='unavailable')
+    assert(jalna.conditions.model===null,'Unavailable source must not manufacture model readings');
+  assert(jalna.decision_integration==='context_only_not_used_by_feasibility_engine',
+    'Regional context must remain independent from resource feasibility');
+  const jalnaAsset=await page.request.get(origin+'/jalna-context.js',{timeout:20000});
+  assert(jalnaAsset.status()===200,'Farmer Jalna context client asset missing');
+
   // FE-01: the clean public app now opens a farmer-focused navigation.
   // Certify that default before switching to the original Detailed workspace
   // for the unchanged grouped-sidebar, evidence, methodology and print checks.
@@ -56,6 +73,12 @@ try{
          farmerLabels.some(x=>x.includes('My Farm Details'))&&
          farmerLabels.some(x=>x.includes('Help')),
     'Farmer View lost weather, farm details or help navigation');
+  await page.locator('#navDesktop [data-nav="1"]').click();
+  await page.locator('#jalnaContext .jalna-soil-type').first()
+    .waitFor({state:'visible',timeout:25000});
+  assert((await page.locator('#jalnaContext').textContent()).includes('Jalna'),
+    'Farmer Check Weather must display sourced Jalna context');
+  await page.locator('#navDesktop [data-nav="0"]').click();
   await page.locator('#experienceSwitch button').filter({hasText:'Detailed View'}).click();
   assert(await page.locator('body').getAttribute('data-experience')==='detailed',
     'Farmer to Detailed switch did not restore the original workspace');

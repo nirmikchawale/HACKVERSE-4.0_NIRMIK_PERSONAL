@@ -22,6 +22,8 @@ from .weather import (
     STALE_AFTER_HOURS, TIMEZONE, WeatherSchemaError,
     build_url as weather_url, public_summary, validate_forecast,
 )
+from .jalna_context import (build_url as jalna_url, validate_current,
+                            context_result, FRESH_MINUTES)
 from .govclimate import (
     DOCS as NASA_DOCS, LAT as NASA_LAT, LON as NASA_LON,
     build_url as nasa_url, date_window, validate_daily,
@@ -30,6 +32,7 @@ from .govclimate import (
 # Correctness does not depend on these per-isolate caches surviving requests.
 _forecast_cache: dict[str, Any] | None = None
 _nasa_cache: dict[str, Any] | None = None
+_jalna_cache: dict[str, Any] | None = None
 _MAX_FORECAST_BODY = 131072
 _MAX_NASA_BODY = 262144
 _NASA_TTL_SECONDS = 1800
@@ -156,6 +159,28 @@ async def edge_government_climate(*, refresh: bool = False,
         }
 
 
+async def edge_jalna_context(*, refresh: bool = False,
+                             now: datetime | None = None) -> dict[str, Any]:
+    """Authenticated regional model; the ICAR soil classification is always historical."""
+    global _jalna_cache
+    now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    cached = _jalna_cache
+    if cached and not refresh and 0 <= (now - cached["at"]).total_seconds() <= FRESH_MINUTES * 60:
+        return context_result(cached["model"], status="cached_recent",
+                              retrieved_at_utc=cached["at"].isoformat())
+    try:
+        raw = await _request_json(jalna_url(), limit=49152, timeout=9)
+        model = validate_current(raw, now=now)
+        _jalna_cache = {"model": model, "at": now}
+        return context_result(model, status="retrieved_live",
+                              retrieved_at_utc=now.isoformat())
+    except (httpx.HTTPError, ValueError, TypeError, KeyError, OSError, TimeoutError):
+        if cached and 0 <= (now - cached["at"]).total_seconds() <= FRESH_MINUTES * 60:
+            return context_result(cached["model"], status="cached_recent",
+                                  retrieved_at_utc=cached["at"].isoformat())
+        return context_result(None, status="unavailable")
+
+
 class CompareRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     before: dict[str, Any]
@@ -228,6 +253,10 @@ async def forecast(refresh: bool = False):
 @app.get("/api/government-climate")
 async def government_climate(refresh: bool = False):
     return await edge_government_climate(refresh=refresh)
+
+@app.get("/api/jalna-agri-context")
+async def jalna_agri_context(refresh: bool = False):
+    return await edge_jalna_context(refresh=refresh)
 
 @app.get("/api/feasibility-scenarios")
 async def feasibility_scenarios():

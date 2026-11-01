@@ -1,0 +1,26 @@
+/* Jalna live model + official historical soil context, accessible in all themes. */
+.jalna-context{margin-top:15px;padding:20px 22px!important;border:1px solid var(--border);min-width:0}
+.jalna-context-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:6px}
+.jalna-context-head-copy{min-width:0;flex:1}
+.jalna-context-head h2{margin:0 0 3px;font-size:clamp(17px,1.5vw,21px);line-height:1.4;font-weight:810;color:var(--ink)}
+.jalna-context-head small,.jalna-context-status,.jalna-context-half>small,.jalna-context>small{color:var(--muted);font-size:12px;line-height:1.6}
+.jalna-context-head button{min-height:44px;white-space:normal;text-align:center}
+.jalna-context-status{margin:5px 0 9px}
+.jalna-context-status:empty{display:none}
+.jalna-context-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:8px 0 12px}
+.jalna-context-half{min-width:0;background:var(--soft);border:1px solid var(--border);padding:16px;border-radius:14px}
+.jalna-context-half h3{font-size:15px;color:var(--ink);line-height:1.4;margin:0 0 8px}
+.jalna-context-half>small{display:block}
+.jalna-metrics,.jalna-soils{display:grid;grid-template-columns:1fr;gap:6px;margin:10px 0}
+.jalna-reading,.jalna-soil-type{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.jalna-reading dt,.jalna-soil-type dt{color:var(--ink);font-weight:620}
+.jalna-reading dd,.jalna-soil-type dd{margin:0;color:var(--ink);font-variant-numeric:tabular-nums;text-align:end;font-weight:800;overflow-wrap:anywhere}
+.jalna-sources{border-top:1px solid var(--border);padding:8px 0;margin-top:9px}
+.jalna-sources summary{cursor:pointer;color:var(--teal);font-size:12px;font-weight:760;min-height:36px;display:flex;align-items:center}
+.jalna-sources p{font-size:12px;color:var(--muted);line-height:1.65;margin:6px 0}
+.jalna-sources a{display:inline-block;font-size:12px;margin:5px 13px 5px 0;color:var(--teal);text-decoration:underline}
+.jalna-context a:focus-visible,.jalna-context summary:focus-visible,.jalna-context button:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+body[data-experience="farmer"] .jalna-context{padding:16px 18px!important}
+body[data-experience="farmer"] .jalna-context-head h2{font-size:19px}
+@media(max-width:750px){.jalna-context{padding:14px!important}.jalna-context-grid{grid-template-columns:1fr}.jalna-context-half{padding:13px}.jalna-context-head{align-items:stretch}.jalna-context-head button{width:100%}}
+@media(prefers-reduced-motion:reduce){.jalna-context *{scroll-behavior:auto!important}}
