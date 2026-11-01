@@ -7,6 +7,11 @@
   const evidenceStyle=document.createElement('link');
   evidenceStyle.rel='stylesheet';evidenceStyle.href='/model-evidence.css';
   document.head.append(evidenceStyle);
+  // One shared responsive type scale for all six dashboard pages.
+  // Original palette, layout and source-native data remain untouched.
+  const typographyStyle=document.createElement('link');
+  typographyStyle.rel='stylesheet';typographyStyle.href='/agri-typography.css';
+  document.head.append(typographyStyle);
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;};
   const num=n=>Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'Unknown';
   const okLocation=()=>state.place?.state==='Maharashtra'&&state.place?.city?.trim().toLowerCase()==='jalna';
