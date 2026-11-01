@@ -89,3 +89,44 @@ test('old model cache cannot provide past/expired time choices',async({page})=>{
   await expect(page.locator('#hourlyEvidenceTable tbody tr')).toHaveCount(0);
   await expect(page.locator('#hourlyEvidenceStatus')).toContainText('No eligible current model forecast');
 });
+
+test('filtered day CSV contains only source-native hours for selected IST date',async({page})=>{
+  const real=forecast();await setSources(page,real);
+  await page.goto('/');await page.locator('#navDesktop [data-nav="1"]').click();
+  const button=page.locator('#exportSelectedModelDay');
+  await expect(button).toBeDisabled();
+  const firstDay=real.hours[0].time.slice(0,10);
+  await page.locator('#hourlyEvidenceDate').selectOption(firstDay);
+  await expect(button).toBeEnabled();
+  const pending=page.waitForEvent('download');
+  await button.click();const download=await pending;
+  expect(download.suggestedFilename()).toBe('agri-foresight-model-hours-jalna-'+firstDay+'.csv');
+  const {readFile}=await import('node:fs/promises');
+  const csv=await readFile(await download.path(),'utf8');
+  const hoursForDate=real.hours.filter(h=>h.time.startsWith(firstDay));
+  const hoursElsewhere=real.hours.filter(h=>!h.time.startsWith(firstDay));
+  for(const h of hoursForDate)expect(csv).toContain('"'+h.time+'"');
+  for(const h of hoursElsewhere)expect(csv).not.toContain('"'+h.time+'"');
+  expect(csv).toContain('external_model_forecast');
+  expect(csv).toContain('Open-Meteo (test-only isolated response)');
+  expect(csv).toContain('not measured rainfall or agricultural safety');
+});
+test('English Marathi Hindi switching translates only presentation, never source values or records',async({page})=>{
+  const real=forecast();await setSources(page,real);
+  await page.goto('/');await page.locator('#navDesktop [data-nav="1"]').click();
+  const rows=page.locator('#hourlyEvidenceTable tbody tr');
+  await expect(rows).toHaveCount(40);
+  await page.locator('#language').selectOption('mr');
+  await expect(page.locator('#hourlyEvidencePanel h2')).toContainText('सर्व तासांचा हवामान अंदाज');
+  await expect(page.locator('#forecastQualityPanel h2')).toContainText('हवामान अंदाजाच्या पुराव्याची गुणवत्ता');
+  await expect(page.locator('#exportSelectedModelDay')).toContainText('निवडलेल्या दिवसाचा CSV');
+  await expect(rows).toHaveCount(40);
+  await expect(page.locator('#hourlyEvidenceTable')).toContainText(real.hours[39].time.replace('T',' '));
+  await page.locator('#language').selectOption('hi');
+  await expect(page.locator('#hourlyEvidencePanel h2')).toContainText('सभी घंटों का मौसम पूर्वानुमान');
+  await expect(page.locator('#forecastQualityPanel h2')).toContainText('मौसम पूर्वानुमान साक्ष्य की गुणवत्ता');
+  await expect(rows).toHaveCount(40);
+  await page.locator('#language').selectOption('en');
+  await expect(page.locator('#hourlyEvidencePanel h2')).toHaveText('Full model-hour timeline');
+  await expect(page.locator('#forecastQualityPanel h2')).toHaveText('Forecast evidence quality');
+});
