@@ -43,7 +43,11 @@ try{
     assert((await result.text()).length>100,'Empty CSS asset '+path);
   }
 
-  const selectors=['#evidenceSourceMatrix','#sourceActivityReceipt',
+  // Guard core planning controls as well as the newer evidence modules. This
+  // frontend-path change also causes the mandatory real-backend gate to run.
+  const selectors=['#apiConnectionStatus','#sourceLedger','#deadlineInput',
+    '#quantity','#readiness','#packageList','#summaryAssessment','#assistantLaunch',
+    '#evidenceSourceMatrix','#sourceActivityReceipt',
     '#historicalModelComparison','#nasaHistoryChart','#networkEvidenceStatus',
     '#decisionDiagnostics','#printEvidenceReceipt','#downloadGovernmentCSV'];
   for(const key of selectors){
