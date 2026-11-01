@@ -2,7 +2,7 @@ name: B-03 Cloudflare-Compatible FastAPI + Browser Integration
 
 on:
   push:
-    branches: [feat/unlockplan-app-deploy]
+    branches: [feat/unlockplan-app-deploy, 'feat/cf-*']
     paths:
       - 'backend/**'
       - 'frontend/**'
