@@ -13,7 +13,7 @@ const nasa={status:'retrieved_live',source:'NASA POWER (US government)',
  data_kind:'government_gridded_historical',latest_data_date:'2026-10-27',
  retrieved_at_utc:new Date().toISOString(),days:[{date:'2026-10-27',precipitation_mm_day:4,temperature_c:25}]};
 async function fixture(page,opts={}){
- await page.addInitScript(()=>localStorage.clear());
+ await page.addInitScript(()=>(localStorage.clear(),localStorage.setItem('agri-experience-v1','detailed')));
  await page.route('**/api/health',r=>r.fulfill({json:opts.failHealth?{ok:false}:health,status:opts.failHealth?503:200}));
  await page.route('**/api/sources',r=>r.fulfill({json:sources}));
  await page.route('**/api/forecast*',r=>r.fulfill({json:opts.stale?makeForecast(true):makeForecast()}));
