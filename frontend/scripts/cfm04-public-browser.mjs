@@ -181,6 +181,52 @@ try{
   }));
 
   const leadKeys=['heroBody','weatherLead','resourceLead','feasLead','changesLead','summaryLead'];
+  // WXR-04 public exact-source functional verification, no intercepted API responses.
+  const compact=page.locator('.wx-workspace-compact');
+  await compact.waitFor({state:'visible',timeout:20000});
+  const a=await compact.locator('.forecast-panel').boundingBox();
+  const b=await compact.locator('.deadline-card').boundingBox();
+  assert(a&&b&&Math.abs(a.width-b.width)<=3&&Math.abs(a.height-b.height)<=3,
+    'WXR-04 evidence and planning cards must be equal-width and matched-height');
+  assert(a.height<570,'WXR-04 panels must be compact, not a full-page static receipt');
+  assert(await compact.locator('.network-evidence,.source-strip,.wx-guide-steps,.live-provenance').count()===0,
+    'Static receipts or redundant planning stepper appear in compact cards');
+  assert(await compact.locator('#saveDeadline').count()===1&&
+    await compact.locator('#deadlineGuideSave').count()===0,
+    'Duplicate Save action remains in planning card');
+  assert(await page.locator('#weatherNetworkDetails').count()===1,
+    'Source receipt disclosure missing from separate evidence section');
+  let quality='unavailable';
+  if(await page.locator('#forecastWindowSummary .wx-horizon-button').count()===3){
+    quality='source-current';
+    for(const [h,expected] of [[6,6],[12,12],[24,24]]){
+      await page.locator('[data-horizon="'+h+'"]').click();
+      assert(await page.locator('#weatherChart .hour-bar').count()===expected,
+        'Authentic model-range button failed for '+h+' hours');
+    }
+    await page.locator('#forecastExploreMetric').selectOption('precipitation_probability_pct');
+    assert((await page.locator('#weatherChart .bar-value').first().textContent()).includes('%'),
+      'Probability control does not change the source measure');
+    const hour=page.locator('#weatherChart .hour-bar:not(:disabled)').first();
+    assert(await hour.count()>0,'Authenticated future model should permit an hour selection');
+    await hour.click();
+    assert((await page.locator('#deadlineInput').inputValue()).length>0,
+      'Future model hour did not draft a candidate deadline');
+    assert(await page.locator('#saveDeadline').isEnabled() &&
+      !(await page.locator('#deadlineGuideContinue').isEnabled()),
+      'Deadline did not begin as an unsaved candidate');
+    await page.locator('#saveDeadline').click();
+    assert(await page.locator('#deadlineGuideContinue').isEnabled(),
+      'Saved candidate did not enable resource continuation');
+  }else{
+    assert(await page.locator('#weatherChart .hour-bar').count()===0 &&
+      !(await page.locator('#deadlineGuideNextHour').isEnabled()),
+      'Unavailable forecast has misleading actionable model hours');
+    assert(await page.locator('#deadlineInput').isEnabled(),
+      'Manual candidate must remain available');
+  }
+  console.log('WXR04_PUBLIC_COMPACT_PASS '+JSON.stringify({matchedCards:true,singleSave:true,modelStatus:quality}));
+
   for(let index=0;index<6;index++){
     await page.locator('#navDesktop [data-nav="'+index+'"]').click();
     const lead=await page.locator('section.section.active [data-i18n="'+leadKeys[index]+'"]').first().textContent();
