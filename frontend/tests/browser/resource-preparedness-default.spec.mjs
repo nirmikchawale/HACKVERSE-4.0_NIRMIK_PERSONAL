@@ -57,7 +57,7 @@ test('only measured form completeness and arithmetic capacity indicators appear'
   await expect(page.locator('#resourceCoverageValue')).toHaveText('100%');
   await expect(page.locator('#resourceGapValue')).toHaveText('0 units');
   await page.locator('#quantity').fill('0');
-  await expect(page.locator('#resourceCoverageValue')).toHaveText('Enter quantities'); // ratio to zero target undefined
+  await expect(page.locator('#resourceCoverageValue')).toHaveText('No planned work'); // ratio to zero target undefined
   await expect(page.locator('#resourceGapValue')).toHaveText('0 units');
 });
 test('empty starter option is omitted from actual server assessment, not rejected or counted',async({page})=>{
