@@ -131,6 +131,6 @@ test('unavailable model offers no selectable candidate or fabricated fallback',a
   await setup(page,{noWeather:true});
   await assessed(page);
   await expect(page.locator('#runMultiDeadline')).toBeDisabled();
-  await expect(page.locator('#multiDeadlineStatus')).toContainText('No recent, source-authenticated');
+  await expect(page.locator('#multiDeadlineStatus')).toContainText('No current future model hours');
   await expect(page.locator('#multiDeadlineResults tbody tr')).toHaveCount(0);
 });

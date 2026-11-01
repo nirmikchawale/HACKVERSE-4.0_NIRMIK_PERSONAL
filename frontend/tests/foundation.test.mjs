@@ -14,5 +14,5 @@ test('all six genuine FastAPI routes bound to frontend',()=>{
 test('scientific cautions and unsupported-location guard remain',()=>{
  assert.match(js,/not farming safety advice|not field-validated agricultural advice/i);
  assert.match(js,/Only Jalna is supported/);
- assert.match(js,/No current forecast hours/);
+ assert.match(js,/No selectable model hours\. You can enter a deadline\./);
 });

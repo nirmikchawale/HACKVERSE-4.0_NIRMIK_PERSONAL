@@ -38,7 +38,7 @@ test('mislabeled live model older than two hours is stale and no model hour rema
   await expect(page.locator('#weatherChart .hour-bar')).toHaveCount(0);
   await expect(page.locator('#hourlyEvidenceTable tbody tr')).toHaveCount(0);
   await expect(page.locator('#exportForecastEvidence')).toBeDisabled();
-  await expect(page.locator('#weatherChartMode')).toContainText('two-hour');
+  await expect(page.locator('#weatherChartMode')).toContainText('2 hours old');
 });
 test('mislabeled recent cache older than two hours cannot authorize model deadline selection',async({page})=>{
   await setup(page,model(new Date(Date.now()-2.5*3600000).toISOString(),'cached_recent'));

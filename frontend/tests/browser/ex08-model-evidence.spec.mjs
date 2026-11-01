@@ -43,7 +43,7 @@ test('source data-quality receipt counts nulls, duplicated timestamps and missin
   await expect(quality).toContainText('3/4 hours reported a model probability');
   await expect(quality).toContainText('1 duplicate record(s)');
   await expect(quality).toContainText('1 absent hourly position(s)');
-  await expect(quality).toContainText('not a field rain gauge');
+  await expect(quality).toContainText('not a rain gauge');
 });
 test('CSV is downloadable from verified model readings; zero is not missing and null stays blank',async({page})=>{
   const source=mockedForecast();

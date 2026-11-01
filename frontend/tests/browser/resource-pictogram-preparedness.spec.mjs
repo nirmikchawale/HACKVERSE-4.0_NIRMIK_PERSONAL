@@ -23,10 +23,10 @@ test.describe('CF-RES-05 pictogram evidence and six input shortcuts', () => {
     await details.nth(0).locator('summary').focus();
     await page.keyboard.press('Enter');
     await expect(details.nth(0)).toHaveAttribute('open','');
-    await expect(details.nth(0)).toContainText('FastAPI determines feasibility only after you evaluate');
+    await expect(details.nth(0)).toContainText('FastAPI checks the plan');
     await details.nth(1).locator('summary').click();
     await expect(details.nth(1)).toHaveAttribute('open','');
-    await expect(details.nth(1)).toContainText('actual rainfall');
+    await expect(details.nth(1)).toContainText('rain and field safety');
     await evidence.locator('.resource-method-disclosure summary').click();
     await expect(evidence.locator('.resource-method-disclosure')).toHaveAttribute('open','');
     await expect(evidence).toContainText('not success probabilities');

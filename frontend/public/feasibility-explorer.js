@@ -40,12 +40,12 @@
   const headingCopy = node('div', 'fw-heading-copy');
   headingCopy.append(node('div', 'section-label', 'DATA-BACKED EXPLORER · JALNA'),
     node('h2', '', '100 worked feasibility scenarios'),
-    node('p', '', 'Explore how capacity, preparation time, readiness and confirmed changes affect a decision. Results come from the same FastAPI engine used for farmer assessments.'));
+    node('p', '', 'See how capacity, work time and readiness affect FastAPI results.'));
   const label = node('span', 'fw-source-label', 'ENGINE-CALCULATED EXAMPLES');
   heading.append(headingCopy, label);
   root.append(heading);
   root.append(node('p', 'fw-disclosure',
-    'These 100 configurations are planning examples, not actual farmer records or government measurements. They are not crop-safety recommendations. Your own farm assessment remains separate below.'));
+    'These 100 cases use example inputs, not real farms. They do not certify field safety.'));
 
   const jump = target => {
     const item = document.querySelector('#navDesktop [data-nav="' + target + '"]') ||
@@ -142,13 +142,13 @@
   const evidenceHead = node('div', 'fw-evidence-heading');
   const evidenceCopy = node('div');
   evidenceCopy.append(node('h3', '', 'Official historical climate · 20-day view'),
-    node('p', '', 'NASA POWER (US government): near-Jalna daily gridded rainfall and temperature. Historical records are not future forecasts or measurements at your farm.'));
+    node('p', '', 'NASA POWER: historical rain and temperature near Jalna, not a forecast or farm reading.'));
   const refreshClimate = makeButton('Refresh government records', () => void loadClimate(true), 'btn');
   evidenceHead.append(evidenceCopy, refreshClimate);
   evidence.append(evidenceHead);
   const officialContext = node('p', 'fw-context');
   officialContext.append(node('strong', '', 'Government of Maharashtra context: '),
-    document.createTextNode('The Jalna District administration describes average annual rainfall of about 650–750 mm. This is broad historical context, not current rainfall or a preparation threshold. '));
+    document.createTextNode('Jalna District reports roughly 650–750 mm annual rain; historical context only. '));
   const officialLink = node('a', '', 'District source');
   officialLink.href = 'https://jalna.gov.in/en/about-district/demography/';
   officialLink.target = '_blank'; officialLink.rel = 'noopener noreferrer';
@@ -172,9 +172,9 @@
     makeButton('Choose a forecast planning deadline', () => jump(1), 'btn')
   );
   const climateInfo = node('p', 'fw-status',
-    'NASA POWER values are historical gridded observations at a district reference, not a farm sensor. ' +
-    'A government API failure means no daily readings can be shown. You can still open its official documentation ' +
-    'and use the real forecast page for a model-informed, user-selected deadline.');
+    'NASA POWER is a historical district grid, not a farm sensor. ' +
+    'If the government API fails, no daily values are shown. See its documentation ' +
+    'or open Weather to choose your own deadline.');
   climateInfo.hidden = true;
   climateInfo.id = 'fwClimateInfo';
   evidence.append(evidenceActions, climateInfo);
@@ -183,15 +183,15 @@
   hero.insertAdjacentElement('beforebegin', root);
   const divider = node('div', 'fw-farmer-divider');
   divider.append(node('h2', '', 'Your farm-specific assessment'),
-    node('p', '', 'Use your own confirmed work quantities, handling readiness and candidate deadline on Pages 02–03. Only their genuine server result is displayed below.'));
+    node('p', '', 'Enter your confirmed inputs and deadline, then run FastAPI below.'));
   hero.insertAdjacentElement('beforebegin', divider);
   // Existing farmer-specific metrics are useful navigation, never guessed farm values.
   // A short action replaces the decorative em dash only while no server result exists.
   const personalMetricTargets = [
     ['resultGoal', 'Enter target →', 2, 'Set the actual work target on Farm resources.'],
     ['resultCap', 'Confirm capacity →', 2, 'Confirm actual comparable handling capacity on Farm resources.'],
-    ['resultGap', 'Assess resources →', 2, 'Capacity shortfall requires your declared target and capacity followed by a real FastAPI assessment.'],
-    ['resultSlack', 'Set deadline →', 1, 'Time slack requires your chosen deadline and actual task-duration estimate.']
+    ['resultGap', 'Assess resources →', 2, 'Enter target and capacity, then assess the shortfall.'],
+    ['resultSlack', 'Set deadline →', 1, 'Choose a deadline and estimated work hours.']
   ];
   const personalActions = [];
   for (const [id, actionText, destination, help] of personalMetricTargets) {
@@ -261,12 +261,12 @@
     const metrics = node('div', 'fw-metrics');
     const metricInfo = node('p','fw-inline-note','Select a metric for its exact meaning and source.');
     for (const [title, value, explanation] of [
-      ['Work target', number(a.target_units) + ' units','Configured amount to prepare in abstract handling units, not actual Jalna tonnage.'],
-      ['Confirmed capacity', number(a.capacity_units) + ' units','Illustrative baseline capacity, not independently verified machinery or labor.'],
-      ['Capacity shortfall', number(base.shortfall_units) + ' units','Exact Python engine difference: max(0, configured target minus capacity).'],
-      ['Available time', number(a.hours_until_candidate_deadline) + ' h','What-if candidate window, not a meteorological rain-onset prediction.'],
-      ['Estimated task', number(a.required_hours) + ' h','Example task-duration assumption, not an agricultural field measurement.'],
-      ['Time slack', number(base.time_budget.time_slack_hours) + ' h','Python engine compares available time and task duration; negative indicates a timing blocker.'],
+      ['Work target', number(a.target_units) + ' units','Example target in handling units, not real crop tonnage.'],
+      ['Confirmed capacity', number(a.capacity_units) + ' units','Example capacity, not verified equipment or labor.'],
+      ['Capacity shortfall', number(base.shortfall_units) + ' units','FastAPI shortfall = max(0, target − capacity).'],
+      ['Available time', number(a.hours_until_candidate_deadline) + ' h','Example deadline, not a rain-onset forecast.'],
+      ['Estimated task', number(a.required_hours) + ' h','Example work hours, not a field measurement.'],
+      ['Time slack', number(base.time_budget.time_slack_hours) + ' h','FastAPI checks time left minus work hours; negative means blocked.'],
     ]) {
       const metric = node('button', 'fw-metric fw-metric-action');
       metric.type = 'button';
@@ -302,7 +302,7 @@
       detail.append(excluded);
     }
     detail.append(node('small', 'fw-case-foot',
-      'Input provenance: configured example · Decision provenance: real FastAPI calculation · Handling units: abstract, not kg or hectares.'));
+      'Example inputs · Real FastAPI result · Abstract units, not kg or hectares.'));
   }
   const filteredCases = () => {
     const term = search.value.trim().toLocaleLowerCase();
@@ -329,7 +329,7 @@
     if (!matches.length) caseList.append(node('p', 'fw-status', 'No cases match this search and filter.'));
     caseMeta.textContent = matches.length ? 'Showing ' + (begin + 1) + '–' + Math.min(begin + PAGE_SIZE, matches.length) +
       ' of ' + matches.length + ' matched cases · page ' + currentPage + ' of ' + pages :
-      '0 matching scenarios · all 100 examples remain available by clearing filters.';
+      'No matches. Clear filters to see all 100.';
     previousPage.disabled = currentPage <= 1;
     nextPage.disabled = currentPage >= pages;
   }
@@ -371,8 +371,8 @@
       }
       const health = await response.json();
       diagnosticInfo.textContent = health?.ok === true ?
-        'FastAPI health verified now. You can evaluate your own confirmed plan.' :
-        'FastAPI returned an unverified health response. Your own farm assessment is not available.';
+        'FastAPI connected. You can assess your plan.' :
+        'FastAPI health not verified. Personal assessment unavailable.';
     } catch (err) {
       diagnosticInfo.textContent = 'Live API network check failed (' + (err?.name || 'NetworkError') +
         '). The Python-built example snapshot is independent of this connection; do not treat it as live farm data.';
@@ -410,11 +410,11 @@
       statusLine.textContent = provenance === 'live_fastapi'
         ? '100 of 100 teaching cases recalculated by the FastAPI engine · ' +
           result.evaluated_at_utc + ' · separate from your farm.'
-        : '100 of 100 teaching cases calculated by Python during the Cloudflare build · ' +
+        : '100 Python-built planning examples · ' +
           result.snapshot_generated_at_utc +
           '. Live API is not reachable; this dated snapshot is NOT a personal evaluation.';
       diagnosticInfo.textContent = provenance === 'live_fastapi'
-        ? 'The examples API is responding. The personal assessment has a separate input and validation step.'
+        ? 'Examples loaded. Personal assessment needs your inputs.'
         : 'Live API unavailable (' + liveError + '). The 100 cases shown are verified build-time examples, ' +
           'not invented weather or submitted farmer records. Use Check live API to retry.';
       download.disabled = false;
@@ -427,7 +427,7 @@
         'Example library could not be verified: ' + (error?.message || 'Network issue') +
         '. Use Recalculate 100 cases to retry.'));
       detail.replaceChildren(node('p', '',
-        'No verified examples are available. Select Check live API to inspect connectivity.'));
+        'No verified examples. Select Check live API.'));
       statusLine.textContent = 'Unable to verify a live or build-certified example catalog.';
       download.disabled = true;
       for (const key of ['feasible','blocked','unknown','packages']) setCount(key, 'Retry to view');
@@ -469,7 +469,7 @@
       climateList.replaceChildren();
       if (data.status === 'unavailable') {
         if (data.days.length) throw new Error('Unavailable source returned data.');
-        climateStatus.textContent = 'Government historical series unavailable — no values substituted.';
+        climateStatus.textContent = 'NASA history unavailable; no substitute data.';
         climateList.append(node('p', 'fw-status', data.notice || 'NASA POWER could not be reached.'));
         return;
       }
@@ -492,7 +492,7 @@
           climateInfo.textContent = day.date + ' · NASA POWER district-reference grid. ' +
             (day.precipitation_mm_day === null ? 'Rainfall value not published; ' : 'Historical rain ' + number(day.precipitation_mm_day) + ' mm/day; ') +
             (day.temperature_c === null ? 'temperature value not published.' : 'historical temperature ' + number(day.temperature_c) + ' degrees C.') +
-            ' Neither reading is a forecast or direct measurement at your farm.';
+            ' Neither is a forecast or a farm reading.';
         });
         row.append(node('time', '', day.date),
           node('strong', '', day.precipitation_mm_day === null ? 'Rain: unavailable' : 'Rain: ' + number(day.precipitation_mm_day) + ' mm'),
