@@ -30,8 +30,11 @@ This repository is for HACKVERSE 2026: Predictive Climate-Smart Agriculture Plan
 ## Version control and deployment
 - Use short-lived branches/PRs for implementation. Never force push main.
 - Do not merge if required checks fail, if scientific boundaries are violated, or if a public behavior cannot be explained accurately.
-- GitHub is the source of truth; successful, reviewed main merges should auto-deploy through a **verified, linked** Vercel Git project.
-- Treat Vercel as **not configured** until its team/project/Git link and a real public deployment are verified. `vercel.json` by itself does not deploy.
+- **Hosting is Cloudflare Workers ONLY**, effective 1 November 2026. All future deployments, release validation, domain changes, backend hosting and PR promotion must target the one Git-connected Cloudflare Worker `agri-foresight` and its real Python FastAPI + Vite assets.
+- Do **not** initiate, configure, deploy, maintain, debug, or spend compute on the previous hosting provider. Ignore historical Vercel instructions elsewhere in this repository for forward-looking work; they are superseded, not a fallback requirement. Do not touch or delete previous hosting resources unless separately authorized.
+- Cloudflare is free-plan by default; purchases, paid-plan changes, DNS/domain ownership transfers, and credentials require separate explicit approval.
+- Use the verified Cloudflare `workers.dev` host while a personally owned custom domain is unconfirmed. Never invent a domain registration or claim a domain is connected.
+- Preserve all completed, accepted frontend features on `main` when promoting a Cloudflare branch. Never merge a stale branch that would drop current features.
 - Exact deployed SHA, API health, valid forecast or explicit degraded state, and desktop/mobile browser smoke are required for PUBLICLY_VERIFIED.
 - Distinguish PLANNED, IMPLEMENTED, TESTED, MERGED, DEPLOYED, VERIFIED in every handoff.
 - Never promise background operations or automatic actions that a deployed integration has not actually performed.
@@ -39,5 +42,5 @@ This repository is for HACKVERSE 2026: Predictive Climate-Smart Agriculture Plan
 ## Deadline
 Internal code/build target: **1 November 2026, 2:00 PM IST**. Official user-supplied organizer deadline: **1 November 2026, 6:00 PM IST**. Preserve time for combined report and two voice-over videos.
 
-## First unfinished engineering step
-Import existing local `UnlockPlan_P0_RealInput_Ready.zip` source into the repository and verify its existing test suite on the exact GitHub commit. Then create the minimal TypeScript UI and integrate forecast-time selection and changed-deadline recomputation. Live weather and browser release gates are still unverified.
+## Active Cloudflare release gate (2026-11-01)
+The Python/TypeScript app and source-backed integrations are already in the repository. Verify the exact `main` SHA at Cloudflare `/_release.json`, `/api/health`, authentic forecast/government-history routes, and Chromium desktop/mobile behavior. Promote new changes through reviewed PRs and all mandatory CI gates. Do not confuse a successful Cloudflare build with independently certified live behavior. The former Vercel route is out of scope.

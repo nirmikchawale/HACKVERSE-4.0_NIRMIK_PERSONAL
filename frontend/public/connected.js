@@ -27,6 +27,9 @@
   const climateStyle=document.createElement('link');
   climateStyle.rel='stylesheet';climateStyle.href='/ex18-climate.css';
   document.head.append(climateStyle);
+  const overviewLayoutStyle=document.createElement('link');
+  overviewLayoutStyle.rel='stylesheet';overviewLayoutStyle.href='/overview-layout.css';
+  document.head.append(overviewLayoutStyle);
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;};
   const num=n=>Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'Unknown';
   const okLocation=()=>state.place?.state==='Maharashtra'&&state.place?.city?.trim().toLowerCase()==='jalna';
@@ -311,9 +314,9 @@
   const title=el('h2','', 'Live source ledger');ledger.append(title);
   ledger.append(el('p','', 'Source descriptions are returned by /api/sources. Model output is a forecast, not a measured rain-onset time or safety certification.'));
   const entries=el('div','live-sources','Source registry: connecting…');ledger.append(entries);
-  const alert=el('p','live-note','Loading real source and application status…');
+  const alert=el('span','sr-only','Checking FastAPI connection…');
   alert.id='apiConnectionStatus';alert.setAttribute('role','status');
-  document.querySelectorAll('section.section')[0].append(alert);
+  document.querySelectorAll('section.section')[5].append(alert);
 
   async function json(path,init={}){
     let response;
@@ -1899,6 +1902,208 @@
   for(const [id,msg] of disclaimers)if(here(id))here(id).textContent=msg;
   here('forecastSourceChip').textContent='CONNECTING';
   additional.sampleWeather=false;additional.demoInputs=false;additional.previewResult=null;
+  // HOME-01: overview is a projection of existing authoritative state, never
+  // a sample farm, forecast substitute, automatic deadline or local assessment.
+  const homeLanguage={
+    en:{
+      pilot:'Already-picked cotton · Jalna pilot · model weather is not a field observation',
+      unsupported:'Jalna-only evidence',outside:'Return to Jalna to use the actual planning sources',
+      weatherLoading:'Checking Open-Meteo',weatherMissing:'Refresh weather evidence',
+      weatherMissingNote:'Source readings cannot be verified; refresh on Weather',
+      rainHours:'future model hours',rainNote:'Open-Meteo · {count}/24 upcoming rainfall values · IST',
+      completeRain:'mm / 24h',completeNote:'Open-Meteo · 24/24 source hours · fetched {time} IST',
+      missingFuture:'Inspect weather timeline',missingFutureNote:'No eligible future model hours in the current response',
+      deadlineChosenNote:'Farmer-chosen candidate · {hours} h remaining · not a rain threshold',
+      deadlinePast:'Review past deadline',deadlinePastNote:'The saved candidate has passed; propose a future IST time',
+      modelWindow:'24h model outlook',modelWindowNote:'Compare 6 / 12 / 24h windows; then choose your deadline',
+      manualWindow:'Plan an IST deadline',manualWindowNote:'A manual candidate is possible without model weather',
+      resources:'4 planning inputs',resourcesNote:'Target · capacity · duration · site readiness',
+      draft:'resource fields drafted',draftNote:'Review and save your declarations before evaluation',
+      reported:'units',reportedNote:'Farmer-reported capacity / target · {hours}h duration · readiness: {ready}',
+      verifySaved:'Review resource draft',verifySavedNote:'Reconfirm locally saved quantities before evaluating',
+      legacy:'Review old demo inputs',legacyNote:'Earlier example values must be replaced with genuine farmer declarations',
+      evalError:'Review assessment request',evalErrorNote:'FastAPI did not return a valid evaluation; inspect your inputs',evalErrorSnap:'Engine reachable · request needs review',
+      readyYes:'yes',readyNo:'no',readyUnknown:'unknown',
+      apiLoading:'Connecting FastAPI',apiMissing:'Check Python service',
+      apiMissingNote:'The real assessment service must be reachable',
+      apiReady:'FastAPI ready',apiReadyNote:'Submit saved deadline and confirmed farmer declarations',
+      apiOutcome:'· conditional',apiResultNote:'FastAPI · {constraints} checked constraints · {gap} unit shortfall',
+      snapshotWindow:'Next 6 / 12 / 24h model views',snapshotManual:'Manual IST planning available',
+      snapshotResource:'Target · capacity · hours · readiness',
+      snapshotReady:'Engine ready · farmer inputs required',snapshotLink:'FastAPI connection check',
+      snapshotReported:'{capacity}/{target} units · {hours}h (reported)',
+      snapshotResult:'FastAPI · {status} · {gap} units shortfall'
+    },
+    mr:{
+      pilot:'आधी वेचलेला कापूस · जालना पायलट · मॉडेल म्हणजे शेतातील मोजमाप नाही',
+      unsupported:'फक्त जालना विभाग',outside:'मूळ नियोजन स्रोतांसाठी जालना निवडा',
+      weatherLoading:'Open-Meteo तपासत आहे',weatherMissing:'हवामान माहिती ताजी करा',
+      weatherMissingNote:'स्रोत पडताळता आला नाही; हवामान पानावर पुन्हा मिळवा',
+      rainHours:'भविष्यातील मॉडेल तास',rainNote:'Open-Meteo · पुढील २४ तासांपैकी {count}/24 पर्जन्यमान नोंदी · IST',
+      completeRain:'मिमी / २४ तास',completeNote:'Open-Meteo मॉडेल पाऊस · 24/24 तास · {time} IST',
+      missingFuture:'हवामान वेळापत्रक पाहा',missingFutureNote:'सध्याच्या डेटात पुढील मॉडेल तास नाहीत',
+      deadlineChosenNote:'शेतकऱ्याची संभाव्य वेळ · {hours} तास बाकी · सुरक्षिततेचा निकष नाही',
+      deadlinePast:'मागील वेळ बदला',deadlinePastNote:'मागील संभाव्य वेळ संपली आहे; पुढची IST वेळ निवडा',
+      modelWindow:'पुढील २४ तासांचा अंदाज',modelWindowNote:'६ / १२ / २४ तास तपासा; स्वतः अंतिम वेळ निवडा',
+      manualWindow:'IST वेळ ठरवा',manualWindowNote:'मॉडेल डेटा नसतानाही स्वतः वेळ निवडता येते',
+      resources:'४ नियोजन माहिती',resourcesNote:'प्रमाण · क्षमता · कालावधी · जागेची तयारी',
+      draft:'साधनांचा मसुदा',draftNote:'माहिती तपासा आणि गणनेपूर्वी जतन करा',
+      reported:'एकके',reportedNote:'शेतकऱ्याने सांगितलेली क्षमता / लक्ष्य · {hours} तास · तयारी: {ready}',
+      verifySaved:'साधनांची माहिती तपासा',verifySavedNote:'गणनेपूर्वी जतन केलेली माहिती पुन्हा खात्री करा',
+      legacy:'जुनी नमुना माहिती तपासा',legacyNote:'आधीचा नमुना बदलून शेतकऱ्याची खरी माहिती द्या',
+      evalError:'मूल्यमापन विनंती तपासा',evalErrorNote:'FastAPI कडून वैध निकाल मिळाला नाही; माहिती तपासा',evalErrorSnap:'इंजिन जोडले आहे · विनंती तपासा',
+      readyYes:'होय',readyNo:'नाही',readyUnknown:'अज्ञात',
+      apiLoading:'FastAPI जोडत आहे',apiMissing:'Python सेवा तपासा',apiMissingNote:'खरे मूल्यमापन करण्यासाठी सेवा आवश्यक आहे',
+      apiReady:'FastAPI तयार',apiReadyNote:'स्वतः निवडलेली वेळ आणि पुष्टी केलेली माहिती पाठवा',
+      apiOutcome:'· अटींसह',apiResultNote:'FastAPI · {constraints} अटी तपासल्या · {gap} एककांची कमतरता',
+      snapshotWindow:'६ / १२ / २४ तासांचे मॉडेल दृश्य',snapshotManual:'स्वतः IST वेळ निवडू शकता',
+      snapshotResource:'प्रमाण · क्षमता · वेळ · तयारी',snapshotReady:'इंजिन तयार · शेतकऱ्याची माहिती आवश्यक',
+      snapshotLink:'FastAPI जोडणी तपासा',snapshotReported:'{capacity}/{target} एकके · {hours} तास (घोषित)',
+      snapshotResult:'FastAPI · {status} · {gap} एककांची कमतरता'
+    },
+    hi:{
+      pilot:'पहले से चुनी गई कपास · जालना पायलट · मॉडल खेत का माप नहीं',
+      unsupported:'केवल जालना क्षेत्र',outside:'असल योजना स्रोतों के लिए जालना चुनें',
+      weatherLoading:'Open-Meteo जाँचा जा रहा है',weatherMissing:'मौसम डेटा रीफ्रेश करें',
+      weatherMissingNote:'स्रोत की पुष्टि नहीं हुई; मौसम पेज पर दोबारा देखें',
+      rainHours:'आने वाले मॉडल घंटे',rainNote:'Open-Meteo · अगले २४ घंटे में {count}/24 वर्षा मान · IST',
+      completeRain:'मिमी / २४ घंटे',completeNote:'Open-Meteo मॉडल बारिश · 24/24 घंटे · {time} IST',
+      missingFuture:'मौसम टाइमलाइन देखें',missingFutureNote:'मौजूदा डेटा में आगे के मॉडल घंटे नहीं हैं',
+      deadlineChosenNote:'किसान की चुनी समय सीमा · {hours} घंटे बाकी · सुरक्षा मानक नहीं',
+      deadlinePast:'समय सीमा बदलें',deadlinePastNote:'पुरानी समय सीमा बीत गई; नई IST समय सीमा चुनें',
+      modelWindow:'अगले २४ घंटे का मॉडल',modelWindowNote:'६ / १२ / २४ घंटे देखें; फिर अपना समय तय करें',
+      manualWindow:'IST समय तय करें',manualWindowNote:'मॉडल के बिना भी समय चुना जा सकता है',
+      resources:'४ जरूरी जानकारी',resourcesNote:'लक्ष्य · क्षमता · अवधि · जगह की तैयारी',
+      draft:'साधनों का मसौदा',draftNote:'पुष्टि से पहले जानकारी जाँचकर सहेजें',
+      reported:'इकाई',reportedNote:'किसान की बताई क्षमता / लक्ष्य · {hours} घंटे · तैयारी: {ready}',
+      verifySaved:'साधन विवरण जाँचें',verifySavedNote:'गणना से पहले सहेजी जानकारी की पुष्टि करें',
+      legacy:'पुराने नमूना डेटा जाँचें',legacyNote:'पुराने उदाहरण को असली किसान जानकारी से बदलें',
+      evalError:'आकलन अनुरोध जाँचें',evalErrorNote:'FastAPI से वैध नतीजा नहीं मिला; विवरण जाँचें',evalErrorSnap:'इंजन जुड़ा है · अनुरोध जाँचें',
+      readyYes:'हाँ',readyNo:'नहीं',readyUnknown:'अज्ञात',
+      apiLoading:'FastAPI जुड़ रहा है',apiMissing:'Python सेवा जाँचें',apiMissingNote:'असली गणना के लिए सेवा चाहिए',
+      apiReady:'FastAPI तैयार',apiReadyNote:'चुना समय और पुष्टि किए विवरण भेजें',
+      apiOutcome:'· शर्तों सहित',apiResultNote:'FastAPI · {constraints} शर्तें जाँचीं · {gap} इकाइयों की कमी',
+      snapshotWindow:'६ / १२ / २४ घंटे का मॉडल',snapshotManual:'मैनुअल IST समय चुन सकते हैं',
+      snapshotResource:'लक्ष्य · क्षमता · समय · तैयारी',snapshotReady:'इंजन तैयार · किसान विवरण जरूरी',
+      snapshotLink:'FastAPI कनेक्शन जाँचें',snapshotReported:'{capacity}/{target} इकाई · {hours} घंटे (बताए गए)',
+      snapshotResult:'FastAPI · {status} · {gap} इकाई की कमी'
+    }
+  };
+  function renderHomepageReadiness(){
+    const t=homeLanguage[state.lang]||homeLanguage.en;
+    const set=(id,value)=>{const node=here(id);if(node)node.textContent=value;};
+    const fill=(template,values)=>template.replace(/\{(\w+)\}/g,(_,key)=>String(values[key]??''));
+    const stamp=value=>{
+      const when=Date.parse(value);
+      return Number.isFinite(when)?new Intl.DateTimeFormat(state.lang==='mr'?'mr-IN':state.lang==='hi'?'hi-IN':'en-IN',
+        {timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(when):'';
+    };
+    set('homepageScope',t.pilot);
+    const supported=okLocation();
+    const current=supported&&isCurrent();
+    const validTime=hour=>Date.parse(String(hour?.time||'')+':00+05:30');
+    // A contiguous set of 24 source-native hours is required before a 24h
+    // precipitation total can be displayed. Nulls or gaps are not zero rain.
+    const future=current?live.forecast.hours.filter(h=>{
+      const time=validTime(h);return Number.isFinite(time)&&time>Date.now()+60_000;
+    }).sort((a,b)=>a.time.localeCompare(b.time)).filter((h,i,a)=>i===0||h.time!==a[i-1].time):[];
+    const start=future.length?validTime(future[0]):NaN;
+    const next24=future.slice(0,24);
+    const complete=next24.length===24&&next24.every((h,i)=>
+      validTime(h)===start+i*3_600_000&&typeof h.precipitation_mm==='number'&&Number.isFinite(h.precipitation_mm));
+    const rainCoverage=future.filter(h=>validTime(h)<Date.now()+24*3_600_000&&typeof h.precipitation_mm==='number').length;
+    if(!supported){
+      set('weatherValue',t.unsupported);set('weatherEvidenceNote',t.outside);
+    }else if(complete){
+      set('weatherValue',num(next24.reduce((total,h)=>total+h.precipitation_mm,0))+' '+t.completeRain);
+      set('weatherEvidenceNote',fill(t.completeNote,{time:stamp(live.forecast.retrieved_at_utc)}));
+    }else if(future.length){
+      set('weatherValue',future.length+' '+t.rainHours);
+      set('weatherEvidenceNote',fill(t.rainNote,{count:Math.min(rainCoverage,24)}));
+    }else if(current){
+      set('weatherValue',t.missingFuture);set('weatherEvidenceNote',t.missingFutureNote);
+    }else{
+      set('weatherValue',live.forecastLoading?t.weatherLoading:t.weatherMissing);
+      set('weatherEvidenceNote',t.weatherMissingNote);
+    }
+    const deadline=state.deadline;
+    const when=typeof deadline==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(deadline)?
+      Date.parse(deadline+':00+05:30'):NaN;
+    if(Number.isFinite(when)&&when>Date.now()){
+      const readable=stamp(new Date(when).toISOString())+' IST';
+      set('deadlineValue',readable);set('snapshotDeadline',readable);
+      set('deadlineEvidenceNote',fill(t.deadlineChosenNote,{hours:num(Math.max(0,(when-Date.now())/3_600_000))}));
+    }else if(Number.isFinite(when)){
+      set('deadlineValue',t.deadlinePast);set('deadlineEvidenceNote',t.deadlinePastNote);
+      set('snapshotDeadline',t.deadlinePast);
+    }else if(current&&future.length){
+      set('deadlineValue',t.modelWindow);set('deadlineEvidenceNote',t.modelWindowNote);
+      set('snapshotDeadline',t.snapshotWindow);
+    }else{
+      set('deadlineValue',t.manualWindow);set('deadlineEvidenceNote',t.manualWindowNote);
+      set('snapshotDeadline',t.snapshotManual);
+    }
+    const r=state.resources;
+    const numbersValid=!!r&&[r.target,r.capacity,r.hours].every(x=>typeof x==='number'&&Number.isFinite(x)&&x>=0);
+    const acknowledged=!!here('confirmInputs')?.checked;
+    // The retired prototype previously persisted this exact illustrative set;
+    // never promote it silently to an actual farmer inventory.
+    const legacyExample=numbersValid&&r.target===80&&r.capacity===60&&r.hours===2.5&&
+      r.readiness==='yes'&&r.baseline==='worker-baseline';
+    const formMatches=numbersValid&&[['quantity',r.target],['capacity',r.capacity],['duration',r.hours]].every(([id,value])=>
+      here(id)?.value.trim()!==''&&Number(here(id).value)===value)&&here('readiness')?.value===r.readiness&&
+      (here('baseline')?.value||'')===(r.baseline||'');
+    if(legacyExample){
+      set('resourcesValue',t.legacy);set('resourcesEvidenceNote',t.legacyNote);
+      set('snapshotResource',t.snapshotResource);
+    }else if(numbersValid&&acknowledged&&formMatches){
+      const values={target:num(r.target),capacity:num(r.capacity),hours:num(r.hours),
+        ready:t[r.readiness==='yes'?'readyYes':r.readiness==='no'?'readyNo':'readyUnknown']};
+      set('resourcesValue',values.capacity+' / '+values.target+' '+t.reported);
+      set('resourcesEvidenceNote',fill(t.reportedNote,values));
+      set('snapshotResource',fill(t.snapshotReported,values));
+    }else if(numbersValid){
+      set('resourcesValue',t.verifySaved);set('resourcesEvidenceNote',t.verifySavedNote);
+      set('snapshotResource',t.snapshotResource);
+    }else{
+      const filled=['quantity','capacity','duration'].filter(id=>here(id)?.value.trim()!=='').length+
+        (['yes','no'].includes(here('readiness')?.value)?1:0);
+      set('resourcesValue',filled?filled+'/4 '+t.draft:t.resources);
+      set('resourcesEvidenceNote',filled?t.draftNote:t.resourcesNote);
+      set('snapshotResource',t.snapshotResource);
+    }
+    const assessment=live.evaluation;
+    if(assessment&&statuses.includes(assessment.status)&&!legacyExample){
+      const values={status:assessment.status.toUpperCase(),constraints:assessment.baseline?.constraints?.length??0,
+        gap:typeof assessment.baseline?.shortfall_units==='number'?num(assessment.baseline.shortfall_units):'?'};
+      set('feasibilityValue',values.status+' '+t.apiOutcome);
+      set('feasibilityEvidenceNote',fill(t.apiResultNote,values));
+      set('snapshotAssessment',fill(t.snapshotResult,values));
+    }else if(live.error){
+      set('feasibilityValue',t.evalError);set('feasibilityEvidenceNote',t.evalErrorNote);
+      set('snapshotAssessment',t.evalErrorSnap);
+    }else if(live.health?.ok===true){
+      set('feasibilityValue',t.apiReady);set('feasibilityEvidenceNote',t.apiReadyNote);
+      set('snapshotAssessment',t.snapshotReady);
+    }else{
+      set('feasibilityValue',live.forecastLoading?t.apiLoading:t.apiMissing);
+      set('feasibilityEvidenceNote',t.apiMissingNote);set('snapshotAssessment',t.snapshotLink);
+    }
+  }
+  // Keep the overview synchronized with refreshes, changed farmer inputs,
+  // language changes, resets, and genuine server responses.
+  const precedingSummary=updateSummaries;
+  updateSummaries=function(){precedingSummary();renderHomepageReadiness();};
+  const precedingWeather=renderWeather;
+  renderWeather=function(){precedingWeather();renderHomepageReadiness();};
+  updateWeatherUI=renderWeather;
+  const precedingAssessment=renderAssessment;
+  renderAssessment=function(){precedingAssessment();renderHomepageReadiness();};
+  updateAssessmentUI=renderAssessment;
+  renderHomepageReadiness();
+  // Source-age display only; never fetches or invents data on a timer.
+  window.setInterval(renderHomepageReadiness,60_000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)renderHomepageReadiness();});
   changeLanguage();
   updateAllNew();
   renderConnectivity();renderEvidenceContrast();
