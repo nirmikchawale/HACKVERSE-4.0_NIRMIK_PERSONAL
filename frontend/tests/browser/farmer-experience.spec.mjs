@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// These are user-facing tests: no stored Detailed View preference.
+test.use({storageState:{cookies:[],origins:[]}});
+
 test.describe('FX-01 farmer-first experience', () => {
   test('farmer view is default; detailed view retains every technical page', async ({ page }) => {
     await page.goto('/');
@@ -55,4 +58,26 @@ test.describe('FX-01 farmer-first experience', () => {
     await page.locator('#farmerTopToggle').click();
     await expect(page.locator('html')).toHaveAttribute('data-farmer-view','on');
   });
+  test('genuine FastAPI response appears in plain-language Farmer View', async ({ page }) => {
+    test.skip(process.env.B03_INTEGRATION !== 'true', 'Requires the verified local FastAPI integration environment');
+    await page.goto('/');
+    await page.locator('#farmerNav button[data-to="1"]').click();
+    await page.locator('#deadlineInput').fill('2099-01-01T12:00');
+    await page.locator('#saveDeadline').click();
+    await page.locator('#farmerNav button[data-to="2"]').click();
+    await page.locator('#quantity').fill('10');
+    await page.locator('#capacity').fill('6');
+    await page.locator('#duration').fill('1');
+    await page.locator('#readiness').selectOption('yes');
+    await page.locator('#confirmInputs').check();
+    await page.locator('#saveResources').click();
+    await page.locator('#language').selectOption('mr');
+    await page.locator('#farmerNav button[data-to="3"]').click();
+    await page.locator('#runAssessment').click();
+    await expect(page.locator('#engineIndicator')).toContainText('RESPONSE VERIFIED',{timeout:20000});
+    await expect(page.locator('.farmer-info-card[role="status"]')).toContainText('प्लॅनमध्ये थोडा बदल');
+    await expect(page.locator('.farmer-info-card[role="status"]')).toContainText('4');
+    await expect(page.locator('#resultHero')).toHaveAttribute('data-kind','blocked');
+  });
+
 });
