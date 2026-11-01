@@ -1,0 +1,12 @@
+/* EX-08: model source coverage only; no agricultural thresholds or new dependencies. */
+.source-qc-panel{margin:20px 0;padding:18px}
+.source-qc-disclosure{color:var(--muted);font-size:12px;line-height:1.6}
+.source-qc-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,195px),1fr));gap:10px;margin:16px 0}
+.source-qc-item{min-width:0;border:1px solid var(--border);background:var(--card);border-radius:12px;padding:12px}
+.source-qc-item strong,.source-qc-item span{display:block;font-size:12px;line-height:1.55}
+.source-qc-item strong{color:var(--ink);font-weight:700}
+.source-qc-item span{margin-top:5px;color:var(--muted);overflow-wrap:anywhere}
+.source-qc-empty{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
+#exportForecastEvidence{min-height:44px}
+#exportForecastEvidence:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+@media(max-width:600px){.source-qc-panel{padding:13px}.source-qc-metrics{grid-template-columns:1fr}}
