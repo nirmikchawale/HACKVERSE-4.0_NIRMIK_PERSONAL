@@ -1166,7 +1166,9 @@
     renderForecastQuality();
     renderHourlyEvidence();
     const chart=here('weatherChart'),mode=here('weatherChartMode'),chip=here('forecastSourceChip');
-    chart.replaceChildren();here('toggleForecast').textContent='Refresh live forecast';here('clearForecast').textContent='Clear forecast view';
+    chart.replaceChildren();here('toggleForecast').textContent=state.lang==='mr'?'अंदाज पुन्हा मिळवा':state.lang==='hi'?'पूर्वानुमान अपडेट करें':'Refresh forecast';
+    here('clearForecast').textContent=state.lang==='mr'?'रिकामे करा':state.lang==='hi'?'हटाएँ':'Clear';
+    here('clearForecast').disabled=!live.forecast;
     if(!okLocation()){chip.textContent='UNSUPPORTED LOCATION';mode.textContent='Jalna-only data coverage';chart.append(el('div','weather-empty','Forecast for this location is not supported. Return to Jalna, Maharashtra; no other-location data is fabricated.'));here('weatherValue').textContent='Unsupported';return;}
     const f=live.forecast;
     if(!f){chip.textContent='NOT CONNECTED';mode.textContent='No authenticated model forecast';chart.append(el('div','weather-empty','No real forecast is loaded. Use Refresh live forecast to request Open-Meteo through the backend.'));here('weatherValue').textContent='Not loaded';return;}
@@ -1181,8 +1183,7 @@
     chip.textContent=navigator.onLine===false?'OFFLINE · LAST-RECEIVED MODEL':
       f.status==='retrieved_live'?'LIVE MODEL FORECAST':'RECENT VERIFIED CACHE';
     mode.textContent='Open-Meteo • '+(f.hours.length)+' model hours • precipitation (mm), probability (%) • IST';
-    const provenance=el('p','live-provenance','Retrieved '+f.retrieved_at_utc+' · age '+num(f.forecast_age_hours)+' h · '+(f.attribution||'Open-Meteo')+'. Model output, not observed rain or safe crop timing.');
-    chart.append(provenance);
+    chip.title='Inspect authenticated model quality. Retrieved '+f.retrieved_at_utc+' UTC · '+(f.attribution||'Open-Meteo')+'; model, not a field observation.';
     renderForecastWindows(chart,f);
     const future=f.hours.filter(h=>{
       const stamp=Date.parse(h.time+':00+05:30');
@@ -1195,10 +1196,9 @@
     if(forecastDay!=='all'&&!dates.includes(forecastDay)){forecastDay='all';forecastOffset=0;}
     const filtered=selectable.filter(h=>forecastDay==='all'||h.time.startsWith(forecastDay));
     if(forecastOffset>=filtered.length)forecastOffset=0;
-    const sample=filtered.slice(forecastOffset,forecastOffset+24);
+    const sample=filtered.slice(forecastOffset,forecastOffset+forecastRange);
     const explorer=el('div','wx-explorer');
     explorer.id='forecastExplorerControls';
-    const explorerLabel=el('div','wx-explorer-title','Explore authenticated model hours · future hours are actionable');
     const metricField=el('label','wx-explorer-field');
     metricField.append(el('span','','Show model measure'));
     const metricSelect=el('select','hourly-evidence-select');metricSelect.id='forecastExploreMetric';
@@ -1216,22 +1216,18 @@
     daySelect.value=forecastDay;daySelect.addEventListener('change',()=>{
       forecastDay=daySelect.value;forecastOffset=0;renderWeather();
     });dayField.append(daySelect);
-    const prev=el('button','btn wx-explorer-page','Previous 24 h');
+    const prev=el('button','btn wx-explorer-page',state.lang==='mr'?'मागे':state.lang==='hi'?'पीछे':'Previous');
     prev.type='button';prev.id='forecastExplorePrev';
     prev.disabled=forecastOffset===0;
-    prev.addEventListener('click',()=>{forecastOffset=Math.max(0,forecastOffset-24);renderWeather();});
-    const next=el('button','btn wx-explorer-page','Next 24 h');
+    prev.addEventListener('click',()=>{forecastOffset=Math.max(0,forecastOffset-forecastRange);renderWeather();});
+    const next=el('button','btn wx-explorer-page',state.lang==='mr'?'पुढे':state.lang==='hi'?'आगे':'Next');
     next.type='button';next.id='forecastExploreNext';
-    next.disabled=forecastOffset+24>=filtered.length;
-    next.addEventListener('click',()=>{forecastOffset+=24;renderWeather();});
-    explorer.append(explorerLabel,metricField,dayField,prev,next);
+    next.disabled=forecastOffset+forecastRange>=filtered.length;
+    next.addEventListener('click',()=>{forecastOffset+=forecastRange;renderWeather();});
+    explorer.append(metricField,dayField,prev,next);
     chart.append(explorer);
     const metricValues=sample.map(h=>h[forecastMetric]).filter(v=>v!==null&&Number.isFinite(v));
-    const summary=el('p','wx-explorer-summary',selectable.length?
-      'Showing '+sample.length+' of '+filtered.length+' source hours · '+metricValues.length+
-      ' numerical values · '+(sample.length-metricValues.length)+' missing. Select a bar to draft a deadline; save it separately.':
-      'No future model hour is eligible. Review prior evidence below or enter a manual deadline; neither determines safe rainfall timing.');
-    chart.append(summary);
+    chart.setAttribute('aria-description','Select a source model hour to copy a proposed deadline. Missing values are unknown, not zero.');
     const bars=el('div','weather-bars');
     const max=forecastMetric==='precipitation_probability_pct'?100:
       Math.max(0.1,...metricValues);
@@ -1268,8 +1264,7 @@
       });bars.append(b);
     }
     chart.append(bars);
-    if(filtered.length>24)chart.append(el('small','wx-explorer-summary',
-      'Explore all '+filtered.length+' matching upcoming hours using the Previous/Next buttons. Historical hours remain in the full evidence table.'));
+
     here('weatherValue').textContent=f.status==='retrieved_live'?'Latest model forecast':'Recent model cache';
   }
   async function refreshForecast(refresh){
