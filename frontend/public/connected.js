@@ -1001,6 +1001,7 @@
       empty:'आगामी मॉडल घंटे उपलब्ध नहीं; कोई कुल वर्षा नहीं दिखाई गई।'}
   };
   // Descriptive sums of genuine future model hours, never a safety cutoff.
+  // Compact interactive forecast horizons: descriptive model sums, never a safety window.
   function renderForecastWindows(chart,forecast){
     const tr=windowI18n[state.lang]||windowI18n.en;
     const now=Date.now(),seen=new Set();
@@ -1009,31 +1010,38 @@
       if(!Number.isFinite(at)||at<now||seen.has(h.time))return false;
       seen.add(h.time);return true;
     }).sort((a,b)=>a.time.localeCompare(b.time));
-    if(!future.length){
-      chart.append(el('p','forecast-window-label',tr.empty));
-      return;
-    }
+    if(!future.length)return;
     const start=Date.parse(future[0].time+':00+05:30');
     const byHour=new Map(future.map(h=>[Date.parse(h.time+':00+05:30'),h]));
-    chart.append(el('p','forecast-window-label',tr.start+
-      future[0].time.replace('T',' ') +tr.note));
-    const grid=el('div','forecast-window-grid');grid.id='forecastWindowSummary';
+    const grid=el('div','forecast-window-grid wx-horizon-grid');grid.id='forecastWindowSummary';
+    grid.setAttribute('role','group');grid.setAttribute('aria-label','Choose model hours to explore (not a safe weather window)');
     for(const n of [6,12,24]){
-      const rows=Array.from({length:n},(_,i)=>byHour.get(start+i*3_600_000)).filter(Boolean),
-        rain=rows.filter(h=>h.precipitation_mm!==null),
-        prob=rows.filter(h=>h.precipitation_probability_pct!==null),
-        complete=rows.length===n&&rain.length===n;
+      const rows=Array.from({length:n},(_,i)=>byHour.get(start+i*3_600_000)).filter(Boolean);
+      const rain=rows.filter(h=>h.precipitation_mm!==null);
+      const prob=rows.filter(h=>h.precipitation_probability_pct!==null);
+      const complete=rows.length===n&&rain.length===n;
+      const sum=rain.reduce((total,h)=>total+h.precipitation_mm,0);
       const card=el('article','forecast-window-card');
-      card.append(el('strong','',tr.window+n+tr.hours));
-      card.append(el('span','window-value',rain.length?
-        (complete?tr.modeled:tr.partial)+
-        num(rain.reduce((total,h)=>total+h.precipitation_mm,0))+' mm':tr.none));
-      card.append(el('small','',tr.coverage+rain.length+'/'+n+tr.units+
-        (complete?tr.complete:tr.incomplete)));
-      card.append(el('small','',tr.maximum+
-        (prob.length?num(Math.max(...prob.map(h=>h.precipitation_probability_pct)))+'%':tr.unavailable)+
-        tr.probability));
-      grid.append(card);
+      const action=el('button','wx-horizon-button');action.type='button';
+      action.dataset.horizon=String(n);
+      action.setAttribute('aria-pressed',String(n===forecastRange));
+      if(n===forecastRange)action.classList.add('is-active');
+      const compactValue=rain.length?num(sum)+' mm':tr.none;
+      const label=el('strong','',n+' h');
+      const amount=el('span','window-value',compactValue);
+      const coverage=el('span','wx-horizon-coverage',rain.length+'/'+n+' '+(state.lang==='mr'?'नोंदी':state.lang==='hi'?'रिकॉर्ड':'hours'));
+      const accessible=el('span','wx-visually-hidden',
+        tr.window+n+tr.hours+' · '+(rain.length?(complete?tr.modeled:tr.partial)+num(sum)+' mm':tr.none)+
+        ' · '+tr.coverage+rain.length+'/'+n+tr.units+
+        (complete?tr.complete:tr.incomplete)+' · '+tr.maximum+
+        (prob.length?num(Math.max(...prob.map(h=>h.precipitation_probability_pct)))+'%':tr.unavailable)+tr.probability);
+      action.title=(state.lang==='mr'?'मॉडेलचे ':state.lang==='hi'?'मॉडल के ':'Show ')+n+' h';
+      action.addEventListener('click',()=>{
+        forecastRange=n;forecastOffset=0;forecastDay='all';
+        renderWeather();
+        chart.querySelector('[data-horizon="'+n+'"]')?.focus({preventScroll:true});
+      });
+      action.append(label,amount,coverage,accessible);card.append(action);grid.append(card);
     }
     chart.append(grid);
   }
@@ -1066,7 +1074,7 @@
   const networkTitle=el('h3'),networkState=el('strong','network-state'),networkDetails=el('p','network-details');
   const networkReceipt=el('div','network-receipts'),networkDisclosure=el('small','network-disclosure');
   connectivity.append(networkTitle,networkState,networkDetails,networkReceipt,networkDisclosure);
-  here('weatherChart').insertAdjacentElement('afterend',connectivity);
+  // The receipt is preserved below, as opt-in evidence outside the two planning cards.
   function renderConnectivity(){
     const t=climateL(),receipts=readLastReceipts(),offline=navigator.onLine===false;
     connectivity.dataset.network=offline?'offline':'unverified';
@@ -1087,6 +1095,7 @@
   let forecastMetric='precipitation_mm';
   let forecastDay='all';
   let forecastOffset=0;
+  let forecastRange=24;
   const deadlineGuide=el('section','wx-deadline-guide');
   deadlineGuide.id='deadlinePlanningGuide';
   deadlineGuide.setAttribute('aria-label','Guided candidate deadline workflow');
