@@ -79,7 +79,7 @@ test('real source refresh reuses provider routes and exports a status-only recei
  await page.locator('#sourceWorkbenchDetail button').filter({hasText:'Download status receipt'}).click();
  const file=await dl;
  expect(file.suggestedFilename()).toContain('nasa-status.json');
- await expect(page.locator('#sourceWorkbenchDetail')).toContainText('not measurements at the farm');
+ await expect(page.locator('#sourceWorkbenchDetail')).toContainText('nor measurements at the farm');
 });
 test('mobile workbench fits viewport, supports tri-language changes and keyboard selection',async({page})=>{
  await fixture(page);await page.setViewportSize({width:390,height:844});await page.goto('/');
