@@ -11,6 +11,97 @@
   const num=n=>Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'Unknown';
   const okLocation=()=>state.place?.state==='Maharashtra'&&state.place?.city?.trim().toLowerCase()==='jalna';
   const statuses=['feasible','blocked','unknown','completed'];
+
+  // EX-09B: page-local translations; values never change numeric source facts.
+  const evidenceLanguages={
+    en:{
+      qualityTitle:'Forecast evidence quality',
+      qualityIntro:'Open-Meteo provides modeled weather, not a field rain gauge or a crop-safe onset threshold. Missing hours and missing values are never interpreted as dry weather.',
+      qualityExport:'Export verified modeled hours (CSV)',
+      qualityFoot:'Export is available only for the supported Jalna pilot and a validated current model response. No farmer declarations are included.',
+      qualityMissing:'No validated current model readings to audit or export. Refresh the forecast to retrieve genuine evidence.',
+      qualityUnsupported:'Not available for this location. Jalna, Maharashtra is the only supported pilot.',
+      provenance:'Provenance',retrieved:'Retrieved (UTC)',elapsed:'Elapsed since retrieval',
+      reported:'Reported hourly records',rainCount:'Rainfall values',chanceCount:'Rain-probability values',
+      duplicates:'Timestamp duplicates',gaps:'Hourly timestamp gaps',
+      cached:'Recent backend-validated model cache',fetched:'Backend-retrieved model forecast',
+      minutes:'minute(s), calculated from the provided timestamp',
+      rainValues:'hours reported a modeled millimeter value',chanceValues:'hours reported a model probability',
+      duplicateUnits:'duplicate record(s)',gapUnits:'absent hourly position(s)',
+      gapLong:'Range too long to verify in this view',
+      timeline:'Full model-hour timeline',timelineIntro:'Source-native modeled rain in millimeters and hourly probability, not observed rain or a crop-safety threshold.',
+      filter:'Filter by model date (IST)',allDates:'All available model dates',dateSuffix:'(IST)',
+      timeHeader:'Model hour · IST',rainHeader:'Modeled rain · mm',chanceHeader:'Model rain probability · %',actionHeader:'Planning action',
+      hourAction:'Use as proposed deadline',unavailable:'Unavailable',pastHour:'Past/current model hours cannot be selected as future deadlines.',
+      hourlyNoData:'No eligible current model forecast. Refresh weather to inspect genuine source hours.',
+      hourlyWrongPlace:'Hourly model data is unavailable for locations outside the Jalna pilot.',
+      hourlyEmpty:'Unavailable, expired and unsupported sources never display sample data.',
+      showing:'Displaying',of:'of',records:'authenticated model hour record(s); all times are IST. Each selected hour is only a proposed planning deadline.',
+      selected:'Model hour selected. Click Save candidate deadline to confirm this assumption.',
+      selectedSource:'Proposed hour chosen from source-validated Open-Meteo model evidence. Not a safe-rain threshold.',
+      expiredHour:'The model hour is no longer valid. Refresh the forecast before selecting another.'
+    },
+    mr:{
+      qualityTitle:'हवामान अंदाजाच्या पुराव्याची गुणवत्ता',
+      qualityIntro:'Open-Meteo चे हवामान आकडे हे मॉडेलचे अंदाज आहेत; शेतातील मोजमाप किंवा सुरक्षित पावसाची वेळ नाही. नसलेला डेटा म्हणजे पाऊस शून्य असा अर्थ नाही.',
+      qualityExport:'पडताळलेल्या हवामान अंदाजाचा CSV घ्या',
+      qualityFoot:'फक्त जालना आणि पडताळलेल्या ताज्या मॉडेल अंदाजासाठी निर्यात उपलब्ध आहे. शेतकऱ्याची वैयक्तिक माहिती यात नाही.',
+      qualityMissing:'सध्या पडताळलेला ताजा अंदाज नाही. वास्तविक डेटा मिळवण्यासाठी अंदाज पुन्हा मिळवा.',
+      qualityUnsupported:'या ठिकाणासाठी उपलब्ध नाही. हा पायलट फक्त जालना, महाराष्ट्र येथे चालतो.',
+      provenance:'माहितीचा स्रोत',retrieved:'मिळाल्याची वेळ (UTC)',elapsed:'मिळाल्यापासूनचा कालावधी',
+      reported:'नोंदवलेले तास',rainCount:'पावसाचे उपलब्ध आकडे',chanceCount:'पावसाच्या शक्यतेचे आकडे',
+      duplicates:'सारखी वेळ पुन्हा',gaps:'तासांच्या नोंदीतील अंतर',
+      cached:'अलीकडे पडताळलेला मॉडेल कॅश',fetched:'Backend कडून मिळालेला मॉडेल अंदाज',
+      minutes:'मिनिटे; स्रोताच्या वेळेवरून मोजलेले',
+      rainValues:'तासांसाठी मॉडेल पावसाचे मिमी आकडे',chanceValues:'तासांसाठी मॉडेल पावसाची शक्यता',
+      duplicateUnits:'दुबार नोंदी',gapUnits:'नसलेल्या तासांच्या नोंदी',
+      gapLong:'या दृश्यात वेळेची व्याप्ती तपासता येत नाही',
+      timeline:'सर्व तासांचा हवामान अंदाज',
+      timelineIntro:'मॉडेलनुसार प्रत्येक तासातील पाऊस (मिमी) व शक्यता; हे प्रत्यक्ष निरीक्षण किंवा सुरक्षिततेचे प्रमाणपत्र नाही.',
+      filter:'मॉडेलचा दिवस निवडा (IST)',allDates:'सर्व उपलब्ध दिवस',dateSuffix:'(IST)',
+      timeHeader:'मॉडेलचा तास · IST',rainHeader:'अंदाजित पाऊस · मिमी',chanceHeader:'पावसाची शक्यता · %',actionHeader:'नियोजनाची कृती',
+      hourAction:'नियोजनाची वेळ निवडा',unavailable:'उपलब्ध नाही',
+      pastHour:'गेलेला किंवा सध्याचा तास भविष्यातील अंतिम वेळ म्हणून वापरता येत नाही.',
+      hourlyNoData:'सध्या ताजा पडताळलेला मॉडेल अंदाज नाही. खरा डेटा मिळवण्यासाठी हवामान पुन्हा मिळवा.',
+      hourlyWrongPlace:'जालना व्यतिरिक्त ठिकाणांसाठी तासांचा अंदाज उपलब्ध नाही.',
+      hourlyEmpty:'नसलेला किंवा कालबाह्य डेटा असल्यास नमुन्याचे बनावट आकडे दाखवत नाही.',
+      showing:'दाखवत आहे',of:'एकूण',records:'पडताळलेल्या तासांच्या नोंदी; सर्व वेळा IST आहेत. निवडलेली वेळ ही केवळ नियोजनासाठी आहे.',
+      selected:'मॉडेलचा तास निवडला. ही वेळ जतन करण्यासाठी Save candidate deadline दाबा.',
+      selectedSource:'Open-Meteo मॉडेलमधून निवडलेली संभाव्य वेळ; हा सुरक्षित पावसाचा निकष नाही.',
+      expiredHour:'निवडलेली वेळ आता वैध नाही. हवामान अंदाज पुन्हा मिळवा.'
+    },
+    hi:{
+      qualityTitle:'मौसम पूर्वानुमान साक्ष्य की गुणवत्ता',
+      qualityIntro:'Open-Meteo के आँकड़े मॉडल पूर्वानुमान हैं, खेत के माप या सुरक्षित वर्षा की सीमा नहीं। लापता जानकारी को शून्य वर्षा नहीं माना जाता।',
+      qualityExport:'सत्यापित मौसम पूर्वानुमान CSV लें',
+      qualityFoot:'निर्यात केवल जालना के ताज़ा सत्यापित मॉडल डेटा के लिए है। इसमें किसान की निजी जानकारी नहीं है।',
+      qualityMissing:'अभी कोई ताज़ा सत्यापित मॉडल डेटा नहीं है। वास्तविक डेटा के लिए पूर्वानुमान रीफ़्रेश करें।',
+      qualityUnsupported:'इस स्थान के लिए उपलब्ध नहीं। पायलट केवल जालना, महाराष्ट्र के लिए है।',
+      provenance:'जानकारी का स्रोत',retrieved:'प्राप्ति समय (UTC)',elapsed:'प्राप्ति के बाद बीता समय',
+      reported:'रिपोर्ट किए गए घंटे',rainCount:'वर्षा के उपलब्ध आँकड़े',chanceCount:'वर्षा संभावना के आँकड़े',
+      duplicates:'दोहराए गए समय',gaps:'घंटों की अनुपस्थित प्रविष्टियाँ',
+      cached:'हाल में सत्यापित मॉडल कैश',fetched:'Backend से प्राप्त मॉडल पूर्वानुमान',
+      minutes:'मिनट; स्रोत के समय से गणना',
+      rainValues:'घंटों के लिए मॉडल वर्षा के मिमी मान',chanceValues:'घंटों के लिए मॉडल वर्षा संभावना',
+      duplicateUnits:'दोहराई गई प्रविष्टियाँ',gapUnits:'अनुपस्थित घंटे',
+      gapLong:'इस दृश्य में इतनी लंबी अवधि सत्यापित नहीं की जा सकती',
+      timeline:'सभी घंटों का मौसम पूर्वानुमान',
+      timelineIntro:'मॉडल के अनुसार प्रत्येक घंटे में वर्षा (मिमी) और संभावना; न कि वास्तविक माप या सुरक्षित कृषि समय।',
+      filter:'मॉडल की तारीख चुनें (IST)',allDates:'सभी उपलब्ध तारीखें',dateSuffix:'(IST)',
+      timeHeader:'मॉडल घंटा · IST',rainHeader:'मॉडल वर्षा · मिमी',chanceHeader:'वर्षा संभावना · %',actionHeader:'नियोजन विकल्प',
+      hourAction:'प्रस्तावित समय चुनें',unavailable:'उपलब्ध नहीं',
+      pastHour:'बीता या वर्तमान घंटा भविष्य की समय-सीमा नहीं हो सकता।',
+      hourlyNoData:'अभी कोई ताज़ा सत्यापित मॉडल घंटा नहीं है। वास्तविक डेटा के लिए मौसम रीफ़्रेश करें।',
+      hourlyWrongPlace:'जालना से बाहर के स्थानों के लिए यह घंटेवार मॉडल उपलब्ध नहीं है।',
+      hourlyEmpty:'अनुपलब्ध या पुराने डेटा की जगह काल्पनिक आँकड़े नहीं दिखाए जाते।',
+      showing:'दिखा रहे हैं',of:'कुल',records:'सत्यापित घंटे; सभी समय IST में हैं। चुना घंटा केवल प्रस्तावित नियोजन समय है।',
+      selected:'मॉडल घंटा चुना गया। पुष्टि के लिए Save candidate deadline दबाएँ।',
+      selectedSource:'सत्यापित Open-Meteo मॉडल से चुना प्रस्तावित घंटा; सुरक्षित वर्षा की सीमा नहीं।',
+      expiredHour:'यह घंटा अब मान्य नहीं है। नया पूर्वानुमान लाएँ।'
+    }
+  };
+  const evidenceText=k=>(evidenceLanguages[state.lang]||evidenceLanguages.en)[k]||evidenceLanguages.en[k]||k;
+
   let previousPlace=state.place.city+'|'+state.place.state;
   const ledger=el('section','live-ledger');
   ledger.id='sourceLedger';
@@ -131,31 +222,30 @@
   qcPanel.insertAdjacentElement('afterend',hourlyPanel);
   hourlyDate.addEventListener('change',renderHourlyEvidence);
   function renderHourlyEvidence(){
+    hourlyTitle.textContent=evidenceText('timeline');hourlyIntro.textContent=evidenceText('timelineIntro');
+    hourlyLabel.querySelector('span').textContent=evidenceText('filter');
     hourlyTableContainer.replaceChildren();
     const evidence=forecastCoverage(),source=evidence?.source;
     const hours=source?.hours||[];
     const distinctDates=[...new Set(hours.map(h=>h.time.slice(0,10)))];
     const retained=hourlyDate.value;
     hourlyDate.replaceChildren();
-    const all=el('option','','All available model dates');all.value='all';hourlyDate.append(all);
+    const all=el('option','',evidenceText('allDates'));all.value='all';hourlyDate.append(all);
     for(const date of distinctDates){
-      const option=el('option','',date+' (IST)');option.value=date;hourlyDate.append(option);
+      const option=el('option','',date+' '+evidenceText('dateSuffix'));option.value=date;hourlyDate.append(option);
     }
     hourlyDate.value=distinctDates.includes(retained)?retained:'all';
     hourlyDate.disabled=!evidence;
     if(!evidence){
-      hourlySummary.textContent=okLocation()?
-        'No eligible current model forecast. Refresh weather to inspect genuine source hours.':
-        'Hourly model data is unavailable for locations outside the Jalna pilot.';
-      hourlyTableContainer.append(el('p','hourly-evidence-note','Unavailable, expired and unsupported sources never display sample data.'));
+      hourlySummary.textContent=okLocation()?evidenceText('hourlyNoData'):evidenceText('hourlyWrongPlace');
+      hourlyTableContainer.append(el('p','hourly-evidence-note',evidenceText('hourlyEmpty')));
       return;
     }
     const filtered=hours.filter(h=>hourlyDate.value==='all'||h.time.startsWith(hourlyDate.value));
-    hourlySummary.textContent='Displaying '+filtered.length+' of '+hours.length+
-      ' authenticated model hour record(s); all times are IST. Each selected hour is only a proposed planning deadline.';
+    hourlySummary.textContent=evidenceText('showing')+' '+filtered.length+' '+evidenceText('of')+' '+hours.length+' '+evidenceText('records');
     const table=el('table','hourly-evidence-table');
     const head=el('thead'),heading=el('tr');
-    for(const value of ['Model hour · IST','Modeled rain · mm','Model rain probability · %','Planning action']){
+    for(const value of ['timeHeader','rainHeader','chanceHeader','actionHeader'].map(evidenceText)){
       const th=el('th','',value);th.scope='col';heading.append(th);
     }
     head.append(heading);table.append(head);
@@ -164,58 +254,62 @@
       const tr=el('tr');
       const timeCell=el('th','',hour.time.replace('T',' '));timeCell.scope='row';
       tr.append(timeCell);
-      tr.append(el('td','',hour.precipitation_mm===null?'Unavailable':num(hour.precipitation_mm)+' mm'));
-      tr.append(el('td','',hour.precipitation_probability_pct===null?'Unavailable':
+      tr.append(el('td','',hour.precipitation_mm===null?evidenceText('unavailable'):num(hour.precipitation_mm)+' mm'));
+      tr.append(el('td','',hour.precipitation_probability_pct===null?evidenceText('unavailable'):
         num(hour.precipitation_probability_pct)+'%'));
       const actionCell=el('td');
-      const action=el('button','btn hourly-evidence-action','Use as proposed deadline');
+      const action=el('button','btn hourly-evidence-action',evidenceText('hourAction'));
       action.type='button';action.dataset.hour=hour.time;
       const validFuture=Number.isFinite(Date.parse(hour.time+':00+05:30'))&&
         Date.parse(hour.time+':00+05:30')>Date.now()+60000;
       action.disabled=!validFuture;
       action.setAttribute('aria-label','Use '+hour.time.replace('T',' ')+' IST as a proposed, not verified-safe, planning deadline');
-      if(!validFuture)action.title='Past/current model hours cannot be selected as future deadlines.';
+      if(!validFuture)action.title=evidenceText('pastHour');
       action.addEventListener('click',()=>{
         const fresh=forecastCoverage();
         const stamp=Date.parse(hour.time+':00+05:30');
         if(!fresh||!fresh.source.hours.some(h=>h.time===hour.time)||
           !Number.isFinite(stamp)||stamp<=Date.now()+60000){
           renderWeather();
-          here('deadlineNotice').textContent='The model hour is no longer valid. Refresh the forecast before selecting another.';
+          here('deadlineNotice').textContent=evidenceText('expiredHour');
           return;
         }
         here('deadlineInput').value=hour.time;
         live.selectedHour=hour.time;
         additional.deadlineSource='model';
-        here('deadlineOriginPreview').textContent='Proposed hour chosen from source-validated Open-Meteo model evidence. Not a safe-rain threshold.';
-        here('deadlineNotice').textContent='Model hour selected. Click Save candidate deadline to confirm this assumption.';
+        here('deadlineOriginPreview').textContent=evidenceText('selectedSource');
+        here('deadlineNotice').textContent=evidenceText('selected');
       });
       actionCell.append(action);tr.append(actionCell);body.append(tr);
     }
     table.append(body);hourlyTableContainer.append(table);
   }
   function renderForecastQuality(){
+    qcPanel.querySelector('h2').textContent=evidenceText('qualityTitle');
+    qcPanel.querySelector('p.source-qc-disclosure').textContent=evidenceText('qualityIntro');
+    qcExport.textContent=evidenceText('qualityExport');
+    qcPanel.querySelector('small.source-qc-disclosure').textContent=evidenceText('qualityFoot');
     qcMetrics.replaceChildren();
     const d=forecastCoverage();
     qcExport.disabled=!d;
     if(!d){
       qcMetrics.append(el('p','source-qc-empty',
-        okLocation()?'No validated current model readings to audit or export. Refresh the forecast to retrieve genuine evidence.':
-          'Not available for this location. Jalna, Maharashtra is the only supported pilot.'));
+        okLocation()?evidenceText('qualityMissing'):evidenceText('qualityUnsupported')));
       return;
     }
     const add=(label,value)=>{
       const item=el('div','source-qc-item');item.append(el('strong','',label),el('span','',value));
       qcMetrics.append(item);
     };
-    add('Provenance',d.source.status==='cached_recent'?'Recent backend-validated model cache':'Backend-retrieved model forecast');
-    add('Retrieved (UTC)',d.source.retrieved_at_utc);
-    add('Elapsed since retrieval',d.ageMinutes+' minute(s), calculated from the provided timestamp');
-    add('Reported hourly records',String(d.records));
-    add('Rainfall values',d.rainCount+'/'+d.records+' hours reported a modeled millimeter value');
-    add('Rain-probability values',d.chanceCount+'/'+d.records+' hours reported a model probability');
-    add('Timestamp duplicates',String(d.duplicateHours)+' duplicate record(s)');
-    add('Hourly timestamp gaps',d.gapCount===null?'Range too long to verify in this view':String(d.gapCount)+' absent hourly position(s)');
+    add(evidenceText('provenance'),d.source.status==='cached_recent'?evidenceText('cached'):evidenceText('fetched'));
+    add(evidenceText('retrieved'),d.source.retrieved_at_utc);
+    add(evidenceText('elapsed'),d.ageMinutes+' '+evidenceText('minutes'));
+    add(evidenceText('reported'),String(d.records));
+    add(evidenceText('rainCount'),d.rainCount+'/'+d.records+' '+evidenceText('rainValues'));
+    add(evidenceText('chanceCount'),d.chanceCount+'/'+d.records+' '+evidenceText('chanceValues'));
+    add(evidenceText('duplicates'),String(d.duplicateHours)+' '+evidenceText('duplicateUnits'));
+    add(evidenceText('gaps'),d.gapCount===null?evidenceText('gapLong'):
+      String(d.gapCount)+' '+evidenceText('gapUnits'));
   }
   qcExport.addEventListener('click',()=>{
     const d=forecastCoverage();
@@ -599,6 +693,8 @@
     }
   };
   void loadGovernmentClimate(false);
+
+  here('language').addEventListener('change',()=>{renderForecastQuality();renderHourlyEvidence();});
 
   // Override obsolete offline-prototype copy, including on language changes.
   // Model outputs remain labeled; no simulated values appear in the real UI.
