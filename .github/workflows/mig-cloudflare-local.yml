@@ -55,6 +55,20 @@ jobs:
           PY
       - name: Install official Python Worker CLI runner
         run: python -m pip install 'uv>=0.8,<1'
+      - name: Assemble Python SDK and Worker bundle without publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv run python - <<'PY'
+          import importlib.metadata as md
+          from packaging.version import Version
+          cli=md.version("workers-py")
+          sdk=md.version("workers-runtime-sdk")
+          assert Version(cli)>=Version("1.17.9"), f"Outdated Cloudflare CLI: {cli}"
+          assert Version(sdk)>=Version("1.9.5"), f"Outdated Cloudflare runtime SDK: {sdk}"
+          print("Cloudflare pywrangler and SDK versions PASS:", cli, sdk)
+          PY
+          uv run pywrangler deploy --dry-run --outdir /tmp/agri-foresight-bundle
       - name: Start real Cloudflare Python Worker locally
         shell: bash
         run: |

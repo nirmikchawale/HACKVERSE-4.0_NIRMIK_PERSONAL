@@ -6,7 +6,7 @@ requires-python = ">=3.13"
 dependencies = ["fastapi>=0.115,<1", "httpx>=0.27,<1", "tzdata>=2024.1"]
 
 [dependency-groups]
-dev = ["workers-py", "workers-runtime-sdk"]
+dev = ["workers-py>=1.17.9,<2", "workers-runtime-sdk>=1.9.5,<2"]
 
 # Cloudflare Builders install this repository from pyproject.toml. Restrict
 # setuptools discovery to the Python application; frontend/ and contrib/
