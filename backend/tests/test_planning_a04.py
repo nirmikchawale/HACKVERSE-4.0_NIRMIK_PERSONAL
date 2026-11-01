@@ -226,6 +226,6 @@ def test_forecast_replan_api_rejects_unlisted_hour(monkeypatch):
     client=TestClient(app)
     case=_feasible()
     monkeypatch.setattr(api,'get_forecast',lambda refresh=False:_weather(datetime.now(timezone.utc)))
-    response=client.post('/api/replan',json={'before':case,'after':case,'selected_hour_local':'2026-11-01T10:00'})
+    response=client.post('/api/replan',json={'before':case,'after':case,'selected_hour_local':'2099-01-01T10:00'})
     assert response.status_code==422
     assert 'not present' in response.json()['detail']
