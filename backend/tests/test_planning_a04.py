@@ -205,7 +205,15 @@ def test_forecast_replan_api_rejects_unavailable_and_accepts_stubbed_recent(monk
     payload={'before':case,'after':case,'selected_hour_local':'2026-11-01T09:00'}
     monkeypatch.setattr(api,'get_forecast',lambda refresh=False:{'status':'unavailable'})
     assert client.post('/api/replan',json=payload).status_code==409
-    fresh=_weather(datetime.now(timezone.utc))  # Synthetic test-only stub.
+    # A real calendar clock eventually makes the fixed test-only 09:00 hour past.
+    # Freeze the API clock solely inside this synthetic test; production stays live.
+    fixed_now=datetime(2026,10,31,17,30,tzinfo=timezone.utc)
+    class FixedClock(datetime):
+        @classmethod
+        def now(cls,tz=None):
+            return fixed_now.astimezone(tz) if tz is not None else fixed_now.replace(tzinfo=None)
+    monkeypatch.setattr(api,'datetime',FixedClock)
+    fresh=_weather(fixed_now)  # Synthetic test-only stub.
     monkeypatch.setattr(api,'get_forecast',lambda refresh=False:fresh)
     response=client.post('/api/replan',json=payload)
     assert response.status_code==200
