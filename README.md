@@ -7,23 +7,54 @@
 
 > The public model forecast gives weather context; the deterministic Python engine assesses whether user-declared resources and a candidate deadline permit preparation. It never asserts agronomic safety or guaranteed protection.
 
-## Current implementation status (31 October 2026)
+## Cloudflare-only deployment policy (November 2026)
 
-- **Workstream B-01:** TypeScript/Vite frontend foundation, responsive design and certified test/deployment baseline.
-- **Workstream B-02:** Typed interactive weather, deadline, farmer-resource and feasibility-result screens.
-- **Workstream A-05:** Python FastAPI source and six-route contract imported unchanged from tested `feat/unlockplan-core` commit `22308c67938135c2ee6c3815d3d17d1b9904ba3a`.
-- **Workstream B-03:** Frontend and FastAPI configured as two Vercel Services (beta), with same-origin `/api` routing and protected preview verification. Backend tests, typecheck, build, local genuine FastAPI browser interactions and real preview GET routes have passed; consult current draft PR #2 and its CI for latest exact SHA.
-- **Production:** The certified unified six-screen FastAPI application was merged to `main` in PR #11 and deployed to Vercel. Public URL as of the branding release preparation: https://hackverse-40nirmikpersonal.vercel.app/. The requested `agriforesight.vercel.app` alias requires separate Vercel domain assignment and live verification.
+**Cloudflare Workers is the sole deployment target.** No new implementation,
+release promotion, or hosting work targets the retired provider.
+The canonical release branch is protected \`main\`; the Cloudflare Python Worker
+entrypoint is \`backend/worker.py\`, serving the FastAPI ASGI app
+\`backend.unlockplan.edge\` with Vite static assets under \`frontend/dist\`.
+
+### What is included
+
+- Six connected dashboard pages, actual source-labeled Open-Meteo forecasts,
+  and NASA POWER US-government historical gridded climate evidence.
+- Page 04: **100 deterministic, reproducible example assessments** generated
+  from 20 bounded example seeds × 5 sensitivity scenarios, each evaluated by
+  the same Python \`unlockplan.engine.evaluate\` as genuine farmer submissions.
+- Distinguishable data kinds: government historical grid, external weather-model
+  forecast, farmer-entered resources, and clearly labeled configured examples.
+  No sample records masquerade as government measurements or real farms.
+- Complete source notes, filter/search/pagination, evidence CSV export and
+  conditional minimal-change explanations. Farmer-specific assessment remains
+  unevaluated until the farmer confirms inputs and the actual API responds.
+
+### Cloudflare build configuration
+
+Cloudflare Workers Builds: repository root \`/\`, production branch \`main\`.
+- Build: \`node scripts/prepare-cloudflare-release.mjs && cd frontend && npm ci && npm run build\`
+- Production deploy: \`uv run pywrangler deploy\`
+- Preview deploy: \`uv run pywrangler preview\`
+- Production and preview builds must use the repo root \`wrangler.jsonc\`
+  and must never use a bare \`npx wrangler deploy\` for this Python Worker.
+- Validate \`/api/health\`, \`/api/feasibility-scenarios\`,
+  \`/api/government-climate\`, and \`/_release.json\` on the actual
+  Cloudflare URL before certifying production.
+
+**Verification:** GitHub passing checks verify code/integration only. Public
+Cloudflare deployment and exact SHA need a separate successful hosted smoke.
+Follow \`docs/CLOUDFLARE_ONLY_FEASIBILITY_100_EXECUTION.md\`.
 
 ## Project layout
 
-```
-frontend/        TypeScript, Vite, HTML/CSS and focused Playwright tests
-backend/         Python FastAPI, deterministic planning engine, source/weather adapters and pytest
-docs/contracts/  Source-of-truth A-05 TypeScript API handoff
-vercel.json      Services beta routing: /api/* to backend, all other paths to frontend
-.github/workflows/   Frontend and real FastAPI integration checks
-```
+\`\`\`
+frontend/        Six-page Vite application and Chromium regression tests
+backend/         Unchanged engine, FastAPI, Cloudflare async adapter, tests
+backend/worker.py   Pywrangler Python Worker / ASGI entrypoint
+wrangler.jsonc   Authoritative Cloudflare service and asset routing
+pyproject.toml   Python Worker SDK and dependency declarations
+.github/workflows/  FastAPI/frontend plus Cloudflare-local certification
+\`\`\`
 
 ## Run locally
 
@@ -52,8 +83,10 @@ Missing or stale weather never becomes simulated rainfall; an unavailable API mu
 
 ## Release gate
 
-Feature branch → source review and SHA identity → Python manifest/tests → TypeScript/security audit/build → actual local API/browser integration → exact-head Vercel preview → independent public/protected-preview HTTP and responsive checks → **separate approval before merging or promoting production**.
+Exact-head source/manifest -> Python tests -> Vite/audit/Chromium -> real
+FastAPI integration -> Cloudflare Python Worker local Pyodide smoke ->
+Cloudflare-hosted preview matching the exact Git SHA -> guarded merge into
+protected \`main\` -> public Cloudflare HTTP/browser/API/SHA certificate.
 
-The root configuration is for a coupled frontend/backend deployment. Independent backend-only feature branches may lack `vercel.json` and should not be mistaken for valid combined previews.
-
-References: [Engineering prompt](docs/MASTER_EXECUTION_PROMPT.md), [stack and gates](docs/TECH_STACK_AND_RELEASE.md), [B-03 architecture](docs/B03_INTEGRATION.md), [B-03 local integration test guide](docs/B03_LOCAL_E2E.md).
+Do not promote on source commit or CI alone. No alternative hosting target
+is part of the project release workflow.
