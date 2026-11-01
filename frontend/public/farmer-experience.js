@@ -113,8 +113,41 @@
       optionType:'क्या बदलना है?',optionAmount:'कितना फर्क पड़ेगा?',optionAvailability:'क्या यह सच में उपलब्ध है?',resourceIdentifier:'व्यक्ति या साधन का नाम (चाहें तो)'
     }
   };
+  /* Plain-language labels for the remaining dashboard and planning pages. */
+  const moreCopy = {
+    en:{forecastKpi:'Upcoming weather',deadlineKpi:'When will you finish?',resourcesKpi:'My farm details',feasKpi:'My plan result',
+      begin:'Start my plan',weatherAction:'Check the weather',enterFarm:'Enter my farm details',
+      pathTitle:'How to make your plan',stepWeather:'Check the weather',stepResources:'Tell us about your work',stepFeas:'Check your plan',stepChanges:'See what you can change',
+      weatherLead:'See the rain forecast and choose the time you want to finish.',deadlineLabel:'Finish my work by (IST)',saveDeadline:'Save my finish time',
+      workingDetails:'My work',unitsIntro:'Use the same equal-sized work parts for both numbers.',
+      optionalChanges:'Extra help you may be able to arrange',optionsDesc:'Only add help you are sure you can get.',
+      whyDecision:'Why did this happen?',minimality:'Each suggested change is needed',minimalityDesc:'The engine returned these only from confirmed options; they may not be the cheapest.',
+      packageOptions:'Possible changes',scenarioComparison:'Compare the original plan and changed plan',
+      replanGuidance:'How to change your plan',reviewPlan:'Review my plan',noPackages:'No confirmed changes found',
+      noPackagesBody:'Check the help you can actually arrange, then check your plan again.'},
+    mr:{forecastKpi:'पावसाचा अंदाज',deadlineKpi:'काम कधी संपवायचं?',resourcesKpi:'माझ्या कामाची माहिती',feasKpi:'माझा प्लॅन कसा आहे?',
+      begin:'प्लॅन सुरू करा',weatherAction:'पाऊस कधी येईल ते पाहा',enterFarm:'माझ्या कामाची माहिती भरा',
+      pathTitle:'प्लॅन कसा करायचा?',stepWeather:'पावसाचा अंदाज पाहा',stepResources:'तुमच्या कामाची माहिती भरा',stepFeas:'प्लॅन तपासा',stepChanges:'शक्य बदल पाहा',
+      weatherLead:'पावसाचा अंदाज पाहा आणि काम कधी संपवायचं ते ठरवा.',deadlineLabel:'काम कधीपर्यंत संपवायचं? (IST)',saveDeadline:'कामाची वेळ जतन करा',
+      workingDetails:'माझ्या कामाची माहिती',unitsIntro:'दोन्ही ठिकाणी सारख्या आकाराचे भाग मोजा.',
+      optionalChanges:'आणखी काय मदत मिळू शकते?',optionsDesc:'खात्रीने मिळणारी माणसं किंवा साधनंच भरा.',
+      whyDecision:'असं का सांगितलं?',minimality:'सुचवलेल्या प्रत्येक बदलाची गरज आहे',minimalityDesc:'हे बदल खात्रीच्या पर्यायांतूनच आले आहेत; ते सर्वात स्वस्त असतीलच असं नाही.',
+      packageOptions:'शक्य बदल',scenarioComparison:'आधीचा आणि बदललेला प्लॅन पाहा',
+      replanGuidance:'प्लॅन कसा बदलायचा?',reviewPlan:'माझा प्लॅन पुन्हा पाहा',noPackages:'खात्रीचा बदल सापडला नाही',
+      noPackagesBody:'खरंच कोणती मदत मिळेल ते तपासा आणि प्लॅन पुन्हा पाहा.'},
+    hi:{forecastKpi:'बारिश का अनुमान',deadlineKpi:'काम कब खत्म करना है?',resourcesKpi:'मेरे खेत का काम',feasKpi:'मेरे प्लान का नतीजा',
+      begin:'प्लान शुरू करें',weatherAction:'बारिश का अनुमान देखें',enterFarm:'मेरे खेत का काम भरें',
+      pathTitle:'प्लान कैसे बनाएँ?',stepWeather:'बारिश का अनुमान देखें',stepResources:'काम की जानकारी भरें',stepFeas:'प्लान जाँचें',stepChanges:'संभव बदलाव देखें',
+      weatherLead:'बारिश का अनुमान देखें और काम पूरा करने का समय चुनें।',deadlineLabel:'काम कब तक पूरा करना है? (IST)',saveDeadline:'काम का समय सहेजें',
+      workingDetails:'मेरे काम की जानकारी',unitsIntro:'दोनों जगह बराबर आकार के हिस्से गिनें।',
+      optionalChanges:'और कैसी मदद मिल सकती है?',optionsDesc:'सिर्फ वही लोग या साधन गिनें जो पक्के मिलेंगे।',
+      whyDecision:'ऐसा क्यों हुआ?',minimality:'हर सुझाया बदलाव ज़रूरी है',minimalityDesc:'ये बदलाव पक्के विकल्पों से आए हैं; ज़रूरी नहीं ये सबसे सस्ते हों।',
+      packageOptions:'संभव बदलाव',scenarioComparison:'पहले और बदले प्लान को देखें',
+      replanGuidance:'प्लान कैसे बदलें?',reviewPlan:'मेरा प्लान फिर देखें',noPackages:'अभी कोई पक्का बदलाव नहीं मिला',
+      noPackagesBody:'देखें कि सच में क्या मदद मिलेगी, फिर प्लान जाँचें।'}
+  };
   const lang=()=>['en','mr','hi'].includes(byId('language')?.value)?byId('language').value:'en';
-  const t=key=>texts[lang()][key]||texts.en[key]||key;
+  const t=key=>texts[lang()][key]||moreCopy[lang()][key]||texts.en[key]||moreCopy.en[key]||key;
   let mode='farmer',showTechnical=false,showResource=false;
   try{mode=localStorage.getItem('agri-foresight-view')==='detailed'?'detailed':'farmer';}catch(_){}
   const nav=byId('navDesktop'),rail=document.querySelector('aside.rail');
@@ -167,6 +200,11 @@
   const translationKeys={
     quantity:'quantity',capacity:'capacity',duration:'duration',readiness:'readiness',confirmText:'declaration',
     baseline:'baseline',saveResourceButton:'save',nextFeasibility:'run',runPreview:'run',
+    weatherStatus:'forecastKpi',deadlineStatus:'deadlineKpi',resourcesStatus:'resourcesKpi',feasibilityStatus:'feasKpi',
+    begin:'begin',forecast:'weatherAction',nextResources:'enterFarm',pathTitle:'pathTitle',stepWeather:'stepWeather',stepResources:'stepResources',stepFeas:'stepFeas',stepChanges:'stepChanges',
+    weatherLead:'weatherLead',deadlineLabel:'deadlineLabel',saveDeadline:'saveDeadline',workingDetails:'workingDetails',unitsIntro:'unitsIntro',
+    optionalChanges:'optionalChanges',optionsDesc:'optionsDesc',whyDecision:'whyDecision',minimality:'minimality',minimalityDesc:'minimalityDesc',
+    packageOptions:'packageOptions',scenarioComparison:'scenarioComparison',replanGuidance:'replanGuidance',reviewPlan:'reviewPlan',noPackages:'noPackages',noPackagesBody:'noPackagesBody',
     viewSummary:'next',optionType:'optionType',optionAmount:'optionAmount',
     optionAvailability:'optionAvailability',resourceIdentifier:'resourceIdentifier'
   };
