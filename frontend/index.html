@@ -96,6 +96,7 @@ html[data-theme="dark"] .brand-gold{color:#f4d676}
 .resource-completeness p{font-size:11px;color:var(--muted);line-height:1.45;margin:0}
 .resource-insights{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .resource-insight{border:1px solid var(--border);border-radius:14px;background:var(--soft);padding:12px;min-width:0}
+.resource-margin{grid-column:1/-1}
 .resource-insight span,.resource-insight small{display:block;color:var(--muted);font-size:11px;line-height:1.4}
 .resource-insight strong{display:block;color:var(--ink);font-size:clamp(16px,1.5vw,21px);margin:7px 0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .resource-tree{padding:0 3px 0 0;display:grid;gap:0}
@@ -185,6 +186,7 @@ html[data-theme="dark"] .brand-gold{color:#f4d676}
       <div class="resource-insights" aria-label="Derived planning quantities">
         <div class="resource-insight"><span data-i18n="reportedCoverage">Reported capacity coverage</span><strong id="resourceCoverageValue">Enter quantities</strong><small data-i18n="coverageNote">Capped at 100% of planned units</small></div>
         <div class="resource-insight"><span data-i18n="reportedGap">Reported capacity shortfall</span><strong id="resourceGapValue">Enter quantities</strong><small data-i18n="gapNote">Planned units minus capacity, minimum zero</small></div>
+        <div class="resource-insight resource-margin"><span data-i18n="deadlineMargin">Estimated time margin</span><strong id="resourceMarginValue">Select deadline and hours</strong><small data-i18n="marginNote">Time remaining minus farmer-estimated work hours; not a safe-weather window</small></div>
       </div>
       <div class="resource-tree" aria-label="Preparedness decision pathway">
         <div class="resource-tree-title" data-i18n="treeTitle">Your next-step pathway</div>
@@ -351,6 +353,7 @@ Object.assign(dict.en,{
  inputsCaptured:'Form entries supplied',completenessCaution:'Completeness counts entries, not agricultural safety or verified resource access.',
  reportedCoverage:'Reported capacity coverage',coverageNote:'Capped at 100% of planned units',
  reportedGap:'Reported capacity shortfall',gapNote:'Planned units minus capacity, minimum zero',
+ deadlineMargin:'Estimated time margin',marginNote:'Time remaining minus farmer-estimated work hours; not a safe-weather window',needDeadlineHours:'Select deadline and hours',
  treeTitle:'Your next-step pathway',treeWork:'Declare planned work',treeDeadline:'Select a candidate deadline',
  treeSite:'Report site readiness',treeAssess:'Inspect server assessment',
  trustUseTitle:'Included in planning',trustUseBody:'Your entered target, capacity, hours, deadline and stated readiness. FastAPI determines feasibility only after you evaluate.',
@@ -368,6 +371,7 @@ Object.assign(dict.mr,{
  inputsCaptured:'भरलेल्या नोंदी',completenessCaution:'पूर्णता म्हणजे शेतीची सुरक्षितता किंवा संसाधनांची स्वतंत्र खात्री नाही.',
  reportedCoverage:'नोंदवलेल्या क्षमतेचे प्रमाण',coverageNote:'नियोजित प्रमाणाच्या १००% पर्यंत',
  reportedGap:'नोंदवलेली क्षमतेची कमतरता',gapNote:'नियोजित प्रमाण वजा क्षमता, किमान शून्य',
+ deadlineMargin:'अंदाजित उरलेला वेळ',marginNote:'शिल्लक वेळ वजा शेतकऱ्याने सांगितलेले कामाचे तास; सुरक्षित हवामानाची खात्री नाही',needDeadlineHours:'अंतिम वेळ आणि तास निवडा',
  treeTitle:'पुढील कृतीचा मार्ग',treeWork:'नियोजित काम नोंदवा',treeDeadline:'अपेक्षित अंतिम वेळ निवडा',
  treeSite:'ठिकाणाची तयारी नोंदवा',treeAssess:'सर्व्हर मूल्यांकन तपासा',
  trustUseTitle:'गणनेत वापरलेले',trustUseBody:'आपले प्रमाण, क्षमता, तास, अंतिम वेळ आणि घोषित तयारी. सर्व्हर मूल्यमापनानंतरच व्यवहार्यता ठरते.',
@@ -385,6 +389,7 @@ Object.assign(dict.hi,{
  inputsCaptured:'दर्ज की गई प्रविष्टियाँ',completenessCaution:'पूर्णता का अर्थ खेती की सुरक्षा या संसाधनों का स्वतंत्र सत्यापन नहीं है।',
  reportedCoverage:'दर्ज क्षमता का अनुपात',coverageNote:'नियोजित मात्रा के अधिकतम १००% तक',
  reportedGap:'दर्ज क्षमता की कमी',gapNote:'लक्षित मात्रा घटा क्षमता, न्यूनतम शून्य',
+ deadlineMargin:'अनुमानित समय अंतर',marginNote:'बचा हुआ समय घटा किसान द्वारा बताए गए कार्य घंटे; सुरक्षित मौसम की पुष्टि नहीं',needDeadlineHours:'समयसीमा और घंटे चुनें',
  treeTitle:'अगले चरण का मार्ग',treeWork:'नियोजित कार्य दर्ज करें',treeDeadline:'उम्मीदवार समयसीमा चुनें',
  treeSite:'स्थान की तैयारी दर्ज करें',treeAssess:'सर्वर मूल्यांकन देखें',
  trustUseTitle:'गणना में शामिल',trustUseBody:'आपकी मात्रा, क्षमता, घंटे, समयसीमा और बताई गई तैयारी। व्यवहार्यता का निर्णय मूल्यांकन के बाद सर्वर करता है।',
@@ -451,6 +456,10 @@ function renderPreparednessUI(){
    :tr('needQuantities');
  $('resourceGapValue').textContent=target!==null&&capacity!==null
    ?fmtNum(Math.max(0,target-capacity))+' '+tr('unitsShort'):tr('needQuantities');
+ const deadlineMs=selected?Date.parse(state.deadline+':00+05:30'):NaN;
+ const marginHours=hours!==null&&Number.isFinite(deadlineMs)?(deadlineMs-Date.now())/3600000-hours:null;
+ $('resourceMarginValue').textContent=marginHours===null?tr('needDeadlineHours'):
+   (marginHours>=0?'+':'')+marginHours.toLocaleString('en-IN',{maximumFractionDigits:1})+' h';
  $('resourceTreeWork').textContent=target!==null&&capacity!==null&&hours!==null
    ?tr('workRecorded'):tr('workIncomplete');
  $('resourceTreeDeadline').textContent=selected?tr('farmerChosen'):tr('chooseDeadline');
