@@ -138,21 +138,29 @@ html[data-theme="dark"] .brand-gold{color:#f4d676}
 <section class="section" data-page="1">
   <div class="page-head elevated"><div><div class="section-label">02 / FORECAST INTELLIGENCE</div><h1 data-i18n="pageWeather">Weather & planning window</h1><p data-i18n="weatherLead">Inspect sourced weather information and choose your own proposed preparation deadline.</p></div><span class="prototype-tag">● CONNECTED PLAN · JALNA SCOPE</span></div>
   <div class="feature-stripe"><div class="feature-icon">☁</div><div><b data-i18n="weatherTruth">Your forecast must have a real source.</b><p data-i18n="weatherTruthDesc">The production backend can retrieve Open-Meteo model information. This standalone file does not access it or invent live observations.</p></div><span class="scope-pill">Jalna · Cotton</span></div>
-  <div class="weather-layout">
+  <div class="weather-layout wx-workspace-compact">
    <div class="panel forecast-panel">
-    <div class="panel-head"><div><span class="section-label tight">MODEL EVIDENCE</span><h2 data-i18n="forecastTimeline">Precipitation timeline</h2></div><span class="status-chip" id="forecastSourceChip">NOT CONNECTED</span></div>
-    <p class="muted" data-i18n="timelineIntro">Only authenticated model forecasts retrieved from the live backend are displayed. Missing or stale values are never replaced with examples.</p>
-    <div class="chart-tools"><button class="btn primary" id="toggleForecast" type="button" data-i18n="showSample">Refresh live forecast</button><button class="btn" id="clearForecast" type="button" data-i18n="clearSample">Clear forecast view</button><span class="chip-outline" id="weatherChartMode">No forecast loaded</span></div>
-    <div id="weatherChart" class="weather-visual" aria-label="Weather evidence timeline"><div class="weather-empty"><div class="weather-empty-icon">☁</div><b data-i18n="noLiveForecast">Authentic forecast not yet retrieved</b><p data-i18n="noTimeline">Real model forecast hours appear here only when the weather provider responds successfully.</p></div></div>
-    <div class="source-strip"><span>◈ <b data-i18n="modelSource">Forecast source</b>: Open-Meteo model via FastAPI</span><span>⌁ <b data-i18n="retrieval">Retrieval</b>: See source timestamp above</span><span>⏱ <b data-i18n="timezone">Timezone</b>: Asia/Kolkata (IST)</span></div>
+     <div class="panel-head wx-panel-head">
+       <div><span class="section-label tight">MODEL EVIDENCE</span><h2 data-i18n="forecastTimeline">Precipitation timeline</h2></div>
+       <button class="status-chip wx-source-button" id="forecastSourceChip" type="button" title="Inspect authenticated model evidence">NOT CONNECTED</button>
+     </div>
+     <div class="chart-tools wx-chart-tools">
+       <button class="btn primary" id="toggleForecast" type="button" data-i18n="showSample">Refresh forecast</button>
+       <button class="btn" id="clearForecast" type="button" data-i18n="clearSample">Clear</button>
+     </div>
+     <span class="wx-visually-hidden" id="weatherChartMode" role="status">No forecast loaded</span>
+     <div id="weatherChart" class="weather-visual" aria-label="Select an authenticated model hour">
+       <div class="weather-empty" role="status">Refresh to view available model hours.</div>
+     </div>
    </div>
    <div class="panel deadline-card">
-     <div class="section-label tight">YOUR PLANNING WINDOW</div><h2 data-i18n="deadlineTitle">Choose candidate deadline</h2><p data-i18n="deadlineExplanation">This is a farmer-chosen assumption, not a confirmed rainfall onset or safe window.</p>
-     <label class="field"><span data-i18n="deadlineLabel">Finish preparation before (IST)</span><input type="datetime-local" id="deadlineInput"><small data-i18n="deadlineHint">Choose a date and time in India Standard Time.</small></label>
-     <div class="deadline-source"><span class="soft-icon">◎</span><div><b data-i18n="deadlineOrigin">Deadline origin</b><small id="deadlineOriginPreview">No candidate hour selected</small></div></div>
-     <button id="saveDeadline" type="button" class="btn primary full" data-i18n="saveDeadline">Save candidate deadline</button><div class="notice" role="status" id="deadlineNotice"></div>
-     <div class="micro-divider"></div><p class="muted" data-i18n="weatherCaution">Rain probability is not an exact rain-onset time. No automatic crop-safe threshold is assumed.</p>
-     <button class="btn full goto" data-target="2" type="button"><span data-i18n="nextResources">Continue to resources</span> →</button>
+     <div class="section-label tight">YOUR PLANNING WINDOW</div>
+     <h2 data-i18n="deadlineTitle">Choose candidate deadline</h2>
+     <label class="field wx-deadline-field"><span data-i18n="deadlineLabel">Finish preparation before (IST)</span><input type="datetime-local" id="deadlineInput"></label>
+     <div class="wx-origin" id="deadlineOriginRow" hidden><small id="deadlineOriginPreview" role="status"></small></div>
+     <button id="saveDeadline" type="button" class="btn primary full" data-i18n="saveDeadline">Save candidate deadline</button>
+     <div class="notice" role="status" id="deadlineNotice"></div>
+     <button class="btn full goto" id="deadlineGuideContinue" data-target="2" type="button"><span data-i18n="nextResources">Continue to resources</span> →</button>
    </div>
   </div>
 </section>
