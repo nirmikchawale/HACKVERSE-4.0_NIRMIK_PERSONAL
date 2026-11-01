@@ -67,8 +67,9 @@ test('WXR-02 planning action explicitly selects, saves and proceeds to resources
   await action.click();
   await expect(page.locator('#deadlineInput')).not.toHaveValue('');
   await expect(page.locator('#deadlinePlanningGuide')).toContainText('Candidate time remaining');
-  await expect(page.locator('#deadlineGuideSave')).toBeEnabled();
-  await page.locator('#deadlineGuideSave').click();
+  await expect(page.locator('#saveDeadline')).toBeEnabled();
+  await expect(page.locator('#deadlineGuideSave')).toHaveCount(0);
+  await page.locator('#saveDeadline').click();
   await expect(page.locator('#deadlineGuideContinue')).toBeEnabled();
   await page.locator('#deadlineGuideContinue').click();
   await expect(page.locator('section.section[data-page="2"]')).toHaveClass(/active/);

@@ -1001,6 +1001,7 @@
       empty:'आगामी मॉडल घंटे उपलब्ध नहीं; कोई कुल वर्षा नहीं दिखाई गई।'}
   };
   // Descriptive sums of genuine future model hours, never a safety cutoff.
+  // Compact interactive forecast horizons: descriptive model sums, never a safety window.
   function renderForecastWindows(chart,forecast){
     const tr=windowI18n[state.lang]||windowI18n.en;
     const now=Date.now(),seen=new Set();
@@ -1009,31 +1010,38 @@
       if(!Number.isFinite(at)||at<now||seen.has(h.time))return false;
       seen.add(h.time);return true;
     }).sort((a,b)=>a.time.localeCompare(b.time));
-    if(!future.length){
-      chart.append(el('p','forecast-window-label',tr.empty));
-      return;
-    }
+    if(!future.length)return;
     const start=Date.parse(future[0].time+':00+05:30');
     const byHour=new Map(future.map(h=>[Date.parse(h.time+':00+05:30'),h]));
-    chart.append(el('p','forecast-window-label',tr.start+
-      future[0].time.replace('T',' ') +tr.note));
-    const grid=el('div','forecast-window-grid');grid.id='forecastWindowSummary';
+    const grid=el('div','forecast-window-grid wx-horizon-grid');grid.id='forecastWindowSummary';
+    grid.setAttribute('role','group');grid.setAttribute('aria-label','Choose model hours to explore (not a safe weather window)');
     for(const n of [6,12,24]){
-      const rows=Array.from({length:n},(_,i)=>byHour.get(start+i*3_600_000)).filter(Boolean),
-        rain=rows.filter(h=>h.precipitation_mm!==null),
-        prob=rows.filter(h=>h.precipitation_probability_pct!==null),
-        complete=rows.length===n&&rain.length===n;
+      const rows=Array.from({length:n},(_,i)=>byHour.get(start+i*3_600_000)).filter(Boolean);
+      const rain=rows.filter(h=>h.precipitation_mm!==null);
+      const prob=rows.filter(h=>h.precipitation_probability_pct!==null);
+      const complete=rows.length===n&&rain.length===n;
+      const sum=rain.reduce((total,h)=>total+h.precipitation_mm,0);
       const card=el('article','forecast-window-card');
-      card.append(el('strong','',tr.window+n+tr.hours));
-      card.append(el('span','window-value',rain.length?
-        (complete?tr.modeled:tr.partial)+
-        num(rain.reduce((total,h)=>total+h.precipitation_mm,0))+' mm':tr.none));
-      card.append(el('small','',tr.coverage+rain.length+'/'+n+tr.units+
-        (complete?tr.complete:tr.incomplete)));
-      card.append(el('small','',tr.maximum+
-        (prob.length?num(Math.max(...prob.map(h=>h.precipitation_probability_pct)))+'%':tr.unavailable)+
-        tr.probability));
-      grid.append(card);
+      const action=el('button','wx-horizon-button');action.type='button';
+      action.dataset.horizon=String(n);
+      action.setAttribute('aria-pressed',String(n===forecastRange));
+      if(n===forecastRange)action.classList.add('is-active');
+      const compactValue=rain.length?num(sum)+' mm':tr.none;
+      const label=el('strong','',n+' h');
+      const amount=el('span','window-value',compactValue);
+      const coverage=el('span','wx-horizon-coverage',rain.length+'/'+n+' '+(state.lang==='mr'?'नोंदी':state.lang==='hi'?'रिकॉर्ड':'hours'));
+      const accessible=el('span','wx-visually-hidden',
+        tr.window+n+tr.hours+' · '+(rain.length?(complete?tr.modeled:tr.partial)+num(sum)+' mm':tr.none)+
+        ' · '+tr.coverage+rain.length+'/'+n+tr.units+
+        (complete?tr.complete:tr.incomplete)+' · '+tr.maximum+
+        (prob.length?num(Math.max(...prob.map(h=>h.precipitation_probability_pct)))+'%':tr.unavailable)+tr.probability);
+      action.title=(state.lang==='mr'?'मॉडेलचे ':state.lang==='hi'?'मॉडल के ':'Show ')+n+' h';
+      action.addEventListener('click',()=>{
+        forecastRange=n;forecastOffset=0;forecastDay='all';
+        renderWeather();
+        chart.querySelector('[data-horizon="'+n+'"]')?.focus({preventScroll:true});
+      });
+      action.append(label,amount,coverage,accessible);card.append(action);grid.append(card);
     }
     chart.append(grid);
   }
@@ -1066,7 +1074,14 @@
   const networkTitle=el('h3'),networkState=el('strong','network-state'),networkDetails=el('p','network-details');
   const networkReceipt=el('div','network-receipts'),networkDisclosure=el('small','network-disclosure');
   connectivity.append(networkTitle,networkState,networkDetails,networkReceipt,networkDisclosure);
-  here('weatherChart').insertAdjacentElement('afterend',connectivity);
+  // The optional evidence receipt stays available, but outside the two decision cards.
+  const networkFold=el('details','wx-network-disclosure');
+  networkFold.id='weatherNetworkDetails';
+  networkFold.append(el('summary','wx-network-toggle',
+    state.lang==='mr'?'नेटवर्क पावत्या तपासा':state.lang==='hi'?'नेटवर्क रसीद देखें':'Inspect network receipts'));
+  networkFold.append(connectivity);
+  qcPanel.append(networkFold);
+  // The receipt is preserved below, as opt-in evidence outside the two planning cards.
   function renderConnectivity(){
     const t=climateL(),receipts=readLastReceipts(),offline=navigator.onLine===false;
     connectivity.dataset.network=offline?'offline':'unverified';
@@ -1087,63 +1102,68 @@
   let forecastMetric='precipitation_mm';
   let forecastDay='all';
   let forecastOffset=0;
-  // Reuse the original page navigation button instead of creating a disabled
-  // duplicate. The existing .goto handler remains attached when the element moves.
-  const continueButton=here('deadlineGuideContinue');
-  if(!continueButton)throw new Error('Missing genuine Continue to resources control');
+  let forecastRange=24;
+  // One shortcut, one date editor, one save button, one continue button.
   const deadlineGuide=el('section','wx-deadline-guide');
   deadlineGuide.id='deadlinePlanningGuide';
-  deadlineGuide.setAttribute('aria-label','Guided candidate deadline workflow');
-  here('deadlineNotice').insertAdjacentElement('afterend',deadlineGuide);
+  deadlineGuide.setAttribute('aria-label','Choose a model hour or enter your own candidate');
+  here('deadlineInput').closest('label.field').insertAdjacentElement('beforebegin',deadlineGuide);
+  const deadlineLanguage={
+    en:{quick:'Use next model hour',manual:'Enter a future time or select a model hour.',invalid:'Choose a future time.',due:'Candidate time remaining: ',saved:'Saved',unsaved:'Not saved',source:'Model hour',own:'Your time',save:'Save candidate deadline'},
+    mr:{quick:'पुढचा मॉडेल तास निवडा',manual:'पुढील वेळ भरा किंवा मॉडेल तास निवडा.',invalid:'पुढील वेळ निवडा.',due:'निवडलेल्या वेळेपर्यंत उरलेले: ',saved:'जतन केले',unsaved:'जतन नाही',source:'मॉडेल तास',own:'तुमची वेळ',save:'निवडलेली वेळ जतन करा'},
+    hi:{quick:'अगला मॉडल घंटा चुनें',manual:'आने वाला समय भरें या मॉडल घंटा चुनें।',invalid:'आने वाला समय चुनें।',due:'चुने समय तक शेष: ',saved:'सहेजा गया',unsaved:'अभी नहीं सहेजा',source:'मॉडल घंटा',own:'आपका समय',save:'चुना समय सहेजें'}
+  };
   function renderDeadlineGuide(){
+    const t=deadlineLanguage[state.lang]||deadlineLanguage.en;
     deadlineGuide.replaceChildren();
     const value=here('deadlineInput').value||'';
-    const saved=!!value&&state.deadline===value;
-    const stamp=Date.parse(value+':00+05:30');
-    const future=Number.isFinite(stamp)&&stamp>Date.now()+60000;
-    const selected=!!value;
-    const steps=el('ol','wx-guide-steps');
-    for(const [label,done] of [['Choose candidate',selected],['Save assumption',saved],['Declare resources',!!live.request]]){
-      const item=el('li',done?'is-complete':'',label+(done?' ✓':''));steps.append(item);
-    }
-    deadlineGuide.append(el('h3','','Your planning pathway'),steps);
-    let explanation;
-    if(!selected)explanation='Choose a future model hour or a deadline (IST); neither proves field safety.';
-    else if(!future)explanation='Choose a future deadline before saving.';
-    else{
-      const hours=(stamp-Date.now())/3600000;
-      explanation='Candidate time remaining: '+num(hours)+' hours, based only on the browser clock. '+
-        (live.selectedHour===value&&isCurrent()?'This exact hour is in the currently validated Open-Meteo model. ':
-          'This is a farmer-selected time, without a source-matched rainfall claim. ')+
-        (saved?'Saved for the next resource assessment.':'Save the candidate to use it in later FastAPI calculations.');
-    }
-    deadlineGuide.append(el('p','wx-guide-status',explanation));
-    const actions=el('div','wx-guide-actions');
-    const nextHour=el('button','btn','Use next available model hour');
-    nextHour.type='button';nextHour.id='deadlineGuideNextHour';
+    const timestamp=value?Date.parse(value+':00+05:30'):NaN;
+    const valid=Number.isFinite(timestamp)&&timestamp>Date.now()+60000;
+    const saved=valid&&state.deadline===value;
+    const model=valid&&live.selectedHour===value&&isCurrent();
     const candidates=candidateHours();
-    nextHour.disabled=!candidates.length;
-    nextHour.title=candidates.length?'Select earliest available future forecast record, not a recommended safe time.':
-      'No current future forecast hour is available. Manual deadline entry remains possible.';
-    nextHour.addEventListener('click',()=>{
+    const select=el('button','btn wx-next-hour',t.quick);
+    select.type='button';select.id='deadlineGuideNextHour';
+    select.disabled=!candidates.length;
+    select.title=select.disabled?'A current authenticated future forecast hour is unavailable. Enter a manual time.':
+      'Copy the earliest source-authenticated future hour as your proposed deadline, never a safety recommendation.';
+    select.addEventListener('click',()=>{
       const candidate=candidateHours()[0];if(!candidate)return;
       here('deadlineInput').value=candidate.time;
-      live.selectedHour=candidate.time;additional.deadlineSource='model';
+      live.selectedHour=candidate.time;
+      additional.deadlineSource='model';
       here('deadlineOriginPreview').textContent=evidenceText('selectedSource');
-      here('deadlineNotice').textContent='Hour selected. Save your deadline; it is not a safety clearance.';
+      here('deadlineNotice').textContent='Model hour selected. Click Save candidate deadline to confirm.';
       clearResult();renderDeadlineGuide();
+      here('deadlineInput').focus({preventScroll:true});
     });
-    const confirm=el('button','btn primary','Save selected deadline');
-    confirm.type='button';confirm.id='deadlineGuideSave';
-    confirm.disabled=!future||saved;confirm.addEventListener('click',()=>here('saveDeadline').click());
-    // Navigation remains available even if the farmer has not saved a deadline,
-    // matching the original working button. A deadline is still required later
-    // for any valid farm-specific feasibility result.
-    continueButton.disabled=false;
-    actions.append(nextHour,confirm,continueButton);deadlineGuide.append(actions);
+    deadlineGuide.append(select);
+    const note=el('span','wx-deadline-state');
+    note.id='deadlineStateSummary';note.setAttribute('role','status');
+    if(!value)note.textContent='';
+    else if(!valid)note.textContent=t.invalid;
+    else note.textContent=(saved?t.saved+' · ':t.unsaved+' · ')+
+      (model?t.source:t.own)+' · '+t.due+num((timestamp-Date.now())/3600000)+' h';
+    deadlineGuide.append(note);
+    const origin=here('deadlineOriginRow');
+    origin.hidden=!valid;
+    if(valid&&!here('deadlineOriginPreview').textContent.trim()){
+      here('deadlineOriginPreview').textContent=model?'Model candidate (not observed rain)':'Farmer-selected deadline';
+    }
+    here('saveDeadline').disabled=!valid||saved;
+    here('deadlineGuideContinue').disabled=!saved;
+    here('saveDeadline').title=valid?(saved?t.saved:t.save):t.invalid;
+    here('deadlineGuideContinue').title=saved?'Continue to resource planning':'Save a future candidate deadline first';
   }
   here('deadlineInput').addEventListener('input',renderDeadlineGuide);
+  here('deadlineInput').addEventListener('change',()=>setTimeout(renderDeadlineGuide,0));
   here('saveDeadline').addEventListener('click',()=>setTimeout(renderDeadlineGuide,0));
+  here('forecastSourceChip').addEventListener('click',()=>{
+    const target=document.getElementById('forecastQualityPanel');
+    if(!target)return;
+    target.scrollIntoView({behavior:'smooth',block:'start'});
+    target.querySelector('#forecastQualityMetrics button')?.focus({preventScroll:true});
+  });
   function renderWeather(){
     renderDeadlineGuide();
     renderSourceMatrix();
@@ -1153,7 +1173,9 @@
     renderForecastQuality();
     renderHourlyEvidence();
     const chart=here('weatherChart'),mode=here('weatherChartMode'),chip=here('forecastSourceChip');
-    chart.replaceChildren();here('toggleForecast').textContent='Refresh live forecast';here('clearForecast').textContent='Clear forecast view';
+    chart.replaceChildren();here('toggleForecast').textContent=state.lang==='mr'?'अंदाज पुन्हा मिळवा':state.lang==='hi'?'पूर्वानुमान अपडेट करें':'Refresh forecast';
+    here('clearForecast').textContent=state.lang==='mr'?'रिकामे करा':state.lang==='hi'?'हटाएँ':'Clear';
+    here('clearForecast').disabled=!live.forecast;
     if(!okLocation()){chip.textContent='UNSUPPORTED LOCATION';mode.textContent='Jalna-only data coverage';chart.append(el('div','weather-empty','Forecast for this location is not supported. Return to Jalna, Maharashtra; no other-location data is fabricated.'));here('weatherValue').textContent='Unsupported';return;}
     const f=live.forecast;
     if(!f){chip.textContent='NOT CONNECTED';mode.textContent='No authenticated model forecast';chart.append(el('div','weather-empty','No real forecast is loaded. Use Refresh live forecast to request Open-Meteo through the backend.'));here('weatherValue').textContent='Not loaded';return;}
@@ -1168,8 +1190,7 @@
     chip.textContent=navigator.onLine===false?'OFFLINE · LAST-RECEIVED MODEL':
       f.status==='retrieved_live'?'LIVE MODEL FORECAST':'RECENT VERIFIED CACHE';
     mode.textContent='Open-Meteo • '+(f.hours.length)+' model hours • precipitation (mm), probability (%) • IST';
-    const provenance=el('p','live-provenance','Retrieved '+f.retrieved_at_utc+' · age '+num(f.forecast_age_hours)+' h · '+(f.attribution||'Open-Meteo')+'. Model output, not observed rain or safe crop timing.');
-    chart.append(provenance);
+    chip.title='Inspect authenticated model quality. Retrieved '+f.retrieved_at_utc+' UTC · '+(f.attribution||'Open-Meteo')+'; model, not a field observation.';
     renderForecastWindows(chart,f);
     const future=f.hours.filter(h=>{
       const stamp=Date.parse(h.time+':00+05:30');
@@ -1182,43 +1203,38 @@
     if(forecastDay!=='all'&&!dates.includes(forecastDay)){forecastDay='all';forecastOffset=0;}
     const filtered=selectable.filter(h=>forecastDay==='all'||h.time.startsWith(forecastDay));
     if(forecastOffset>=filtered.length)forecastOffset=0;
-    const sample=filtered.slice(forecastOffset,forecastOffset+24);
+    const sample=filtered.slice(forecastOffset,forecastOffset+forecastRange);
     const explorer=el('div','wx-explorer');
     explorer.id='forecastExplorerControls';
-    const explorerLabel=el('div','wx-explorer-title','Explore authenticated model hours · future hours are actionable');
     const metricField=el('label','wx-explorer-field');
-    metricField.append(el('span','','Show model measure'));
+    metricField.append(el('span','',state.lang==='mr'?'मोजमाप':state.lang==='hi'?'माप':'Measure'));
     const metricSelect=el('select','hourly-evidence-select');metricSelect.id='forecastExploreMetric';
-    for(const [v,label] of [['precipitation_mm','Modeled rainfall · mm'],['precipitation_probability_pct','Hourly rain probability · %']]){
+    for(const [v,label] of [['precipitation_mm',state.lang==='mr'?'पाऊस · mm':state.lang==='hi'?'वर्षा · mm':'Rain · mm'],['precipitation_probability_pct',state.lang==='mr'?'पावसाची शक्यता · %':state.lang==='hi'?'वर्षा संभावना · %':'Rain chance · %']]){
       const op=el('option','',label);op.value=v;metricSelect.append(op);
     }
     metricSelect.value=forecastMetric;metricSelect.addEventListener('change',()=>{
       forecastMetric=metricSelect.value;renderWeather();
     });metricField.append(metricSelect);
     const dayField=el('label','wx-explorer-field');
-    dayField.append(el('span','','Model day · IST'));
+    dayField.append(el('span','',state.lang==='mr'?'तारीख · IST':state.lang==='hi'?'तारीख · IST':'Date · IST'));
     const daySelect=el('select','hourly-evidence-select');daySelect.id='forecastExploreDay';
-    const all=el('option','','All upcoming dates');all.value='all';daySelect.append(all);
+    const all=el('option','',state.lang==='mr'?'सर्व पुढील तारखा':state.lang==='hi'?'सभी अगली तारीखें':'All dates');all.value='all';daySelect.append(all);
     for(const day of dates){const op=el('option','',day);op.value=day;daySelect.append(op);}
     daySelect.value=forecastDay;daySelect.addEventListener('change',()=>{
       forecastDay=daySelect.value;forecastOffset=0;renderWeather();
     });dayField.append(daySelect);
-    const prev=el('button','btn wx-explorer-page','Previous 24 h');
+    const prev=el('button','btn wx-explorer-page',state.lang==='mr'?'मागे':state.lang==='hi'?'पीछे':'Previous');
     prev.type='button';prev.id='forecastExplorePrev';
     prev.disabled=forecastOffset===0;
-    prev.addEventListener('click',()=>{forecastOffset=Math.max(0,forecastOffset-24);renderWeather();});
-    const next=el('button','btn wx-explorer-page','Next 24 h');
+    prev.addEventListener('click',()=>{forecastOffset=Math.max(0,forecastOffset-forecastRange);renderWeather();});
+    const next=el('button','btn wx-explorer-page',state.lang==='mr'?'पुढे':state.lang==='hi'?'आगे':'Next');
     next.type='button';next.id='forecastExploreNext';
-    next.disabled=forecastOffset+24>=filtered.length;
-    next.addEventListener('click',()=>{forecastOffset+=24;renderWeather();});
-    explorer.append(explorerLabel,metricField,dayField,prev,next);
+    next.disabled=forecastOffset+forecastRange>=filtered.length;
+    next.addEventListener('click',()=>{forecastOffset+=forecastRange;renderWeather();});
+    explorer.append(metricField,dayField,prev,next);
     chart.append(explorer);
     const metricValues=sample.map(h=>h[forecastMetric]).filter(v=>v!==null&&Number.isFinite(v));
-    const summary=el('p','wx-explorer-summary',selectable.length?
-      'Showing '+sample.length+' of '+filtered.length+' source hours · '+metricValues.length+
-      ' numerical values · '+(sample.length-metricValues.length)+' missing. Select a bar to draft a deadline; save it separately.':
-      'No future model hour is eligible. Review prior evidence below or enter a manual deadline; neither determines safe rainfall timing.');
-    chart.append(summary);
+    chart.setAttribute('aria-description','Select a source model hour to copy a proposed deadline. Missing values are unknown, not zero.');
     const bars=el('div','weather-bars');
     const max=forecastMetric==='precipitation_probability_pct'?100:
       Math.max(0.1,...metricValues);
@@ -1255,8 +1271,7 @@
       });bars.append(b);
     }
     chart.append(bars);
-    if(filtered.length>24)chart.append(el('small','wx-explorer-summary',
-      'Explore all '+filtered.length+' matching upcoming hours using the Previous/Next buttons. Historical hours remain in the full evidence table.'));
+
     here('weatherValue').textContent=f.status==='retrieved_live'?'Latest model forecast':'Recent model cache';
   }
   async function refreshForecast(refresh){
@@ -2655,7 +2670,10 @@
   };
   void loadGovernmentClimate(false);
 
-  here('language').addEventListener('change',()=>{renderForecastQuality();renderHourlyEvidence();renderWeather();});
+  here('language').addEventListener('change',()=>{
+    networkFold.querySelector('summary').textContent=state.lang==='mr'?'नेटवर्क पावत्या तपासा':state.lang==='hi'?'नेटवर्क रसीद देखें':'Inspect network receipts';
+    renderForecastQuality();renderHourlyEvidence();renderWeather();
+  });
 
   // Override obsolete offline-prototype copy, including on language changes.
   // Model outputs remain labeled; no simulated values appear in the real UI.
