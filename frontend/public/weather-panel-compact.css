@@ -1,0 +1,84 @@
+/* WXR-04 — Weather/Window bottom alignment, no redundant empty source strip.
+   Exact scope: Weather & Window only; retain forecast data, source drawer,
+   translations, date validation and real user-input state unchanged. */
+section.section[data-page="1"] .weather-layout{
+  align-items:stretch;
+}
+section.section[data-page="1"] .weather-layout > .forecast-panel,
+section.section[data-page="1"] .weather-layout > .deadline-card{
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+section.section[data-page="1"] .weather-layout .forecast-panel #weatherChart{
+  flex:1 1 210px;
+  min-height:210px;
+  height:auto;
+}
+section.section[data-page="1"] .deadline-card .wx-deadline-guide{
+  margin:10px 0 0;
+  padding:12px;
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+section.section[data-page="1"] .deadline-card .wx-guide-steps{
+  gap:6px;
+}
+section.section[data-page="1"] .deadline-card .wx-guide-steps > li{
+  padding:7px 8px;
+}
+section.section[data-page="1"] .deadline-card .wx-guide-status{
+  font-size:11px;
+  line-height:1.55;
+  margin:8px 0 10px;
+}
+section.section[data-page="1"] .deadline-card .wx-guide-actions{
+  margin-top:auto;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+section.section[data-page="1"] .deadline-card .wx-guide-actions .btn{
+  min-width:0;
+  width:100%;
+  min-height:44px;
+  overflow-wrap:anywhere;
+}
+section.section[data-page="1"] .deadline-card #deadlineGuideContinue{
+  grid-column:1/-1;
+  cursor:pointer;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:7px;
+}
+section.section[data-page="1"] .deadline-card #deadlineGuideContinue:focus-visible{
+  outline:3px solid var(--teal);
+  outline-offset:3px;
+}
+@media(max-width:1150px){
+  section.section[data-page="1"] .weather-layout{
+    align-items:start;
+  }
+  section.section[data-page="1"] .weather-layout .forecast-panel #weatherChart{
+    flex:0 1 auto;
+    height:225px;
+  }
+  section.section[data-page="1"] .deadline-card .wx-deadline-guide{
+    flex:0 1 auto;
+  }
+}
+@media(max-width:460px){
+  section.section[data-page="1"] .deadline-card .wx-guide-actions{
+    grid-template-columns:1fr;
+  }
+  section.section[data-page="1"] .deadline-card #deadlineGuideContinue{grid-column:auto}
+}
+@media(prefers-reduced-motion:reduce){
+  section.section[data-page="1"] .deadline-card #deadlineGuideContinue{
+    scroll-behavior:auto;
+  }
+}
