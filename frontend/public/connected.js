@@ -21,6 +21,9 @@
   const intelligenceStyle=document.createElement('link');
   intelligenceStyle.rel='stylesheet';intelligenceStyle.href='/source-intelligence.css';
   document.head.append(intelligenceStyle);
+  const workbenchStyle=document.createElement('link');
+  workbenchStyle.rel='stylesheet';workbenchStyle.href='/source-workbench.css';
+  document.head.append(workbenchStyle);
   const receiptStyles=document.createElement('link');
   receiptStyles.rel='stylesheet';receiptStyles.href='/source-print.css';
   document.head.append(receiptStyles);
@@ -1571,55 +1574,332 @@
   let governmentClimateRequest=0;
   let governmentClimateVisibleState='loading';
   let governmentClimateErrorMessage='';
-  // EX-16 / F12 — five independent data/source status receipts.
+
+  // EX-16 / F12 / CF-SOURCE-01: verified evidence WORKBENCH.
+  // These are live projections of already validated server responses, not a
+  // replacement weather engine, client-side feasibility model or IMD feed.
   const sourcePanel=el('section','panel source-matrix');
   sourcePanel.id='evidenceSourceMatrix';
   sourcePanel.setAttribute('aria-label','Verified data source and engine status');
   const sourceTitle=el('h2','','Verified sources');
   const sourceIntro=el('p','source-matrix-intro');
+  const sourceSummary=el('p','source-workbench-summary');
+  sourceSummary.id='sourceWorkbenchSummary';
+  const sourceToolbar=el('div','source-workbench-toolbar');
+  sourceToolbar.setAttribute('role','group');
+  sourceToolbar.setAttribute('aria-label','Filter evidence sources');
   const sourceGrid=el('div','source-matrix-grid');
   sourceGrid.id='evidenceSourceGrid';
-  sourceGrid.setAttribute('aria-live','polite');
-  sourcePanel.append(sourceTitle,sourceIntro,sourceGrid);
+  sourceGrid.setAttribute('aria-label','Select a source to inspect provenance and next actions');
+  const sourceDetails=el('section','source-workbench-detail');
+  sourceDetails.id='sourceWorkbenchDetail';
+  sourceDetails.setAttribute('aria-label','Selected source evidence and available actions');
+  const sourceTitleRow=el('div','source-workbench-title');
+  sourceTitleRow.append(sourceTitle,sourceSummary);
+  sourcePanel.append(sourceTitleRow,sourceIntro,sourceToolbar,sourceGrid,sourceDetails);
   document.querySelector('section.section[data-page="0"]').append(sourcePanel);
-  function renderSourceMatrix(){
-    const t=intel(),supported=okLocation();
-    sourceTitle.textContent=t.title;sourceIntro.textContent=t.intro;
-    sourceGrid.replaceChildren();
-    const add=(name,status,detail,kind)=>{
-      const card=el('article','source-matrix-card');card.dataset.kind=kind;
-      card.append(el('strong','',name),el('span','source-matrix-state',status),el('small','',detail));
-      sourceGrid.append(card);
-    };
-    const connected=live.health?.ok===true&&Array.isArray(live.sources?.sources);
-    add(t.api,connected?t.connected:t.unverified,connected?t.engineDetail:t.engineMissing,
-      connected?'ready':'unavailable');
-    if(!supported){
-      add(t.model,t.unsupported,t.pilot,'unavailable');
-      add(t.nasa,t.unsupported,t.pilot,'unavailable');
-    }else{
-      const f=live.forecast,current=isCurrent()&&Array.isArray(f?.hours)&&f.hours.length>0;
-      const stale=f&&['retrieved_live','cached_recent','stale_cache'].includes(f.status)&&
-        (!isCurrent()||f.status==='stale_cache');
-      add(t.model,current?(f.status==='cached_recent'?t.cache:t.verified):
-        stale?t.stale:live.forecastLoading?t.pending:t.missing,
-        current?t.forecastDetail+f.retrieved_at_utc+' · '+f.hours.length+' h':t.forecastMissing,
-        current?'model':'unavailable');
-      const g=governmentClimateData;
-      const verified=governmentClimateVisibleState==='verified'&&g&&
-        ['retrieved_live','cached_recent'].includes(g.status)&&
-        g.data_kind==='government_gridded_historical'&&
-        g.source==='NASA POWER (US government)'&&
-        Array.isArray(g.days)&&g.days.length>0;
-      add(t.nasa,verified?(g.status==='cached_recent'?t.histcache:t.hist):
-        governmentClimateVisibleState==='loading'?t.pending:t.missing,
-        verified?t.historyDetail+g.latest_data_date+' · '+g.retrieved_at_utc+t.historyTail:
-        t.historyMissing,verified?'historical':'unavailable');
+
+  const wbLabels={
+    en:{
+      intro:'Choose a source to inspect actual receipts, coverage, limitations and next actions.',
+      all:'All five',available:'With a response',attention:'Needs action',inspect:'Inspect details',
+      data:'data feeds',engine:'engine',followups:'follow-ups',active:'Source-backed',
+      metadata:'Source-native details',capability:'What this can support',
+      limitation:'What this cannot prove',observed:'Source retrieved (UTC)',
+      checked:'Dashboard checked (UTC)',next:'Useful next step',
+      registry:'Registry entries',engineVersion:'Backend version',coverage:'Rainfall values',
+      hours:'modeled hours',historyDays:'historical days',latest:'Latest historical date',
+      selected:'Current selection',results:'Server constraints',decision:'Server assessment',
+      pending:'Awaiting farmer assessment',missingValue:'Unavailable',
+      noResponse:'No sources currently have a verified response. Refresh a source or review its limitations.',
+      inspectForecast:'Open interactive forecast',refreshForecast:'Refresh Open-Meteo',
+      inspectNASA:'Explore historical evidence',refreshNASA:'Refresh NASA history',
+      inspectAPI:'Inspect source registry',inspectFarm:'Declare farm resources',
+      inspectResult:'Open FastAPI assessment',inspectIMD:'Open official district warnings',
+      recalc:'Recheck displayed ages',download:'Download status receipt',
+      receipt:'Status-only evidence receipt. It does not contain farmer quantities, certify field safety or indicate an official IMD warning.',
+      modelCan:'Inspect model hours, rainfall data coverage and a proposed planning window.',
+      modelCannot:'Modeled rainfall cannot prove observed rain, precise onset or crop-safe handling.',
+      nasaCan:'Review source-native historical daily grid dates and rainfall/temperature measurements.',
+      nasaCannot:'Historical grid values are neither a coming forecast nor measurements at the farm.',
+      apiCan:'Run the existing real Python resource assessment with explicitly declared inputs.',
+      apiCannot:'API connectivity alone cannot certify farmer resources, agricultural suitability or feasibility.',
+      imdCan:'Independently read official district-level warnings on the IMD website.',
+      imdCannot:'This application has no validated live IMD feed. Opening IMD externally does not import or verify a warning here.',
+      farmCan:'Review the real FastAPI response, constraints and excluded resource changes after a farmer submission.',
+      farmCannot:'Farmer declarations and computed feasibility do not confirm physical equipment availability or field safety.',
+      apiHint:'Open the existing source ledger and API evidence; no backend data will be invented.',
+      modelHint:'Refresh only the modeled forecast; missing hours are never treated as zero rainfall.',
+      nasaHint:'Retrieve NASA POWER history as historical evidence; it is not a future forecast.',
+      imdHint:'Official website opens separately. Review the appropriate district and issue date yourself.',
+      farmHint:'Enter actual target, capacity, duration and site readiness, then run FastAPI.',
+      provider:'Source or engine',availableNow:'Verified response available',sourceMissing:'Response not available',
+      actionNeeded:'Action needed',notConnected:'Not connected',sourceScope:'Jalna cotton pilot',
+      noAuto:'No automatic weather-safety or agronomic clearance',
+      stampEmpty:'Not supplied by source',sourceNotApplicable:'No source receipt'
+    },
+    mr:{
+      intro:'स्रोत निवडा; खरी नोंद, माहितीची व्याप्ती, मर्यादा व पुढील कृती तपासा.',
+      all:'सर्व पाच',available:'प्रतिसाद उपलब्ध',attention:'कृती आवश्यक',inspect:'तपशील पाहा',
+      data:'डेटा स्रोत',engine:'इंजिन',followups:'पुढील कृती',active:'स्रोताधारित',
+      metadata:'स्रोताचे तपशील',capability:'यातून काय समजते',
+      limitation:'यातून काय सिद्ध होत नाही',observed:'स्रोत वेळ (UTC)',
+      checked:'डॅशबोर्ड तपासणी (UTC)',next:'पुढची कृती',
+      registry:'स्रोत नोंदी',engineVersion:'बॅकएंड आवृत्ती',coverage:'पावसाच्या नोंदी',
+      hours:'मॉडेल तास',historyDays:'ऐतिहासिक दिवस',latest:'शेवटचा ऐतिहासिक दिवस',
+      selected:'निवडलेला स्रोत',results:'सर्व्हरचे निर्बंध',decision:'सर्व्हर मूल्यमापन',
+      pending:'शेतकरी मूल्यमापन बाकी',missingValue:'उपलब्ध नाही',
+      noResponse:'पडताळलेला प्रतिसाद उपलब्ध नाही. स्रोत पुन्हा मिळवा किंवा मर्यादा पाहा.',
+      inspectForecast:'हवामान अंदाज पाहा',refreshForecast:'Open-Meteo पुन्हा मिळवा',
+      inspectNASA:'ऐतिहासिक डेटा पाहा',refreshNASA:'NASA इतिहास पुन्हा मिळवा',
+      inspectAPI:'स्रोत नोंद पाहा',inspectFarm:'साधने नोंदवा',
+      inspectResult:'FastAPI मूल्यमापन पाहा',inspectIMD:'अधिकृत जिल्हा इशारे पाहा',
+      recalc:'वेळ पुन्हा मोजा',download:'स्थिती नोंद डाउनलोड',
+      receipt:'फक्त स्थितीची नोंद. यात शेतकरी प्रमाण नाही व शेत सुरक्षिततेचा किंवा IMD इशाऱ्याचा दाखला नाही.',
+      modelCan:'मॉडेल तास, पावसाच्या नोंदी व नियोजन वेळ तपासा.',
+      modelCannot:'मॉडेल म्हणजे प्रत्यक्ष पाऊस किंवा शेतातील सुरक्षिततेची हमी नाही.',
+      nasaCan:'ऐतिहासिक ग्रिडमधील दिवस, पाऊस आणि तापमान तपासा.',
+      nasaCannot:'ऐतिहासिक डेटा भविष्यातील अंदाज किंवा शेतातील मोजमाप नाही.',
+      apiCan:'शेतकऱ्याने दिलेल्या माहितीवर खऱ्या Python इंजिनने गणना करा.',
+      apiCannot:'API जोडले म्हणजे प्रत्यक्ष साधने किंवा शेतीची सुरक्षितता सिद्ध होत नाही.',
+      imdCan:'IMD च्या अधिकृत संकेतस्थळावर जिल्ह्याचे इशारे पाहा.',
+      imdCannot:'इथे अधिकृत IMD थेट फीड नाही; बाहेरील पान पाहिल्याने इथे इशारा पडताळला जात नाही.',
+      farmCan:'FastAPI निकाल, अटी व वगळलेले पर्याय पहा.',
+      farmCannot:'शेतकरी नोंदी व गणना प्रत्यक्ष साधनांची उपस्थिती किंवा शेत सुरक्षितता सिद्ध करत नाहीत.',
+      apiHint:'विद्यमान स्रोत नोंद व API पुरावे पाहा.',
+      modelHint:'फक्त मॉडेल ताजे करा; गहाळ तास शून्य पाऊस नाहीत.',
+      nasaHint:'NASA चा ऐतिहासिक डेटा मिळवा; तो भविष्यवाणी नाही.',
+      imdHint:'बाह्य संकेतस्थळ उघडेल. योग्य जिल्हा व तारीख स्वतः तपासा.',
+      farmHint:'लक्ष्य, क्षमता, कालावधी व तयारी नोंदवा आणि FastAPI वापरा.',
+      provider:'स्रोत किंवा इंजिन',availableNow:'पडताळलेला प्रतिसाद',sourceMissing:'प्रतिसाद उपलब्ध नाही',
+      actionNeeded:'कृती आवश्यक',notConnected:'जोडलेले नाही',sourceScope:'जालना कापूस पायलट',
+      noAuto:'स्वयंचलित हवामान सुरक्षिततेची हमी नाही',
+      stampEmpty:'स्रोताने दिलेले नाही',sourceNotApplicable:'स्रोत नोंद नाही'
+    },
+    hi:{
+      intro:'स्रोत चुनें; वास्तविक रिकॉर्ड, उपलब्ध डेटा, सीमाएँ और अगले कदम देखें।',
+      all:'सभी पाँच',available:'जवाब उपलब्ध',attention:'कार्रवाई चाहिए',inspect:'विवरण देखें',
+      data:'डेटा स्रोत',engine:'इंजन',followups:'अगले कदम',active:'स्रोत आधारित',
+      metadata:'स्रोत का विवरण',capability:'इससे क्या पता चलता है',
+      limitation:'यह क्या साबित नहीं करता',observed:'स्रोत समय (UTC)',
+      checked:'डैशबोर्ड जाँच (UTC)',next:'अगला कदम',
+      registry:'स्रोत रिकॉर्ड',engineVersion:'बैकएंड संस्करण',coverage:'वर्षा रिकॉर्ड',
+      hours:'मॉडल घंटे',historyDays:'ऐतिहासिक दिन',latest:'अंतिम ऐतिहासिक दिन',
+      selected:'चुना स्रोत',results:'सर्वर की शर्तें',decision:'सर्वर मूल्यांकन',
+      pending:'किसान मूल्यांकन बाकी',missingValue:'उपलब्ध नहीं',
+      noResponse:'अभी सत्यापित प्रतिक्रिया नहीं है। स्रोत रीफ्रेश करें या सीमाएँ देखें।',
+      inspectForecast:'पूर्वानुमान देखें',refreshForecast:'Open-Meteo रीफ्रेश करें',
+      inspectNASA:'ऐतिहासिक प्रमाण देखें',refreshNASA:'NASA इतिहास रीफ्रेश करें',
+      inspectAPI:'स्रोत रजिस्टर देखें',inspectFarm:'कृषि संसाधन दर्ज करें',
+      inspectResult:'FastAPI मूल्यांकन देखें',inspectIMD:'आधिकारिक जिला चेतावनी देखें',
+      recalc:'समय पुनः जाँचें',download:'स्थिति रिकॉर्ड डाउनलोड',
+      receipt:'केवल स्थिति का रिकॉर्ड। किसान की मात्रा शामिल नहीं; खेत सुरक्षा या IMD चेतावनी प्रमाणित नहीं।',
+      modelCan:'मॉडल घंटे, वर्षा डेटा और प्रस्तावित समय सीमा देख सकते हैं।',
+      modelCannot:'मॉडल वास्तविक बारिश, वर्षा शुरू होने का समय या खेत की सुरक्षा साबित नहीं करता।',
+      nasaCan:'ऐतिहासिक ग्रिड की तिथियाँ, वर्षा और तापमान देखें।',
+      nasaCannot:'ऐतिहासिक डेटा आगामी पूर्वानुमान या खेत का माप नहीं है।',
+      apiCan:'किसान के स्पष्ट विवरण से मौजूदा वास्तविक Python आकलन चलाएँ।',
+      apiCannot:'API कनेक्शन से खेत संसाधन, कृषि उपयुक्तता या व्यवहार्यता प्रमाणित नहीं होती।',
+      imdCan:'IMD की आधिकारिक वेबसाइट पर जिला चेतावनी अलग से देखें।',
+      imdCannot:'इस ऐप में सत्यापित लाइव IMD फीड नहीं है। बाहर देखने से यहाँ चेतावनी सत्यापित नहीं होती।',
+      farmCan:'FastAPI परिणाम, शर्तें और छोड़े गए संसाधन विकल्प देखें।',
+      farmCannot:'किसान विवरण और गणना वास्तविक उपलब्धता या खेत की सुरक्षा का प्रमाण नहीं हैं।',
+      apiHint:'मौजूदा स्रोत रजिस्टर और API प्रमाण देखें।',
+      modelHint:'केवल मॉडल रीफ्रेश करें; गायब घंटे शून्य वर्षा नहीं हैं।',
+      nasaHint:'NASA इतिहास देखें; वह भविष्यवाणी नहीं है।',
+      imdHint:'आधिकारिक साइट अलग खुलेगी। सही जिला और तारीख खुद जाँचें।',
+      farmHint:'लक्ष्य, क्षमता, अवधि और तैयारी भरकर FastAPI चलाएँ।',
+      provider:'स्रोत या इंजन',availableNow:'सत्यापित प्रतिक्रिया',sourceMissing:'प्रतिक्रिया उपलब्ध नहीं',
+      actionNeeded:'अगला कदम जरूरी',notConnected:'जुड़ा नहीं',sourceScope:'जालना कपास पायलट',
+      noAuto:'मौसम/कृषि सुरक्षा का स्वतः प्रमाण नहीं',
+      stampEmpty:'स्रोत ने नहीं दिया',sourceNotApplicable:'स्रोत रिकॉर्ड नहीं'
     }
-    add(t.imd,t.notconnected,t.imdDetail,'unavailable');
-    const result=live.evaluation;
-    add(t.farm,result?t.backend+result.status.toUpperCase():t.unevaluated,
-      result?t.assessmentDetail:t.assessmentMissing,result?'decision':'unavailable');
+  };
+  let sourceSelected='model',sourceFilter='all',sourceBusy='';
+  const wbText=()=>wbLabels[state.lang]||wbLabels.en;
+  const wbStamp=value=>Number.isFinite(Date.parse(value||''))?String(value):wbText().stampEmpty;
+  function workbenchRecords(){
+    const t=intel(),w=wbText(),supported=okLocation();
+    const connected=live.health?.ok===true&&Array.isArray(live.sources?.sources);
+    const f=live.forecast,modelCurrent=supported&&isCurrent()&&Array.isArray(f?.hours)&&f.hours.length>0;
+    const stale=!!(supported&&f&&['retrieved_live','cached_recent','stale_cache'].includes(f.status)&&
+      (!isCurrent()||f.status==='stale_cache'));
+    const modelCount=modelCurrent?f.hours.length:0;
+    const rainCount=modelCurrent?f.hours.filter(h=>typeof h.precipitation_mm==='number'&&Number.isFinite(h.precipitation_mm)).length:0;
+    const gov=governmentClimateData;
+    const nasaOK=supported&&governmentClimateVisibleState==='verified'&&
+      gov&&['retrieved_live','cached_recent'].includes(gov.status)&&
+      gov.source==='NASA POWER (US government)'&&
+      gov.data_kind==='government_gridded_historical'&&Array.isArray(gov.days)&&gov.days.length>0;
+    const assessment=live.evaluation,assessed=!!(live.request&&live.evaluatedAtUtc&&assessment&&statuses.includes(assessment.status));
+    const constraints=assessed?assessment.baseline.constraints.length:0;
+    const modelStatus=!supported?t.unsupported:modelCurrent?(f.status==='cached_recent'?t.cache:t.verified):
+      stale?t.stale:live.forecastLoading?t.pending:t.missing;
+    const modelDetail=!supported?t.pilot:modelCurrent?
+      t.forecastDetail+f.retrieved_at_utc+' · '+modelCount+' h':stale?t.stale:t.forecastMissing;
+    const historyStatus=!supported?t.unsupported:nasaOK?(gov.status==='cached_recent'?t.histcache:t.hist):
+      governmentClimateVisibleState==='loading'?t.pending:t.missing;
+    const historyDetail=!supported?t.pilot:nasaOK?
+      t.historyDetail+gov.latest_data_date+' · '+gov.retrieved_at_utc+t.historyTail:t.historyMissing;
+    return [
+      {id:'api',name:t.api,status:connected?t.connected:t.unverified,
+        detail:connected?t.engineDetail:t.engineMissing,kind:connected?'ready':'unavailable',
+        available:connected,metric:connected?live.sources.sources.length+' '+w.registry:t.unverified,
+        when:null,values:[[w.engineVersion,connected?String(live.health.version||w.stampEmpty):w.stampEmpty],
+          [w.registry,connected?String(live.sources.sources.length):w.stampEmpty]],
+        can:w.apiCan,cannot:w.apiCannot,hint:w.apiHint,primary:w.inspectAPI,page:5},
+      {id:'model',name:t.model,status:modelStatus,detail:modelDetail,
+        kind:modelCurrent?'model':'unavailable',available:!!modelCurrent,
+        metric:modelCurrent?rainCount+'/'+modelCount+' '+w.coverage:modelStatus,
+        when:modelCurrent?f.retrieved_at_utc:null,values:[[w.coverage,modelCurrent?rainCount+'/'+modelCount:w.stampEmpty],
+          [w.hours,modelCurrent?String(modelCount):w.stampEmpty]],
+        can:w.modelCan,cannot:w.modelCannot,hint:w.modelHint,primary:w.inspectForecast,page:1,
+        refresh:w.refreshForecast},
+      {id:'nasa',name:t.nasa,status:historyStatus,detail:historyDetail,
+        kind:nasaOK?'historical':'unavailable',available:!!nasaOK,
+        metric:nasaOK?gov.days.length+' '+w.historyDays:historyStatus,
+        when:nasaOK?gov.retrieved_at_utc:null,
+        values:[[w.historyDays,nasaOK?String(gov.days.length):w.stampEmpty],
+          [w.latest,nasaOK?gov.latest_data_date:w.stampEmpty]],
+        can:w.nasaCan,cannot:w.nasaCannot,hint:w.nasaHint,primary:w.inspectNASA,page:1,
+        refresh:w.refreshNASA},
+      {id:'imd',name:t.imd,status:t.notconnected,detail:t.imdDetail,
+        kind:'unavailable',available:false,metric:w.notConnected,when:null,
+        values:[[w.provider,'India Meteorological Department'],
+          [w.selected,w.sourceNotApplicable]],
+        can:w.imdCan,cannot:w.imdCannot,hint:w.imdHint,primary:w.inspectIMD,
+        href:'https://mausam.imd.gov.in/responsive/districtWiseWarning.php'},
+      {id:'farm',name:t.farm,status:assessed?t.backend+assessment.status.toUpperCase():t.unevaluated,
+        detail:assessed?t.assessmentDetail:t.assessmentMissing,
+        kind:assessed?'decision':'unavailable',available:assessed,
+        metric:assessed?assessment.status.toUpperCase():w.pending,
+        when:assessed?live.evaluatedAtUtc:null,
+        values:[[w.decision,assessed?assessment.status.toUpperCase():w.pending],
+          [w.results,assessed?String(constraints):w.stampEmpty]],
+        can:w.farmCan,cannot:w.farmCannot,hint:w.farmHint,
+        primary:assessed?w.inspectResult:w.inspectFarm,page:assessed?3:2}
+    ];
+  }
+  const sourceFilters=['all','available','attention'];
+  sourceFilters.forEach(key=>{
+    const button=el('button','source-filter-button');button.type='button';button.dataset.filter=key;
+    button.addEventListener('click',()=>{sourceFilter=key;renderSourceMatrix();});
+    sourceToolbar.append(button);
+  });
+  const wbNode=(tag,className,text)=>el(tag,className,text);
+  function renderSourceMatrix(){
+    const t=intel(),w=wbText(),data=workbenchRecords();
+    sourceTitle.textContent=t.title;sourceIntro.textContent=w.intro;
+    const available=data.filter(r=>r.available);
+    const pending=data.length-available.length;
+    const feeds=data.filter(r=>['model','nasa'].includes(r.id)&&r.available).length;
+    sourceSummary.textContent=feeds+'/2 '+w.data+' · '+(data[0].available?'1/1':'0/1')+
+      ' '+w.engine+' · '+pending+' '+w.followups;
+    sourceToolbar.querySelectorAll('button').forEach(button=>{
+      const kind=button.dataset.filter;
+      button.textContent=(kind==='all'?w.all:kind==='available'?w.available:w.attention)+
+        ' · '+(kind==='all'?data.length:kind==='available'?available.length:pending);
+      button.setAttribute('aria-pressed',String(sourceFilter===kind));
+    });
+    const visible=data.filter(r=>sourceFilter==='all'||(sourceFilter==='available'?r.available:!r.available));
+    if(visible.length&&!visible.some(r=>r.id===sourceSelected))sourceSelected=visible[0].id;
+    const focused=sourceGrid.contains(document.activeElement)?document.activeElement?.dataset.sourceId:null;
+    sourceGrid.replaceChildren();
+    data.forEach((item,index)=>{
+      const card=wbNode('button','source-matrix-card');
+      card.type='button';card.dataset.kind=item.kind;card.dataset.sourceId=item.id;
+      card.hidden=!visible.some(r=>r.id===item.id);
+      card.setAttribute('aria-pressed',String(item.id===sourceSelected));
+      card.setAttribute('aria-controls','sourceWorkbenchDetail');
+      const top=wbNode('span','source-card-heading');
+      top.append(wbNode('strong','',item.name),wbNode('span','source-card-index',String(index+1).padStart(2,'0')));
+      card.append(top,wbNode('span','source-matrix-state',item.status),
+        wbNode('small','source-card-metric',item.metric),
+        wbNode('span','source-card-inspect',w.inspect+' ›'));
+      card.addEventListener('click',()=>{sourceSelected=item.id;renderSourceMatrix();});
+      sourceGrid.append(card);
+    });
+    if(focused){
+      const same=sourceGrid.querySelector('[data-source-id="'+focused+'"]:not([hidden])');
+      if(same)same.focus({preventScroll:true});
+    }
+    sourceDetails.replaceChildren();
+    const selected=visible.find(r=>r.id===sourceSelected);
+    if(!selected){
+      sourceDetails.append(wbNode('p','source-workbench-empty',w.noResponse));
+    }else{
+      const heading=wbNode('div','source-detail-heading');
+      const titles=wbNode('div','source-detail-titles');
+      titles.append(wbNode('span','source-detail-eyebrow',w.selected+' / '+String(data.indexOf(selected)+1).padStart(2,'0')),
+        wbNode('h3','',selected.name));
+      const flag=wbNode('span','source-detail-state',selected.status);flag.dataset.kind=selected.kind;
+      heading.append(titles,flag);
+      const columns=wbNode('div','source-detail-columns');
+      const facts=wbNode('div','source-detail-facts');
+      facts.append(wbNode('h4','',w.metadata));
+      const list=wbNode('dl','source-detail-metrics');
+      selected.values.forEach(([label,value])=>{
+        list.append(wbNode('dt','',label),wbNode('dd','',value));
+      });
+      list.append(wbNode('dt','',w.observed),wbNode('dd','',selected.when?wbStamp(selected.when):w.sourceNotApplicable),
+        wbNode('dt','',w.checked),wbNode('dd','',new Date().toISOString()));
+      facts.append(list);
+      const practical=wbNode('div','source-detail-practical');
+      practical.append(wbNode('h4','',w.capability),wbNode('p','',selected.can),
+        wbNode('h4','source-caution-heading',w.limitation),wbNode('p','source-caution-text',selected.cannot));
+      columns.append(facts,practical);
+      const footer=wbNode('div','source-detail-footer');
+      const next=wbNode('p','source-detail-next',selected.hint);
+      const actions=wbNode('div','source-detail-actions');
+      const primary=selected.href?wbNode('a','source-detail-action primary',selected.primary):
+        wbNode('button','source-detail-action primary',selected.primary);
+      if(selected.href){
+        primary.href=selected.href;primary.target='_blank';primary.rel='noopener noreferrer';
+        primary.setAttribute('aria-label',selected.primary+' (external official website)');
+      }else{
+        primary.type='button';primary.addEventListener('click',()=>goto(selected.page));
+      }
+      actions.append(primary);
+      if(selected.refresh){
+        const refresh=wbNode('button','source-detail-action',selected.refresh);
+        refresh.type='button';refresh.disabled=!!sourceBusy||!okLocation()||
+          (selected.id==='model'&&live.forecastLoading)||
+          (selected.id==='nasa'&&govRefresh.disabled);
+        refresh.addEventListener('click',async()=>{
+          if(sourceBusy)return;
+          sourceBusy=selected.id;refresh.disabled=true;sourceDetails.setAttribute('aria-busy','true');
+          try{
+            if(selected.id==='model')await refreshForecast(true);
+            else if(selected.id==='nasa')await loadGovernmentClimate(true);
+          }finally{sourceBusy='';sourceDetails.removeAttribute('aria-busy');renderSourceMatrix();}
+        });
+        actions.append(refresh);
+      }
+      const receipt=wbNode('button','source-detail-action subtle',w.download);
+      receipt.type='button';
+      receipt.addEventListener('click',()=>{
+        const current=workbenchRecords().find(r=>r.id===selected.id);
+        if(!current)return;
+        const safe={
+          schema:'agri-foresight-source-status-v1',source_id:current.id,
+          name:current.name,status:current.status,source_kind:current.kind,
+          source_response_available:current.available,
+          source_retrieved_at_utc:current.when||null,
+          reported_metrics:current.values.map(([label,value])=>({label,value})),
+          browser_checked_at_utc:new Date().toISOString(),
+          scope:okLocation()?'Jalna, Maharashtra': 'Unsupported location',
+          disclaimer:w.receipt
+        };
+        const blob=new Blob([JSON.stringify(safe,null,2)],{type:'application/json'});
+        const url=URL.createObjectURL(blob);
+        const anchor=wbNode('a');anchor.href=url;
+        anchor.download='agri-foresight-source-'+current.id+'-status.json';
+        anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      });
+      actions.append(receipt);
+      footer.append(next,actions);
+      sourceDetails.append(heading,wbNode('p','source-detail-summary',selected.detail),columns,footer);
+    }
     renderSourceActivity();renderPrintEvidence();
   }
   // F13: independent source timestamps. Recalculate = no new API requests.
