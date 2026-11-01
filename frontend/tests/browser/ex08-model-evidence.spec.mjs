@@ -88,3 +88,13 @@ test('future-dated purported retrieval fails source-age validation and has no ex
   await expect(page.locator('#exportForecastEvidence')).toBeDisabled();
   await expect(page.locator('#forecastQualityMetrics')).toContainText('No validated current model readings');
 });
+
+test('claimed recent model cache older than backend 2-hour TTL cannot be exported as current',async({page})=>{
+  const cached=mockedForecast();
+  cached.status='cached_recent';
+  cached.retrieved_at_utc=new Date(Date.now()-3*60*60*1000).toISOString();
+  await intercept(page,cached);
+  await page.goto('/');await page.locator('#navDesktop [data-nav="1"]').click();
+  await expect(page.locator('#exportForecastEvidence')).toBeDisabled();
+  await expect(page.locator('#forecastQualityMetrics')).toContainText('No validated current model readings');
+});

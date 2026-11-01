@@ -90,7 +90,10 @@
     if(!isCurrent())return null;
     const f=live.forecast;
     const ageMs=Date.now()-Date.parse(f.retrieved_at_utc||'');
-    if(!Number.isFinite(ageMs)||ageMs<0||!Array.isArray(f.hours)||!f.hours.length)return null;
+    // Match the authoritative backend's two-hour STALE_AFTER_HOURS contract.
+    // A wrongly labelled old cache must never become a "current" CSV receipt.
+    if(!Number.isFinite(ageMs)||ageMs<0||ageMs>2*60*60*1000||
+      !Array.isArray(f.hours)||!f.hours.length)return null;
     const timeKeys=f.hours.map(h=>Date.parse(h.time+':00+05:30'));
     if(timeKeys.some(t=>!Number.isFinite(t)))return null;
     const unique=new Set(timeKeys), sorted=[...unique].sort((a,b)=>a-b);
