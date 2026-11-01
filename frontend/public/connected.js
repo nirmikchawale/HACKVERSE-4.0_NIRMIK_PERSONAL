@@ -1293,6 +1293,8 @@
       draft:'resource fields drafted',draftNote:'Review and save your declarations before evaluation',
       reported:'units',reportedNote:'Farmer-reported capacity / target · {hours}h duration · readiness: {ready}',
       verifySaved:'Review resource draft',verifySavedNote:'Reconfirm locally saved quantities before evaluating',
+      legacy:'Review old demo inputs',legacyNote:'Earlier example values must be replaced with genuine farmer declarations',
+      evalError:'Review assessment request',evalErrorNote:'FastAPI did not return a valid evaluation; inspect your inputs',evalErrorSnap:'Engine reachable · request needs review',
       readyYes:'yes',readyNo:'no',readyUnknown:'unknown',
       apiLoading:'Connecting FastAPI',apiMissing:'Check Python service',
       apiMissingNote:'The real assessment service must be reachable',
@@ -1320,6 +1322,8 @@
       draft:'साधनांचा मसुदा',draftNote:'माहिती तपासा आणि गणनेपूर्वी जतन करा',
       reported:'एकके',reportedNote:'शेतकऱ्याने सांगितलेली क्षमता / लक्ष्य · {hours} तास · तयारी: {ready}',
       verifySaved:'साधनांची माहिती तपासा',verifySavedNote:'गणनेपूर्वी जतन केलेली माहिती पुन्हा खात्री करा',
+      legacy:'जुनी नमुना माहिती तपासा',legacyNote:'आधीचा नमुना बदलून शेतकऱ्याची खरी माहिती द्या',
+      evalError:'मूल्यमापन विनंती तपासा',evalErrorNote:'FastAPI कडून वैध निकाल मिळाला नाही; माहिती तपासा',evalErrorSnap:'इंजिन जोडले आहे · विनंती तपासा',
       readyYes:'होय',readyNo:'नाही',readyUnknown:'अज्ञात',
       apiLoading:'FastAPI जोडत आहे',apiMissing:'Python सेवा तपासा',apiMissingNote:'खरे मूल्यमापन करण्यासाठी सेवा आवश्यक आहे',
       apiReady:'FastAPI तयार',apiReadyNote:'स्वतः निवडलेली वेळ आणि पुष्टी केलेली माहिती पाठवा',
@@ -1345,6 +1349,8 @@
       draft:'साधनों का मसौदा',draftNote:'पुष्टि से पहले जानकारी जाँचकर सहेजें',
       reported:'इकाई',reportedNote:'किसान की बताई क्षमता / लक्ष्य · {hours} घंटे · तैयारी: {ready}',
       verifySaved:'साधन विवरण जाँचें',verifySavedNote:'गणना से पहले सहेजी जानकारी की पुष्टि करें',
+      legacy:'पुराने नमूना डेटा जाँचें',legacyNote:'पुराने उदाहरण को असली किसान जानकारी से बदलें',
+      evalError:'आकलन अनुरोध जाँचें',evalErrorNote:'FastAPI से वैध नतीजा नहीं मिला; विवरण जाँचें',evalErrorSnap:'इंजन जुड़ा है · अनुरोध जाँचें',
       readyYes:'हाँ',readyNo:'नहीं',readyUnknown:'अज्ञात',
       apiLoading:'FastAPI जुड़ रहा है',apiMissing:'Python सेवा जाँचें',apiMissingNote:'असली गणना के लिए सेवा चाहिए',
       apiReady:'FastAPI तैयार',apiReadyNote:'चुना समय और पुष्टि किए विवरण भेजें',
@@ -1412,10 +1418,17 @@
     const r=state.resources;
     const numbersValid=!!r&&[r.target,r.capacity,r.hours].every(x=>typeof x==='number'&&Number.isFinite(x)&&x>=0);
     const acknowledged=!!here('confirmInputs')?.checked;
+    // The retired prototype previously persisted this exact illustrative set;
+    // never promote it silently to an actual farmer inventory.
+    const legacyExample=numbersValid&&r.target===80&&r.capacity===60&&r.hours===2.5&&
+      r.readiness==='yes'&&r.baseline==='worker-baseline';
     const formMatches=numbersValid&&[['quantity',r.target],['capacity',r.capacity],['duration',r.hours]].every(([id,value])=>
       here(id)?.value.trim()!==''&&Number(here(id).value)===value)&&here('readiness')?.value===r.readiness&&
       (here('baseline')?.value||'')===(r.baseline||'');
-    if(numbersValid&&acknowledged&&formMatches){
+    if(legacyExample){
+      set('resourcesValue',t.legacy);set('resourcesEvidenceNote',t.legacyNote);
+      set('snapshotResource',t.snapshotResource);
+    }else if(numbersValid&&acknowledged&&formMatches){
       const values={target:num(r.target),capacity:num(r.capacity),hours:num(r.hours),
         ready:t[r.readiness==='yes'?'readyYes':r.readiness==='no'?'readyNo':'readyUnknown']};
       set('resourcesValue',values.capacity+' / '+values.target+' '+t.reported);
@@ -1432,12 +1445,15 @@
       set('snapshotResource',t.snapshotResource);
     }
     const assessment=live.evaluation;
-    if(assessment&&statuses.includes(assessment.status)){
+    if(assessment&&statuses.includes(assessment.status)&&!legacyExample){
       const values={status:assessment.status.toUpperCase(),constraints:assessment.baseline?.constraints?.length??0,
         gap:typeof assessment.baseline?.shortfall_units==='number'?num(assessment.baseline.shortfall_units):'?'};
       set('feasibilityValue',values.status+' '+t.apiOutcome);
       set('feasibilityEvidenceNote',fill(t.apiResultNote,values));
       set('snapshotAssessment',fill(t.snapshotResult,values));
+    }else if(live.error){
+      set('feasibilityValue',t.evalError);set('feasibilityEvidenceNote',t.evalErrorNote);
+      set('snapshotAssessment',t.evalErrorSnap);
     }else if(live.health?.ok===true){
       set('feasibilityValue',t.apiReady);set('feasibilityEvidenceNote',t.apiReadyNote);
       set('snapshotAssessment',t.snapshotReady);
