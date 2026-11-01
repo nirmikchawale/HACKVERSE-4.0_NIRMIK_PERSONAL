@@ -24,10 +24,87 @@
   const receiptStyles=document.createElement('link');
   receiptStyles.rel='stylesheet';receiptStyles.href='/source-print.css';
   document.head.append(receiptStyles);
+  const climateStyle=document.createElement('link');
+  climateStyle.rel='stylesheet';climateStyle.href='/ex18-climate.css';
+  document.head.append(climateStyle);
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;};
   const num=n=>Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'Unknown';
   const okLocation=()=>state.place?.state==='Maharashtra'&&state.place?.city?.trim().toLowerCase()==='jalna';
   const statuses=['feasible','blocked','unknown','completed'];
+  // EX-18: labels vary with language; NASA/model source values never do.
+  const climateText={
+    en:{
+      contrastTitle:'Model forecast and historical grid · different periods',
+      contrastIntro:'These datasets do not represent the same dates, observations or farm location. The two rainfall totals must not be treated as a model validation or a safety comparison.',
+      forecastTitle:'Next 24 forecast hours · Open-Meteo MODEL',historicalTitle:'Up to 14 historical days · NASA POWER GRID',
+      modelData:'Known modeled rainfall',historyData:'Available historical gridded rainfall',
+      modelMissing:'No verified future model hours',historyMissing:'No verified historical grid',
+      rainCoverage:'Rainfall data coverage',days:'calendar days',hours:'hours',
+      period:'Period',future:'Future hours (IST)',past:'Historical dates',
+      gap:'Missing or unavailable readings are unknown, not zero',
+      noComparison:'No matching period or field rain gauge is provided; do not compare these as equivalent weather observations.',
+      chartTitle:'NASA POWER · historical rainfall and temperature',
+      chartIntro:'A visual record of up to 14 validated historical grid dates; never a forecast or farm measurement. Missing readings are shown as unavailable.',
+      barTitle:'Historical daily rainfall · mm/day',
+      lineTitle:'Historical daily mean air temperature · °C',
+      showTable:'Show all source-native values as a table',date:'Date',rain:'Rainfall (mm/day)',temperature:'Temperature (°C)',
+      missing:'Unavailable',chartEmpty:'Verified historical climate data is not available.',
+      offlineTitle:'Network and last successful source receipts',
+      offline:'Browser reports offline',browserOnline:'Browser reports online; provider connectivity unverified',
+      lastModel:'Last Open-Meteo receipt',lastNASA:'Last NASA POWER receipt',
+      noSaved:'No successful source receipt saved on this browser',metadata:'Only source timestamps are retained locally; no farmer inputs or weather readings are cached. These receipts are not current weather evidence.',
+      offlineNotice:'Offline: refresh requests may fail; no substitute forecast will be shown.',
+      connectedNotice:'Use the existing source Refresh buttons to verify providers. Online status does not prove API availability.'
+    },
+    mr:{
+      contrastTitle:'मॉडेल अंदाज व ऐतिहासिक ग्रिड · वेगळे कालखंड',
+      contrastIntro:'हे दोन्ही स्रोत समान दिवस, मोजमाप किंवा शेत दाखवत नाहीत. दोन पावसाच्या बेरजांची सुरक्षिततेसाठी तुलना करू नका.',
+      forecastTitle:'पुढील २४ तास · Open-Meteo मॉडेल',historicalTitle:'मागील कमाल १४ दिवस · NASA POWER ग्रिड',
+      modelData:'उपलब्ध मॉडेल पाऊस',historyData:'उपलब्ध ऐतिहासिक ग्रिड पाऊस',
+      modelMissing:'पडताळलेले पुढील मॉडेल तास नाहीत',historyMissing:'पडताळलेला ऐतिहासिक डेटा नाही',
+      rainCoverage:'पावसाच्या नोंदी',days:'दिवस',hours:'तास',
+      period:'कालावधी',future:'पुढील तास (IST)',past:'ऐतिहासिक तारखा',
+      gap:'गहाळ नोंदी म्हणजे शून्य पाऊस नाही',
+      noComparison:'समान कालावधी किंवा शेतातील मोजमाप नाही; यांना समान हवामान निरीक्षणे समजू नका.',
+      chartTitle:'NASA POWER · ऐतिहासिक पाऊस व तापमान',
+      chartIntro:'कमाल १४ पडताळलेल्या ऐतिहासिक ग्रिड तारखा; अंदाज किंवा शेतातील मोजमाप नाही. गहाळ आकडे उपलब्ध नाहीत असे दाखवले आहेत.',
+      barTitle:'ऐतिहासिक दररोजचा पाऊस · मिमी/दिवस',
+      lineTitle:'ऐतिहासिक हवेचे सरासरी तापमान · °C',
+      showTable:'स्रोताचे सर्व आकडे तक्त्यात पाहा',date:'तारीख',rain:'पाऊस (मिमी/दिवस)',temperature:'तापमान (°C)',
+      missing:'उपलब्ध नाही',chartEmpty:'ऐतिहासिक माहिती पडताळता आली नाही.',
+      offlineTitle:'नेटवर्क व शेवटच्या स्रोत नोंदी',
+      offline:'ब्राउझर ऑफलाइन दाखवतो',browserOnline:'ब्राउझर ऑनलाइन दाखवतो; स्रोत उपलब्धतेची खात्री नाही',
+      lastModel:'शेवटची Open-Meteo नोंद',lastNASA:'शेवटची NASA POWER नोंद',
+      noSaved:'या ब्राउझरमध्ये यशस्वी स्रोत नोंद नाही',metadata:'फक्त स्रोत वेळा स्थानिकरीत्या नोंदवल्या आहेत; शेतकरी माहिती व हवामान आकडे साठवलेले नाहीत. हे चालू हवामानाचे पुरावे नाहीत.',
+      offlineNotice:'ऑफलाइन: नवीन स्रोत उपलब्ध नसेल; बनावट अंदाज दाखवला जाणार नाही.',
+      connectedNotice:'स्रोत उपलब्ध आहेत का ते तपासण्यासाठी Refresh वापरा. ऑनलाइन म्हणजे API चालूच आहे असे नाही.'
+    },
+    hi:{
+      contrastTitle:'मॉडल पूर्वानुमान और ऐतिहासिक ग्रिड · अलग अवधियाँ',
+      contrastIntro:'दोनों स्रोत एक ही तारीख, अवलोकन या खेत की जानकारी नहीं हैं। वर्षा के योग से मॉडल सुरक्षा या सत्यापन निष्कर्ष न निकालें।',
+      forecastTitle:'अगले २४ घंटे · Open-Meteo मॉडल',historicalTitle:'पिछले अधिकतम १४ दिन · NASA POWER ग्रिड',
+      modelData:'उपलब्ध मॉडल वर्षा',historyData:'उपलब्ध ऐतिहासिक ग्रिड वर्षा',
+      modelMissing:'वर्तमान सत्यापित मॉडल घंटे नहीं हैं',historyMissing:'सत्यापित ऐतिहासिक ग्रिड नहीं है',
+      rainCoverage:'वर्षा डेटा कवरेज',days:'दिन',hours:'घंटे',
+      period:'अवधि',future:'आने वाले घंटे (IST)',past:'ऐतिहासिक तारीखें',
+      gap:'उपलब्ध न होना शून्य वर्षा नहीं है',
+      noComparison:'एक समान समय अवधि या खेत का वर्षामापी नहीं है; इन्हें समान मौसम अवलोकन न मानें।',
+      chartTitle:'NASA POWER · ऐतिहासिक वर्षा और तापमान',
+      chartIntro:'अधिकतम १४ सत्यापित ऐतिहासिक ग्रिड दिन; पूर्वानुमान या खेत का माप नहीं। गायब आँकड़े अनुपलब्ध हैं।',
+      barTitle:'ऐतिहासिक दैनिक वर्षा · मिमी/दिन',
+      lineTitle:'ऐतिहासिक दैनिक औसत तापमान · °C',
+      showTable:'सभी स्रोत मान तालिका में दिखाएँ',date:'तारीख',rain:'वर्षा (मिमी/दिन)',temperature:'तापमान (°C)',
+      missing:'अनुपलब्ध',chartEmpty:'सत्यापित ऐतिहासिक मौसम उपलब्ध नहीं है।',
+      offlineTitle:'नेटवर्क तथा अंतिम सफल स्रोत रिकॉर्ड',
+      offline:'ब्राउज़र ऑफलाइन दिखाता है',browserOnline:'ब्राउज़र ऑनलाइन दिखाता है; API उपलब्धता सत्यापित नहीं',
+      lastModel:'अंतिम Open-Meteo रिकॉर्ड',lastNASA:'अंतिम NASA POWER रिकॉर्ड',
+      noSaved:'इस ब्राउज़र में कोई सफल स्रोत रिकॉर्ड नहीं',metadata:'केवल स्रोत समय स्थानीय रूप से रखे हैं; किसान विवरण या मौसम आँकड़े संग्रहीत नहीं हैं। यह वर्तमान मौसम प्रमाण नहीं है।',
+      offlineNotice:'ऑफलाइन: स्रोत रिफ्रेश असफल हो सकता है; काल्पनिक पूर्वानुमान नहीं दिखेगा।',
+      connectedNotice:'वास्तविक स्रोत जाँचने के लिए Refresh दबाएँ। ऑनलाइन होना API उपलब्धता की गारंटी नहीं है।'
+    }
+  };
+  const climateL=()=>climateText[state.lang]||climateText.en;
+
   // EX-17: source data/units are not modified when changing languages.
   const receiptStrings={
    en:{title:'Source activity · exact timestamps',help:'Provider retrieval time differs from the browser check. Recalculating ages does not retrieve new weather.',check:'Browser checked at',again:'Recalculate displayed ages',
@@ -567,8 +644,56 @@
     }
     chart.append(grid);
   }
+  // F27: persist ONLY last-success metadata, never API payloads or farmer inputs.
+  const lastSourceKey='agri-foresight-source-receipts-v1';
+  const safeReceiptTime=value=>{
+    const ms=Date.parse(value||'');
+    return Number.isFinite(ms)&&ms<=Date.now()+60000&&
+      ms>=Date.now()-90*86400000?new Date(ms).toISOString():null;
+  };
+  const readLastReceipts=()=>{
+    try{
+      const raw=localStorage.getItem(lastSourceKey);
+      if(!raw||raw.length>700)return {};
+      const value=JSON.parse(raw);
+      if(value?.version!==1||typeof value!=='object')return {};
+      return {model:safeReceiptTime(value.model),nasa:safeReceiptTime(value.nasa)};
+    }catch{return {};}
+  };
+  const recordSourceReceipt=kind=>{
+    const at=new Date().toISOString(),existing=readLastReceipts();
+    const next={version:1,model:existing.model||null,nasa:existing.nasa||null};
+    next[kind]=at;
+    try{localStorage.setItem(lastSourceKey,JSON.stringify(next));}catch{}
+    renderConnectivity();
+  };
+  const connectivity=el('section','network-evidence');
+  connectivity.id='networkEvidenceStatus';
+  connectivity.setAttribute('aria-label','Offline status and last successful provider receipt');
+  const networkTitle=el('h3'),networkState=el('strong','network-state'),networkDetails=el('p','network-details');
+  const networkReceipt=el('div','network-receipts'),networkDisclosure=el('small','network-disclosure');
+  connectivity.append(networkTitle,networkState,networkDetails,networkReceipt,networkDisclosure);
+  here('weatherChart').insertAdjacentElement('afterend',connectivity);
+  function renderConnectivity(){
+    const t=climateL(),receipts=readLastReceipts(),offline=navigator.onLine===false;
+    connectivity.dataset.network=offline?'offline':'unverified';
+    networkTitle.textContent=t.offlineTitle;
+    networkState.textContent=offline?t.offline:t.browserOnline;
+    networkDetails.textContent=offline?t.offlineNotice:t.connectedNotice;
+    networkReceipt.replaceChildren();
+    const line=(label,stamp)=>{
+      const p=el('p','network-receipt-line',label+': '+(stamp||t.noSaved));
+      networkReceipt.append(p);
+    };
+    line(t.lastModel,receipts.model);line(t.lastNASA,receipts.nasa);
+    networkDisclosure.textContent=t.metadata;
+  }
+  window.addEventListener('online',()=>{renderConnectivity();renderEvidenceContrast();renderWeather();});
+  window.addEventListener('offline',()=>{renderConnectivity();renderEvidenceContrast();renderWeather();});
   function renderWeather(){
     renderSourceMatrix();
+    renderConnectivity();
+    renderEvidenceContrast();
     renderCandidateComparisonChoices();
     renderForecastQuality();
     renderHourlyEvidence();
@@ -585,7 +710,8 @@
       chart.append(el('div','weather-empty','No current forecast hours can be selected. Manual deadlines remain possible.'));
       here('weatherValue').textContent=f.status;return;
     }
-    chip.textContent=f.status==='retrieved_live'?'LIVE MODEL FORECAST':'RECENT VERIFIED CACHE';
+    chip.textContent=navigator.onLine===false?'OFFLINE · LAST-RECEIVED MODEL':
+      f.status==='retrieved_live'?'LIVE MODEL FORECAST':'RECENT VERIFIED CACHE';
     mode.textContent='Open-Meteo • '+(f.hours.length)+' model hours • precipitation (mm), probability (%) • IST';
     const provenance=el('p','live-provenance','Retrieved '+f.retrieved_at_utc+' · age '+num(f.forecast_age_hours)+' h · '+(f.attribution||'Open-Meteo')+'. Model output, not observed rain or safe crop timing.');
     chart.append(provenance);
@@ -626,6 +752,7 @@
     try {
       if(!okLocation())throw new Error('Only Jalna is supported by the current forecast service.');
       live.forecast=validForecast(await json('/api/forecast'+(refresh?'?refresh=true':'')));
+      if(okLocation()&&isCurrent()&&live.forecast.hours.length)recordSourceReceipt('model');
       live.selectedHour=null;
     } catch(e){live.forecast=null;here('deadlineNotice').textContent=e.message;}
     finally{live.forecastLoading=false;here('toggleForecast').disabled=false;renderWeather();}
@@ -1274,6 +1401,168 @@
   govSummary.id='governmentClimateSummary';
   govPanel.append(govTitle,govIntro,govActions,govRows,govSummary,govDetail);
   document.querySelector('section.section[data-page="1"]').append(govPanel);
+  // F05: category-separated *period summaries*, never a forecast-versus-observation score.
+  const evidenceCompare=el('section','evidence-contrast');
+  evidenceCompare.id='historicalModelComparison';
+  evidenceCompare.setAttribute('aria-label','Forecast and historical climate evidence periods');
+  const compareHeading=el('h3'),compareIntro=el('p','evidence-disclosure');
+  const compareGrid=el('div','evidence-contrast-grid');
+  const compareCaution=el('small','evidence-disclosure');
+  evidenceCompare.append(compareHeading,compareIntro,compareGrid,compareCaution);
+  govPanel.insertBefore(evidenceCompare,govRows);
+  function renderEvidenceContrast(){
+    const t=climateL(),f=live.forecast,g=governmentClimateData;
+    compareHeading.textContent=t.contrastTitle;
+    compareIntro.textContent=t.contrastIntro;
+    compareCaution.textContent=t.noComparison;
+    compareGrid.replaceChildren();
+    const card=(label,period,quantity,coverage,note,kind)=>{
+      const node=el('article','evidence-contrast-card');
+      node.dataset.kind=kind;
+      node.append(el('strong','',label),el('small','',t.period+': '+period),
+        el('span','contrast-value',quantity),el('small','',coverage),
+        el('small','',note));
+      compareGrid.append(node);
+    };
+    const now=Date.now(),m=isCurrent()&&Array.isArray(f?.hours);
+    const future=m?f.hours.filter(h=>{
+      const time=Date.parse(h.time+':00+05:30');
+      return Number.isFinite(time)&&time>=now;
+    }).sort((a,b)=>a.time.localeCompare(b.time)):[];
+    // Start the 24-hour span at the first actual future source hour,
+    // using absolute IST hourly slots; absent hours remain missing.
+    const start=future.length?Date.parse(future[0].time+':00+05:30'):NaN;
+    const byHour=new Map(future.map(h=>[Date.parse(h.time+':00+05:30'),h]));
+    const selected=Number.isFinite(start)?
+      Array.from({length:24},(_,i)=>byHour.get(start+i*3600000)):new Array(24);
+    const rain=selected.filter(h=>h&&Number.isFinite(h.precipitation_mm));
+    const modelPeriod=future.length?future[0].time.replace('T',' ')+' IST → '+
+      new Date(start+23*3600000).toLocaleString('en-GB',{timeZone:'Asia/Kolkata',
+        year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})+' IST':
+      t.modelMissing;
+    card(t.forecastTitle,modelPeriod,rain.length?
+      t.modelData+': '+num(rain.reduce((sum,h)=>sum+h.precipitation_mm,0))+' mm':
+      t.modelMissing,t.rainCoverage+': '+rain.length+'/24 '+t.hours,
+      t.gap,'model');
+    const historical=okLocation()&&governmentClimateVisibleState==='verified'&&g&&
+      ['retrieved_live','cached_recent'].includes(g.status)&&
+      g.source==='NASA POWER (US government)'&&g.data_kind==='government_gridded_historical'&&
+      Array.isArray(g.days)&&g.days.length>0;
+    const days=historical?g.days.slice(-14):[];
+    const rainDays=days.filter(d=>Number.isFinite(d.precipitation_mm_day));
+    card(t.historicalTitle,days.length?
+      days[0].date+' → '+days[days.length-1].date:t.historyMissing,
+      rainDays.length?t.historyData+': '+
+        num(rainDays.reduce((sum,d)=>sum+d.precipitation_mm_day,0))+' mm':
+        t.historyMissing,t.rainCoverage+': '+rainDays.length+'/'+days.length+' '+t.days,
+      t.gap,'historical');
+  }
+  // F11: source-native daily charts plus accessible exact-value table.
+  const historyPlot=el('section','nasa-history-plot');
+  historyPlot.id='nasaHistoryChart';historyPlot.hidden=true;
+  historyPlot.setAttribute('aria-label','NASA historical daily rainfall and temperature chart');
+  const historyPlotTitle=el('h3'),historyPlotInfo=el('p','evidence-disclosure');
+  const rainTitle=el('h4'),rainBars=el('div','nasa-bars');
+  rainBars.id='nasaRainChart';
+  const tempTitle=el('h4'),tempPlot=el('div','nasa-temperature-wrap');
+  const chartTable=el('details','nasa-chart-data'),tableSummary=el('summary');
+  const dataTable=el('table','nasa-data-table');dataTable.id='nasaChartTable';
+  chartTable.append(tableSummary,dataTable);
+  historyPlot.append(historyPlotTitle,historyPlotInfo,rainTitle,rainBars,
+    tempTitle,tempPlot,chartTable);
+  govPanel.insertBefore(historyPlot,govRows);
+  const svgNS='http://www.w3.org/2000/svg';
+  const svgPart=(name,attrs={})=>{
+    const element=document.createElementNS(svgNS,name);
+    for(const [k,v] of Object.entries(attrs))element.setAttribute(k,String(v));
+    return element;
+  };
+  function clearHistoricalChart(){
+    historyPlot.hidden=true;rainBars.replaceChildren();tempPlot.replaceChildren();
+    dataTable.replaceChildren();renderEvidenceContrast();
+  }
+  function renderHistoricalChart(data){
+    if(!okLocation()||!data||data.data_kind!=='government_gridded_historical'||
+      !['retrieved_live','cached_recent'].includes(data.status)||!Array.isArray(data.days)){
+      clearHistoricalChart();return;
+    }
+    const t=climateL(),rows=data.days.slice(-14);
+    if(!rows.length){clearHistoricalChart();return;}
+    historyPlot.hidden=false;
+    historyPlotTitle.textContent=t.chartTitle;
+    historyPlotInfo.textContent=t.chartIntro;
+    rainTitle.textContent=t.barTitle;
+    tempTitle.textContent=t.lineTitle;
+    tableSummary.textContent=t.showTable;
+    rainBars.replaceChildren();tempPlot.replaceChildren();dataTable.replaceChildren();
+    const maxRain=Math.max(0,...rows.filter(d=>Number.isFinite(d.precipitation_mm_day))
+      .map(d=>d.precipitation_mm_day));
+    rows.forEach(row=>{
+      const item=el('div','nasa-bar-day');
+      const track=el('div','nasa-bar-track');
+      const filled=Number.isFinite(row.precipitation_mm_day);
+      if(filled){
+        const bar=el('div','nasa-bar-fill');
+        bar.style.height=(maxRain>0?Math.max(0,row.precipitation_mm_day/maxRain*100):0)+'%';
+        track.append(bar);
+      }else track.append(el('span','nasa-bar-gap','—'));
+      item.setAttribute('aria-label',row.date+': '+(filled?row.precipitation_mm_day+' mm/day':t.missing));
+      item.append(track,el('small','',row.date.slice(5)));
+      rainBars.append(item);
+    });
+    const temps=rows.map(row=>row.temperature_c).filter(Number.isFinite);
+    if(temps.length){
+      const lo=Math.min(...temps),hi=Math.max(...temps);
+      const span=Math.max(hi-lo,1),svg=svgPart('svg',{
+        viewBox:'0 0 700 150',role:'img','aria-label':t.lineTitle,
+        preserveAspectRatio:'xMidYMid meet'
+      });
+      const title=svgPart('title');title.textContent=t.lineTitle;svg.append(title);
+      const y=value=>120-(value-lo)/span*95;
+      const x=i=>25+i*650/Math.max(rows.length-1,1);
+      // Never draw across an unknown temperature or missing calendar day.
+      let segment=[];
+      const flush=()=>{
+        if(segment.length>1)svg.append(svgPart('polyline',{
+          points:segment.map(v=>v.join(',')).join(' '),fill:'none',
+          stroke:'currentColor','stroke-width':3,'stroke-linecap':'round',
+          'stroke-linejoin':'round'
+        }));
+        segment=[];
+      };
+      rows.forEach((row,i)=>{
+        if(!Number.isFinite(row.temperature_c)){flush();return;}
+        if(i&&Number.isFinite(rows[i-1].temperature_c)&&
+          Date.parse(row.date)-Date.parse(rows[i-1].date)!==86400000)flush();
+        const cx=x(i),cy=y(row.temperature_c);
+        segment.push([cx,cy]);
+        const circle=svgPart('circle',{cx,cy,r:4,fill:'currentColor'});
+        const pointLabel=svgPart('title');pointLabel.textContent=row.date+': '+row.temperature_c+' °C';
+        circle.append(pointLabel);svg.append(circle);
+      });
+      flush();
+      const high=svgPart('text',{x:2,y:14,'font-size':13,fill:'currentColor'});
+      high.textContent=num(hi)+'°';
+      const low=svgPart('text',{x:2,y:142,'font-size':13,fill:'currentColor'});
+      low.textContent=num(lo)+'°';
+      svg.append(high,low);tempPlot.append(svg);
+    }else tempPlot.append(el('p','evidence-disclosure',t.missing));
+    const head=el('thead'),headerRow=el('tr');
+    [t.date,t.rain,t.temperature].forEach(text=>headerRow.append(el('th','',text)));
+    head.append(headerRow);
+    const body=el('tbody');
+    rows.forEach(row=>{
+      const tr=el('tr');
+      tr.append(el('th','',row.date),
+        el('td','',Number.isFinite(row.precipitation_mm_day)?
+          num(row.precipitation_mm_day):t.missing),
+        el('td','',Number.isFinite(row.temperature_c)?
+          num(row.temperature_c):t.missing));
+      body.append(tr);
+    });
+    dataTable.append(head,body);
+  }
+
 
   let governmentClimateData=null;
   let governmentClimateRequest=0;
@@ -1423,6 +1712,7 @@
   }
   function renderGovernmentClimate(data){
     govRows.replaceChildren();
+    renderHistoricalChart(data);renderEvidenceContrast();
     const count=govRange.value==='all'?data.days.length:7;
     const items=data.days.slice(-count);
     const rain=items.filter(x=>x.precipitation_mm_day!==null);
@@ -1448,6 +1738,7 @@
   async function loadGovernmentClimate(refresh=false){
     const token=++governmentClimateRequest;
     governmentClimateData=null;governmentClimateVisibleState='loading';governmentClimateErrorMessage='';
+    clearHistoricalChart();
     renderSourceMatrix();
     govDownload.disabled=true;
     govCSV.disabled=true;
@@ -1488,6 +1779,7 @@
       govStatus.textContent=(data.status==='cached_recent'?historyText('cached'):historyText('retrieved'))+' · '+data.days.length+' '+historyText('historyDays');
       governmentClimateVisibleState='verified';
       governmentClimateData=data;
+      recordSourceReceipt('nasa');
       renderSourceMatrix();
       govDownload.disabled=false;
       govCSV.disabled=false;
@@ -1517,6 +1809,7 @@
     link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
   here('language').addEventListener('change',translateGovernmentPanel);
+  here('language').addEventListener('change',()=>{renderEvidenceContrast();renderHistoricalChart(governmentClimateData);renderConnectivity();});
   here('language').addEventListener('change',()=>{renderSourceActivity();renderPrintEvidence();});
   here('language').addEventListener('change',()=>{renderSourceMatrix();renderDecisionDiagnostics();});
   govCSV.addEventListener('click',()=>{
@@ -1608,6 +1901,7 @@
   additional.sampleWeather=false;additional.demoInputs=false;additional.previewResult=null;
   changeLanguage();
   updateAllNew();
+  renderConnectivity();renderEvidenceContrast();
   renderSourceMatrix();renderDecisionDiagnostics();renderPrintEvidence();
   window.setInterval(()=>{if(!document.hidden){renderSourceMatrix();renderPrintEvidence();}},60000);
   void boot();
