@@ -562,6 +562,8 @@
         additional.deadlineSource='model';
         here('deadlineOriginPreview').textContent=evidenceText('selectedSource');
         here('deadlineNotice').textContent=evidenceText('selected');
+        renderDeadlineGuide();
+        here('deadlineInput').scrollIntoView({behavior:'smooth',block:'center'});
       });
       actionCell.append(action);tr.append(actionCell);body.append(tr);
     }
@@ -768,7 +770,62 @@
   let forecastMetric='precipitation_mm';
   let forecastDay='all';
   let forecastOffset=0;
+  const deadlineGuide=el('section','wx-deadline-guide');
+  deadlineGuide.id='deadlinePlanningGuide';
+  deadlineGuide.setAttribute('aria-label','Guided candidate deadline workflow');
+  here('deadlineNotice').insertAdjacentElement('afterend',deadlineGuide);
+  function renderDeadlineGuide(){
+    deadlineGuide.replaceChildren();
+    const value=here('deadlineInput').value||'';
+    const saved=!!value&&state.deadline===value;
+    const stamp=Date.parse(value+':00+05:30');
+    const future=Number.isFinite(stamp)&&stamp>Date.now()+60000;
+    const selected=!!value;
+    const steps=el('ol','wx-guide-steps');
+    for(const [label,done] of [['Choose candidate',selected],['Save assumption',saved],['Declare resources',!!live.request]]){
+      const item=el('li',done?'is-complete':'',label+(done?' ✓':''));steps.append(item);
+    }
+    deadlineGuide.append(el('h3','','Your planning pathway'),steps);
+    let explanation;
+    if(!selected)explanation='Select a future model hour or enter your own IST deadline. Weather data is not a safe-work threshold.';
+    else if(!future)explanation='The selected deadline is not in the future. Select a later hour before saving.';
+    else{
+      const hours=(stamp-Date.now())/3600000;
+      explanation='Candidate time remaining: '+num(hours)+' hours, based only on the browser clock. '+
+        (live.selectedHour===value&&isCurrent()?'This exact hour is in the currently validated Open-Meteo model. ':
+          'This is a farmer-selected time, without a source-matched rainfall claim. ')+
+        (saved?'Saved for the next resource assessment.':'Save the candidate to use it in later FastAPI calculations.');
+    }
+    deadlineGuide.append(el('p','wx-guide-status',explanation));
+    const actions=el('div','wx-guide-actions');
+    const nextHour=el('button','btn','Use next available model hour');
+    nextHour.type='button';nextHour.id='deadlineGuideNextHour';
+    const candidates=candidateHours();
+    nextHour.disabled=!candidates.length;
+    nextHour.title=candidates.length?'Select earliest available future forecast record, not a recommended safe time.':
+      'No current future forecast hour is available. Manual deadline entry remains possible.';
+    nextHour.addEventListener('click',()=>{
+      const candidate=candidateHours()[0];if(!candidate)return;
+      here('deadlineInput').value=candidate.time;
+      live.selectedHour=candidate.time;additional.deadlineSource='model';
+      here('deadlineOriginPreview').textContent=evidenceText('selectedSource');
+      here('deadlineNotice').textContent='Source hour drafted. Confirm the candidate deadline; the model does not certify field safety.';
+      clearResult();renderDeadlineGuide();
+    });
+    const confirm=el('button','btn primary','Save selected deadline');
+    confirm.type='button';confirm.id='deadlineGuideSave';
+    confirm.disabled=!future||saved;confirm.addEventListener('click',()=>here('saveDeadline').click());
+    const continueButton=el('button','btn','Continue to resources');
+    continueButton.type='button';continueButton.id='deadlineGuideContinue';
+    continueButton.disabled=!saved;
+    continueButton.addEventListener('click',()=>here('deadlineNotice').closest('.deadline-card')
+      .querySelector('.goto[data-target="2"]')?.click());
+    actions.append(nextHour,confirm,continueButton);deadlineGuide.append(actions);
+  }
+  here('deadlineInput').addEventListener('input',renderDeadlineGuide);
+  here('saveDeadline').addEventListener('click',()=>setTimeout(renderDeadlineGuide,0));
   function renderWeather(){
+    renderDeadlineGuide();
     renderSourceMatrix();
     renderConnectivity();
     renderEvidenceContrast();
