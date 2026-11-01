@@ -23,15 +23,17 @@ async function setup(page,{f=forecast(),g=nasa,validHealth=health}={}){
  await page.route('**/api/forecast*',r=>r.fulfill({status:200,json:f}));
  await page.route('**/api/government-climate*',r=>r.fulfill({status:200,json:g}));
 }
-test('source age card uses provider retrieval time and independent browser check time',async({page})=>{
+test('two useful source cards separate provider retrieval from browser check time',async({page})=>{
  await setup(page);await page.goto('/');
  const grid=page.locator('#sourceActivityRows');
- await expect(grid.locator('.source-activity-item')).toHaveCount(4);
+ await expect(grid.locator('.source-activity-item')).toHaveCount(2);
  await expect(grid.locator('.source-activity-item').nth(0)).toContainText('Verified current model source');
  await expect(grid.locator('.source-activity-item').nth(0)).toContainText('minutes old');
  await expect(grid.locator('.source-activity-item').nth(1)).toContainText('2026-10-26');
- await expect(grid.locator('.source-activity-item').nth(2)).toContainText('No verified server assessment');
- await expect(grid.locator('.source-activity-item').nth(3)).toContainText('Not connected');
+ await expect(grid).not.toContainText('No verified server assessment');
+ await expect(grid).not.toContainText('IMD official warnings');
+ await expect(grid.locator('.source-activity-measure')).toHaveCount(2);
+ await expect(grid.locator('.source-activity-item[data-source="model"]')).toContainText('1/1');
  const stamp=await page.locator('#sourceActivityChecked').getAttribute('datetime');
  await page.locator('#recheckSourceAges').click();
  const updated=await page.locator('#sourceActivityChecked').getAttribute('datetime');
@@ -106,7 +108,7 @@ test('print click updates receipt before invoking native printing and retains tr
 test('source activity cards preserve mobile one-column bounds',async({page})=>{
  await setup(page);await page.setViewportSize({width:390,height:844});await page.goto('/');
  const cards=page.locator('#sourceActivityRows .source-activity-item');
- await expect(cards).toHaveCount(4);
+ await expect(cards).toHaveCount(2);
  const boxes=await cards.evaluateAll(xs=>xs.map(x=>({l:x.getBoundingClientRect().left,r:x.getBoundingClientRect().right,w:x.getBoundingClientRect().width})));
  expect(boxes.every(x=>x.l>=0&&x.r<=390&&x.w>100)).toBe(true);
 });

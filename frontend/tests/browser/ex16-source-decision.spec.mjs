@@ -36,17 +36,17 @@ async function setup(page, options={}){
   await page.route('**/api/forecast*',r=>r.fulfill({status:200,json:options.forecast??forecast}));
   await page.route('**/api/government-climate*',r=>r.fulfill({status:200,json:options.historical??historical}));
 }
-test('overview differentiates backend, model forecast, historical government grid and unconnected IMD',async({page})=>{
+test('overview includes only connected engine, model forecast and historical government grid',async({page})=>{
   await setup(page);
   await page.goto('/');
   const list=page.locator('#evidenceSourceGrid .source-matrix-card');
-  await expect(list).toHaveCount(5);
+  await expect(list).toHaveCount(3);
   await expect(list.nth(0)).toContainText('Connected');
   await expect(list.nth(1)).toContainText('Verified model hours');
   await expect(list.nth(2)).toContainText('Verified historical grid');
   await expect(list.nth(2)).toContainText('2026-10-26');
-  await expect(list.nth(3)).toContainText('Not connected');
-  await expect(list.nth(4)).toContainText('Not evaluated');
+  await expect(page.locator('#sourceActivityRows .source-activity-item')).toHaveCount(2);
+  await expect(page.locator('#evidenceSourceMatrix')).not.toContainText('IMD official warnings');
   await expect(page.locator('#evidenceSourceMatrix')).not.toContainText('All sources live');
 });
 test('unsupported city clears previously verified Jalna-only source receipt',async({page})=>{
@@ -66,7 +66,7 @@ test('missing sources never claim verified NASA or usable current forecast',asyn
     forecast:{status:'unavailable',hours:[],notice:'Model unavailable'}});
   await page.goto('/');
   await expect(page.locator('#evidenceSourceGrid')).toContainText('Unavailable / not loaded');
-  await expect(page.locator('#evidenceSourceGrid')).toContainText('Not connected');
+  await expect(page.locator('#evidenceSourceGrid')).not.toContainText('IMD official warnings');
   await expect(page.locator('#evidenceSourceGrid')).not.toContainText('Verified historical grid');
 });
 test('backend constraint explanation shows both blocked and unknown statuses without overwriting them',async({page})=>{
@@ -128,20 +128,20 @@ test('expired model cache is marked stale and not called verified live data',asy
   await expect(grid).not.toContainText('Verified model hours');
   await expect(grid).toContainText('Verified historical grid');
 });
-test('three interface languages retain five statuses and mobile source cards fit the viewport',async({page})=>{
+test('three languages retain supported evidence sources and mobile cards fit viewport',async({page})=>{
   await setup(page);
   await page.setViewportSize({width:390,height:844});
   await page.goto('/');
   const matrix=page.locator('#evidenceSourceMatrix');
   const cards=matrix.locator('.source-matrix-card');
-  await expect(cards).toHaveCount(5);
+  await expect(cards).toHaveCount(3);
   await page.locator('#language').selectOption('mr');
   await expect(matrix).toContainText('स्वतंत्र स्रोत स्थिती');
-  await expect(matrix).toContainText('जोडलेले नाही');
+  await expect(matrix).not.toContainText('IMD official warnings');
   await page.locator('#language').selectOption('hi');
   await expect(matrix).toContainText('स्वतंत्र स्रोत की स्थिति');
   await page.locator('#language').selectOption('en');
-  await expect(matrix).toContainText('Not connected');
+  await expect(matrix).not.toContainText('Farmer resource assessment');
   const rects=await cards.evaluateAll(nodes=>nodes.map(n=>({left:n.getBoundingClientRect().left,right:n.getBoundingClientRect().right,width:n.getBoundingClientRect().width})));
   expect(rects.every(r=>r.left>=0&&r.right<=390&&r.width>100)).toBe(true);
 });

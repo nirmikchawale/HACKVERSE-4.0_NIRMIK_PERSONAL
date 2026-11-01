@@ -1798,7 +1798,7 @@
   const wbLabels={
     en:{
       intro:'Choose a source to inspect actual receipts, coverage, limitations and next actions.',
-      all:'All five',available:'With a response',attention:'Needs action',inspect:'Inspect details',
+      all:'All three',available:'With a response',attention:'Needs action',inspect:'Inspect details',
       data:'data feeds',engine:'engine',followups:'follow-ups',active:'Source-backed',
       metadata:'Source-native details',capability:'What this can support',
       limitation:'What this cannot prove',observed:'Source retrieved (UTC)',
@@ -1813,7 +1813,7 @@
       inspectAPI:'Inspect source registry',inspectFarm:'Declare farm resources',
       inspectResult:'Open FastAPI assessment',inspectIMD:'Open official district warnings',
       recalc:'Recheck displayed ages',download:'Download status receipt',
-      receipt:'Status-only evidence receipt. It does not contain farmer quantities, certify field safety or indicate an official IMD warning.',
+      receipt:'Source-status receipt only. No farmer quantities or field-safety certification.',
       modelCan:'Inspect model hours, rainfall data coverage and a proposed planning window.',
       modelCannot:'Modeled rainfall cannot prove observed rain, precise onset or crop-safe handling.',
       nasaCan:'Review source-native historical daily grid dates and rainfall/temperature measurements.',
@@ -1836,7 +1836,7 @@
     },
     mr:{
       intro:'स्रोत निवडा; खरी नोंद, माहितीची व्याप्ती, मर्यादा व पुढील कृती तपासा.',
-      all:'सर्व पाच',available:'प्रतिसाद उपलब्ध',attention:'कृती आवश्यक',inspect:'तपशील पाहा',
+      all:'सर्व तीन',available:'प्रतिसाद उपलब्ध',attention:'कृती आवश्यक',inspect:'तपशील पाहा',
       data:'डेटा स्रोत',engine:'इंजिन',followups:'पुढील कृती',active:'स्रोताधारित',
       metadata:'स्रोताचे तपशील',capability:'यातून काय समजते',
       limitation:'यातून काय सिद्ध होत नाही',observed:'स्रोत वेळ (UTC)',
@@ -1851,7 +1851,7 @@
       inspectAPI:'स्रोत नोंद पाहा',inspectFarm:'साधने नोंदवा',
       inspectResult:'FastAPI मूल्यमापन पाहा',inspectIMD:'अधिकृत जिल्हा इशारे पाहा',
       recalc:'वेळ पुन्हा मोजा',download:'स्थिती नोंद डाउनलोड',
-      receipt:'फक्त स्थितीची नोंद. यात शेतकरी प्रमाण नाही व शेत सुरक्षिततेचा किंवा IMD इशाऱ्याचा दाखला नाही.',
+      receipt:'फक्त स्रोत स्थितीची नोंद; शेतकऱ्याचे प्रमाण किंवा शेत सुरक्षिततेचा दाखला नाही.',
       modelCan:'मॉडेल तास, पावसाच्या नोंदी व नियोजन वेळ तपासा.',
       modelCannot:'मॉडेल म्हणजे प्रत्यक्ष पाऊस किंवा शेतातील सुरक्षिततेची हमी नाही.',
       nasaCan:'ऐतिहासिक ग्रिडमधील दिवस, पाऊस आणि तापमान तपासा.',
@@ -1874,7 +1874,7 @@
     },
     hi:{
       intro:'स्रोत चुनें; वास्तविक रिकॉर्ड, उपलब्ध डेटा, सीमाएँ और अगले कदम देखें।',
-      all:'सभी पाँच',available:'जवाब उपलब्ध',attention:'कार्रवाई चाहिए',inspect:'विवरण देखें',
+      all:'सभी तीन',available:'जवाब उपलब्ध',attention:'कार्रवाई चाहिए',inspect:'विवरण देखें',
       data:'डेटा स्रोत',engine:'इंजन',followups:'अगले कदम',active:'स्रोत आधारित',
       metadata:'स्रोत का विवरण',capability:'इससे क्या पता चलता है',
       limitation:'यह क्या साबित नहीं करता',observed:'स्रोत समय (UTC)',
@@ -1889,7 +1889,7 @@
       inspectAPI:'स्रोत रजिस्टर देखें',inspectFarm:'कृषि संसाधन दर्ज करें',
       inspectResult:'FastAPI मूल्यांकन देखें',inspectIMD:'आधिकारिक जिला चेतावनी देखें',
       recalc:'समय पुनः जाँचें',download:'स्थिति रिकॉर्ड डाउनलोड',
-      receipt:'केवल स्थिति का रिकॉर्ड। किसान की मात्रा शामिल नहीं; खेत सुरक्षा या IMD चेतावनी प्रमाणित नहीं।',
+      receipt:'केवल स्रोत स्थिति रिकॉर्ड; किसान की मात्रा या खेत सुरक्षा का प्रमाण नहीं।',
       modelCan:'मॉडल घंटे, वर्षा डेटा और प्रस्तावित समय सीमा देख सकते हैं।',
       modelCannot:'मॉडल वास्तविक बारिश, वर्षा शुरू होने का समय या खेत की सुरक्षा साबित नहीं करता।',
       nasaCan:'ऐतिहासिक ग्रिड की तिथियाँ, वर्षा और तापमान देखें।',
@@ -1927,8 +1927,6 @@
       gov&&['retrieved_live','cached_recent'].includes(gov.status)&&
       gov.source==='NASA POWER (US government)'&&
       gov.data_kind==='government_gridded_historical'&&Array.isArray(gov.days)&&gov.days.length>0;
-    const assessment=live.evaluation,assessed=!!(live.request&&live.evaluatedAtUtc&&assessment&&statuses.includes(assessment.status));
-    const constraints=assessed?assessment.baseline.constraints.length:0;
     const modelStatus=!supported?t.unsupported:modelCurrent?(f.status==='cached_recent'?t.cache:t.verified):
       stale?t.stale:live.forecastLoading?t.pending:t.missing;
     const modelDetail=!supported?t.pilot:modelCurrent?
@@ -1958,22 +1956,7 @@
         values:[[w.historyDays,nasaOK?String(gov.days.length):w.stampEmpty],
           [w.latest,nasaOK?gov.latest_data_date:w.stampEmpty]],
         can:w.nasaCan,cannot:w.nasaCannot,hint:w.nasaHint,primary:w.inspectNASA,page:1,
-        refresh:w.refreshNASA},
-      {id:'imd',name:t.imd,status:t.notconnected,detail:t.imdDetail,
-        kind:'unavailable',available:false,metric:w.notConnected,when:null,
-        values:[[w.provider,'India Meteorological Department'],
-          [w.selected,w.sourceNotApplicable]],
-        can:w.imdCan,cannot:w.imdCannot,hint:w.imdHint,primary:w.inspectIMD,
-        href:'https://mausam.imd.gov.in/responsive/districtWiseWarning.php'},
-      {id:'farm',name:t.farm,status:assessed?t.backend+assessment.status.toUpperCase():t.unevaluated,
-        detail:assessed?t.assessmentDetail:t.assessmentMissing,
-        kind:assessed?'decision':'unavailable',available:assessed,
-        metric:assessed?assessment.status.toUpperCase():w.pending,
-        when:assessed?live.evaluatedAtUtc:null,
-        values:[[w.decision,assessed?assessment.status.toUpperCase():w.pending],
-          [w.results,assessed?String(constraints):w.stampEmpty]],
-        can:w.farmCan,cannot:w.farmCannot,hint:w.farmHint,
-        primary:assessed?w.inspectResult:w.inspectFarm,page:assessed?3:2}
+        refresh:w.refreshNASA}
     ];
   }
   const sourceFilters=['all','available','attention'];
@@ -2098,10 +2081,12 @@
     }
     renderSourceActivity();renderPrintEvidence();
   }
-  // F13: independent source timestamps. Recalculate = no new API requests.
+  // F13: freshness of real model + government historical grid only.
+  // Assessment and disconnected official warning status belong to planning/evidence,
+  // not the homepage. No source values are inferred from browser connectivity.
   const sourceActivity=el('section','source-activity');
   sourceActivity.id='sourceActivityReceipt';
-  sourceActivity.setAttribute('aria-label','Evidence source timing and freshness');
+  sourceActivity.setAttribute('aria-label','Weather model and historical grid freshness');
   const activityTitle=el('h3');
   const activityHelp=el('p','source-matrix-intro');
   const activityChecked=el('time','activity-checked');
@@ -2109,44 +2094,75 @@
   const activityRows=el('div','source-activity-rows');activityRows.id='sourceActivityRows';
   const recalc=el('button','btn','Recalculate displayed ages');
   recalc.type='button';recalc.id='recheckSourceAges';
-  sourceActivity.append(activityTitle,activityHelp,activityChecked,activityRows,recalc);
+  const activityHeader=el('div','source-activity-heading');
+  const activityLead=el('div','source-activity-lead');
+  activityLead.append(activityTitle,activityHelp);
+  const activityTools=el('div','source-activity-tools');
+  activityTools.append(activityChecked,recalc);
+  activityHeader.append(activityLead,activityTools);
+  sourceActivity.append(activityHeader,activityRows);
   sourcePanel.append(sourceActivity);
+  const activityCopy={
+    en:{title:'Explore genuine source evidence',intro:'Two independently timestamped sources: upcoming model weather and historical government data.',
+      coverage:'Valid rainfall values',history:'Verified historical days',none:'No verified source values',
+      modelAction:'Explore forecast hours',historyAction:'Explore NASA history',
+      retrieval:'Source receipt',check:'Browser checked',freshness:'Actual provider data, not field measurements'},
+    mr:{title:'खरे स्रोत पुरावे पाहा',intro:'दोन वेगवेगळ्या वेळेचे स्रोत: हवामान मॉडेल आणि सरकारी ऐतिहासिक डेटा.',
+      coverage:'उपलब्ध पावसाच्या नोंदी',history:'पडताळलेले ऐतिहासिक दिवस',none:'पडताळलेली स्रोत नोंद नाही',
+      modelAction:'हवामान तास पाहा',historyAction:'NASA इतिहास पाहा',
+      retrieval:'स्रोत वेळ',check:'ब्राउझर तपासणी',freshness:'स्रोत माहिती; शेतातील मोजमाप नाही'},
+    hi:{title:'वास्तविक स्रोत प्रमाण देखें',intro:'अलग समय वाले दो स्रोत: मॉडल मौसम और सरकारी ऐतिहासिक डेटा।',
+      coverage:'उपलब्ध वर्षा मान',history:'सत्यापित ऐतिहासिक दिन',none:'सत्यापित स्रोत डेटा नहीं',
+      modelAction:'मॉडल घंटे देखें',historyAction:'NASA इतिहास देखें',
+      retrieval:'स्रोत समय',check:'ब्राउज़र जाँच',freshness:'स्रोत डेटा; खेत का माप नहीं'}
+  };
   function renderSourceActivity(){
-    const t=receiptLanguage(),now=Date.now(),supported=okLocation(),forecast=live.forecast;
-    activityTitle.textContent=t.title;activityHelp.textContent=t.help;recalc.textContent=t.again;
+    const t=receiptLanguage(),c=activityCopy[state.lang]||activityCopy.en,
+      now=Date.now(),supported=okLocation(),forecast=live.forecast;
+    activityTitle.textContent=c.title;activityHelp.textContent=c.intro;
+    recalc.textContent=t.again;
     activityChecked.dateTime=new Date(now).toISOString();
-    activityChecked.textContent=t.check+': '+activityChecked.dateTime;
+    activityChecked.textContent=c.check+': '+activityChecked.dateTime;
     activityRows.replaceChildren();
-    const add=(title,status,detail,stamp,link,titleLink)=>{
-      const row=el('article','source-activity-item');
-      row.append(el('strong','',title),el('span','source-activity-status',status),el('small','',detail));
+    const add=(id,title,status,detail,stamp,link,titleLink,metric,action)=>{
+      const row=el('article','source-activity-item');row.dataset.source=id;
+      const heading=el('div','source-activity-item-heading');
+      heading.append(el('strong','',title),el('span','source-activity-status',status));
+      row.append(heading,el('div','source-activity-measure',metric),el('small','',detail));
       if(stamp&&Number.isFinite(Date.parse(stamp))){
-        const time=el('time','',t.retrieved+': '+stamp);time.dateTime=stamp;row.append(time);
+        const time=el('time','',c.retrieval+': '+stamp);time.dateTime=stamp;row.append(time);
       }
+      const links=el('div','source-activity-actions');
+      const open=el('button','source-activity-open',action);open.type='button';
+      open.addEventListener('click',()=>goto(1));
+      links.append(open);
       if(link){const anchor=el('a','',titleLink);anchor.href=link;
-        anchor.rel='noopener noreferrer';anchor.target='_blank';row.append(anchor);}
+        anchor.rel='noopener noreferrer';anchor.target='_blank';links.append(anchor);}
+      row.append(links);
       activityRows.append(row);
     };
     const ftime=Date.parse(forecast?.retrieved_at_utc||''),ms=now-ftime;
-    const valid= supported&&isCurrent()&&forecast?.hours?.length>0;
+    const valid=supported&&isCurrent()&&forecast?.hours?.length>0;
     const expired=supported&&forecast&&['retrieved_live','cached_recent','stale_cache'].includes(forecast.status)&&
       (!valid||ms>2*60*60*1000);
     const age=Number.isFinite(ms)&&ms>=0?Math.floor(ms/60000)+' '+t.age:t.future;
-    add(t.model,!supported?t.unsupported:valid?t.valid:expired?t.stale:t.notAvailable,
+    const modelCoverage=valid?forecast.hours.filter(h=>
+      typeof h.precipitation_mm==='number'&&Number.isFinite(h.precipitation_mm)).length+'/'+forecast.hours.length:
+      c.none;
+    add('model',t.model,!supported?t.unsupported:valid?t.valid:expired?t.stale:t.notAvailable,
       valid?t.retrieved+': '+forecast.retrieved_at_utc+' · '+age:
       expired?t.stale+': '+(forecast.retrieved_at_utc||'—'):t.notAvailable,
       supported?forecast?.retrieved_at_utc:null,
-      'https://open-meteo.com/en/docs',t.docsModel);
+      'https://open-meteo.com/en/docs',t.docsModel,
+      valid?modelCoverage+' · '+c.coverage:c.none,c.modelAction);
     const gov=governmentClimateData,verified=supported&&governmentClimateVisibleState==='verified'&&
       gov?.source==='NASA POWER (US government)'&&gov?.data_kind==='government_gridded_historical'&&
       ['retrieved_live','cached_recent'].includes(gov.status)&&gov.days?.length>0;
-    add(t.history,verified?t.historic:!supported?t.unsupported:t.notAvailable,
+    add('nasa',t.history,verified?t.historic:!supported?t.unsupported:t.notAvailable,
       verified?t.latest+': '+gov.latest_data_date+' · '+t.retrieved+': '+gov.retrieved_at_utc:t.notAvailable,
-      verified?gov.retrieved_at_utc:null,'https://power.larc.nasa.gov/docs/services/api/temporal/daily/',t.docsNASA);
-    const assessed=live.request&&live.evaluation&&live.evaluatedAtUtc;
-    add(t.decision,assessed?'FastAPI · '+live.evaluation.status.toUpperCase():t.notAssessed,
-      assessed?t.received+': '+live.evaluatedAtUtc:t.notAssessed,assessed?live.evaluatedAtUtc:null,null,null);
-    add(t.imd,t.unconnected,t.unconnected,null,null,null);
+      verified?gov.retrieved_at_utc:null,
+      'https://power.larc.nasa.gov/docs/services/api/temporal/daily/',t.docsNASA,
+      verified?gov.days.length+' · '+c.history+' · '+gov.latest_data_date:c.none,c.historyAction);
   }
   recalc.addEventListener('click',()=>{renderSourceMatrix();renderPrintEvidence();});
   function translateGovernmentPanel(){

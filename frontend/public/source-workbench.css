@@ -8,7 +8,7 @@
 .source-filter-button{min-height:38px;padding:8px 13px;border-radius:100px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:12px;font-weight:680;cursor:pointer}
 .source-filter-button[aria-pressed="true"]{background:var(--soft);color:var(--teal);border-color:var(--teal)}
 .source-filter-button:hover{border-color:var(--teal)}
-.source-matrix .source-matrix-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0 0 12px}
+.source-matrix .source-matrix-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 12px}
 .source-matrix .source-matrix-card{appearance:none;position:relative;text-align:left;display:flex;flex-direction:column;align-items:stretch;min-width:0;min-height:163px;padding:15px;border:1px solid var(--border);border-radius:15px;background:var(--card);color:var(--ink);cursor:pointer;transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease}
 .source-matrix .source-matrix-card[hidden]{display:none!important}
 .source-matrix .source-matrix-card:hover{transform:translateY(-2px);border-color:var(--teal)}
@@ -47,7 +47,7 @@
 .source-workbench-empty{color:var(--muted);margin:0;font-size:13px;line-height:1.6}
 .source-matrix :is(button,a):focus-visible{outline:3px solid var(--focus,var(--teal));outline-offset:3px}
 @media(min-width:681px) and (max-width:1280px){
- .source-matrix .source-matrix-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .source-matrix .source-matrix-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:680px){
  .source-matrix .source-matrix-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -70,4 +70,39 @@
 }
 @media print{
  .source-workbench-toolbar,.source-matrix-grid,.source-workbench-detail{display:none!important}
+}
+
+/* CF-OVERVIEW-02: only verifiable model/history chronology is shown on Home.
+   Two broad, balanced source cards replace the former four-card warning/assessment grid. */
+#sourceActivityReceipt{border-top:1px solid var(--border);margin-top:18px;padding-top:18px}
+#sourceActivityReceipt .source-activity-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}
+#sourceActivityReceipt .source-activity-lead{flex:1 1 320px;min-width:0}
+#sourceActivityReceipt .source-activity-heading h3{margin:0 0 5px;line-height:1.3}
+#sourceActivityReceipt .source-activity-tools{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;flex:0 1 490px}
+#sourceActivityReceipt .source-activity-tools .activity-checked{margin:0;min-width:0;overflow-wrap:anywhere}
+#sourceActivityReceipt .source-activity-tools .btn{flex:none}
+#sourceActivityReceipt .source-activity-rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:14px 0 0}
+#sourceActivityReceipt .source-activity-item{padding:17px;border-radius:15px;gap:9px;min-width:0}
+#sourceActivityReceipt .source-activity-item-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#sourceActivityReceipt .source-activity-item-heading strong{font-size:13px;line-height:1.45}
+#sourceActivityReceipt .source-activity-status{margin:0;font-size:12px;line-height:1.45}
+#sourceActivityReceipt .source-activity-measure{font-size:clamp(15px,1.5vw,18px);font-weight:780;line-height:1.38;font-variant-numeric:tabular-nums;color:var(--ink);overflow-wrap:anywhere}
+#sourceActivityReceipt .source-activity-item small,
+#sourceActivityReceipt .source-activity-item time{font-size:11px;line-height:1.5}
+#sourceActivityReceipt .source-activity-actions{margin-top:auto;padding-top:10px;display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+#sourceActivityReceipt .source-activity-open{appearance:none;min-height:37px;padding:8px 13px;border-radius:10px;border:1px solid var(--teal);background:var(--teal);color:#fff;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+#sourceActivityReceipt .source-activity-actions a{font-size:12px;min-height:37px;display:inline-flex;align-items:center}
+#sourceActivityReceipt .source-activity-open:focus-visible,
+#sourceActivityReceipt .source-activity-actions a:focus-visible{outline:3px solid var(--focus,var(--teal));outline-offset:3px}
+@media(max-width:900px){
+ #sourceActivityReceipt .source-activity-heading{flex-direction:column;gap:7px}
+ #sourceActivityReceipt .source-activity-lead{flex-basis:auto}
+ #sourceActivityReceipt .source-activity-tools{flex-basis:auto;justify-content:flex-start}
+}
+@media(max-width:740px){
+ #sourceActivityReceipt .source-activity-rows{grid-template-columns:1fr}
+ #sourceActivityReceipt .source-activity-item{padding:14px}
+}
+@media print{
+ #sourceActivityReceipt{display:none!important}
 }
