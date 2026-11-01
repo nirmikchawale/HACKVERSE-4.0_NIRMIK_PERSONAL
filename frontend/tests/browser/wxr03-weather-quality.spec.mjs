@@ -26,7 +26,9 @@ async function openWeather(page,forecast=source()){
   await page.route('**/api/forecast*',r=>r.fulfill({status:200,json:forecast}));
   await page.route('**/api/government-climate*',r=>r.fulfill({status:200,
     json:{status:'unavailable',source:'NASA POWER (US government)',days:[]}}));
-  await page.goto('/');await page.locator('#navDesktop [data-nav="1"]').click();
+  await page.goto('/');
+  const nav=page.viewportSize()?.width<=740?'#navMobile':'#navDesktop';
+  await page.locator(nav+' [data-nav="1"]').click();
 }
 test('WXR-03 removes weather placeholders and retains six pages',async({page})=>{
   await openWeather(page);const section=page.locator('section.section[data-page="1"]');
@@ -93,7 +95,7 @@ test('WXR-03 stale evidence is not displayed as current and CSV stays disabled',
   stale.retrieved_at_utc=new Date(Date.now()-4*3600000).toISOString();
   await openWeather(page,stale);
   await expect(page.locator('#qcHourGrid')).toHaveCount(0);
-  await expect(page.locator('#forecastQualityInspector')).toContainText('No current validated model response');
+  await expect(page.locator('#forecastQualityInspector')).toContainText('No current validated Jalna model response');
   await expect(page.locator('#exportForecastEvidence')).toBeDisabled();
   await expect(page.locator('#forecastQualityInspector button')).toContainText('Refresh authentic forecast');
 });
