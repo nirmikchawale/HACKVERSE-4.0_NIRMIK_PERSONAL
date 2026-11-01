@@ -1,0 +1,47 @@
+name: CF-AUDIT Production Homepage Four Cards
+on:
+  push:
+    branches: [audit/cloudflare-prod-home01-b9e57]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  visual-homepage:
+    name: Live Cloudflare production four-card audit (exact SHA)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      EXPECTED_SHA: b9e57ba6be3325e6888445c892a384160eec42d9
+      CLOUDFLARE_PREVIEW_URL: https://agri-foresight.nirmikchawale1.workers.dev/
+    steps:
+      - name: Checkout read-only test harness
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {persist-credentials: false}
+      - name: Node 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with: {node-version: '22'}
+      - name: Confirm exact live production source before testing
+        run: |
+          node --input-type=module - <<'JS'
+          const origin=process.env.CLOUDFLARE_PREVIEW_URL;
+          const r=await fetch(origin+'_release.json',{cache:'no-store',signal:AbortSignal.timeout(16000)});
+          if(!r.ok)throw Error('Cloudflare release receipt HTTP '+r.status);
+          const d=await r.json();
+          if(d.git_commit_sha!==process.env.EXPECTED_SHA)throw Error('Expected exact public SHA '+process.env.EXPECTED_SHA+' but received '+d.git_commit_sha);
+          console.log('CLOUDFLARE_PRODUCTION_SHA_PASS '+d.git_commit_sha);
+          JS
+      - name: Install Playwright
+        working-directory: frontend
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+      - name: Verify 4 homepage cards and snapshot on real cloud-hosted API, desktop and mobile
+        working-directory: frontend
+        run: npx playwright test -c playwright.cloudflare.config.mjs
+      - name: Upload read-only public screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cloudflare-prod-b9e57-homepage-evidence
+          path: frontend/test-results/cloudflare-hosted/
+          if-no-files-found: ignore
