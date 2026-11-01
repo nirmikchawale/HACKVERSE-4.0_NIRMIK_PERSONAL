@@ -32,7 +32,8 @@ test('Overview and Weather have no duplicated passive theory cards, but weather 
   await page.locator('#navDesktop [data-nav="1"]').click();
   await expect(page.locator('section[data-page="1"] .feature-stripe')).toHaveCount(0);
   await expect(page.locator('section[data-page="1"] .insight-row')).toHaveCount(0);
-  await expect(page.locator('[data-i18n="deadlineExplanation"]')).toContainText('not a rain-safety guarantee');
+  await expect(page.locator('[data-i18n="deadlineExplanation"]')).toHaveCount(0);
+  await expect(page.locator('#deadlineGuideNextHour')).toBeAttached();
   await expect(page.locator('#deadlineInput')).toBeVisible();
   await expect(page.locator('#toggleForecast')).toBeVisible();
   await expect(page.locator('#saveDeadline')).toBeVisible();
