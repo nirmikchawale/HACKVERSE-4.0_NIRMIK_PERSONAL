@@ -43,7 +43,7 @@ test('server evaluation and comparison use declared resources, not local arithme
  await stub(page);let posted,compared;
  await page.route('**/api/evaluate',r=>{posted=r.request().postDataJSON();return r.fulfill({status:200,json:evalResp});});
  await page.route('**/api/compare',r=>{compared=r.request().postDataJSON();return r.fulfill({status:200,json:{before:evalResp,after:{...evalResp,status:'feasible',baseline:projected},changes:{changed_fields:['capacity_units'],status_before:'blocked',status_after:'feasible',time_slack_delta_hours:0},interpretation:'User-conditional change only'}});});
- await page.goto('/');await prepare(page);await page.locator('#addChange').click();
+ await page.goto('/');await prepare(page);await expect(page.locator('#changeEditor .change-row')).toHaveCount(1);
  await page.locator('#changeEditor [data-x=amount]').fill('4');
  await page.locator('#changeEditor [data-x=rid]').fill('worker-extra');
  await page.locator('#changeEditor [data-x=availability]').selectOption('confirmed');
