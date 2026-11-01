@@ -4,7 +4,7 @@ import {test,expect} from '@playwright/test';
 // actual six-page frontend, not just string replacement in source files.
 const leadKeys=['heroBody','weatherLead','resourceLead','feasLead','changesLead','summaryLead'];
 test.beforeEach(async({page})=>{
-  await page.addInitScript(()=>{localStorage.clear();sessionStorage.clear()});
+  await page.addInitScript(()=>{(localStorage.clear(),localStorage.setItem('agri-experience-v1','detailed'));sessionStorage.clear()});
 });
 test('all six dashboards stay navigable with shorter action-first introductions',async({page})=>{
   await page.setViewportSize({width:1440,height:900});
