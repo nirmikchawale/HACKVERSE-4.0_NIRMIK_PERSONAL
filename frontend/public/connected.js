@@ -42,16 +42,16 @@
   const climateText={
     en:{
       contrastTitle:'Model forecast and historical grid · different periods',
-      contrastIntro:'These datasets do not represent the same dates, observations or farm location. The two rainfall totals must not be treated as a model validation or a safety comparison.',
+      contrastIntro:'These sources cover different dates and places. Their rain totals do not prove safety.',
       forecastTitle:'Next 24 forecast hours · Open-Meteo MODEL',historicalTitle:'Up to 20 historical days · NASA POWER GRID',
       modelData:'Known modeled rainfall',historyData:'Available historical gridded rainfall',
       modelMissing:'No verified future model hours',historyMissing:'No verified historical grid',
       rainCoverage:'Rainfall data coverage',days:'calendar days',hours:'hours',
       period:'Period',future:'Future hours (IST)',past:'Historical dates',
       gap:'Missing or unavailable readings are unknown, not zero',
-      noComparison:'No matching period or field rain gauge is provided; do not compare these as equivalent weather observations.',
+      noComparison:'Different dates and sources; neither measures rain at this farm.',
       chartTitle:'NASA POWER · historical rainfall and temperature',
-      chartIntro:'A visual record of up to 20 validated historical grid dates; never a forecast or farm measurement. Missing readings are shown as unavailable.',
+      chartIntro:'Up to 20 NASA history dates, not forecasts or farm readings.',
       barTitle:'Historical daily rainfall · mm/day',
       lineTitle:'Historical daily mean air temperature · °C',
       showTable:'Show all source-native values as a table',date:'Date',rain:'Rainfall (mm/day)',temperature:'Temperature (°C)',
@@ -59,9 +59,9 @@
       offlineTitle:'Network and last successful source receipts',
       offline:'Browser reports offline',browserOnline:'Browser reports online; provider connectivity unverified',
       lastModel:'Last Open-Meteo receipt',lastNASA:'Last NASA POWER receipt',
-      noSaved:'No successful source receipt saved on this browser',metadata:'Only source timestamps are retained locally; no farmer inputs or weather readings are cached. These receipts are not current weather evidence.',
+      noSaved:'No successful source receipt saved on this browser',metadata:'Only source times are saved locally, not farm inputs or weather readings.',
       offlineNotice:'Offline: refresh requests may fail; no substitute forecast will be shown.',
-      connectedNotice:'Use the existing source Refresh buttons to verify providers. Online status does not prove API availability.'
+      connectedNotice:'Use Refresh to check each source. Online does not mean available.'
     },
     mr:{
       contrastTitle:'मॉडेल अंदाज व ऐतिहासिक ग्रिड · वेगळे कालखंड',
@@ -114,20 +114,20 @@
 
   // EX-17: source data/units are not modified when changing languages.
   const receiptStrings={
-   en:{title:'Source activity · exact timestamps',help:'Provider retrieval time differs from the browser check. Recalculating ages does not retrieve new weather.',check:'Browser checked at',again:'Recalculate displayed ages',
+   en:{title:'Source activity · exact timestamps',help:'Source time differs from browser check time. Rechecking does not fetch weather.',check:'Browser checked at',again:'Recalculate displayed ages',
     model:'Open-Meteo modeled forecast',history:'NASA POWER historical grid',decision:'FastAPI assessment',imd:'IMD official warnings',
     notAvailable:'No verified response',unsupported:'Unsupported location · Jalna data unavailable',stale:'Expired forecast · do not use',valid:'Verified current model source',
     historic:'Verified government historical data, not a forecast',retrieved:'Provider retrieved (UTC)',latest:'Latest historical day',
     received:'Browser received server decision (UTC)',notAssessed:'No verified server assessment',unconnected:'Not connected · no official live warnings',
     age:'minutes old',future:'invalid future timestamp',docsModel:'Model provider documentation',docsNASA:'NASA POWER official documentation',
-    printTitle:'Agri Foresight · evidence and decision receipt',summary:'Jalna already-picked cotton preparedness. Not a safety, rainfall-onset, yield or loss-prevention certificate.',
+    printTitle:'Agri Foresight · evidence and decision receipt',summary:'Jalna cotton planning; not a field-safety or loss-prevention certificate.',
     made:'Browser report created (UTC)',place:'Scenario location',result:'FastAPI decision',noResult:'NOT EVALUATED · no validated backend assessment',
     input:'Actual farmer inputs submitted',noInput:'No completed FastAPI submission',deadline:'Candidate deadline (IST)',
     forecast:'External model forecast',noForecast:'No currently verified model hours',nasa:'Government historical climate',noHistory:'No validated NASA history',
     warnings:'Official IMD warnings',noIMD:'No authorized live IMD warning connection; no warning inferred',
     constraints:'Unresolved backend constraints',noConstraint:'No blocked/unknown constraints returned',unknownConstraint:'No backend evaluation to establish constraints',
     excluded:'Unconfirmed/excluded options',noExcluded:'No backend exclusions',selected:'Selected conditional package',noSelected:'None selected or certified completed',
-    comparisons:'Server-verified candidate comparisons',caution:'This records only user-declared resources and server output. Open-Meteo is a non-government-hosted MODEL, not observed rainfall. NASA POWER is historical government gridded evidence. No change is automatically executed.'},
+    comparisons:'Server-verified candidate comparisons',caution:'Records farmer entries and FastAPI results. Open-Meteo is modeled; NASA is historical. No changes are made automatically.'},
    mr:{title:'स्रोताची वेळ व तपशील',help:'स्रोताकडून माहिती मिळाल्याची वेळ आणि ब्राउझरची तपासणी वेगळी आहे. वेळ तपासल्याने नवीन हवामान मिळत नाही.',check:'ब्राउझर तपासणी वेळ',again:'वेळ पुन्हा मोजा',
     model:'Open-Meteo मॉडेल अंदाज',history:'NASA POWER ऐतिहासिक डेटा',decision:'FastAPI मूल्यमापन',imd:'IMD अधिकृत इशारे',
     notAvailable:'पडताळलेला डेटा नाही',unsupported:'हे ठिकाण समर्थित नाही · जालनाचा डेटा नाही',stale:'जुना अंदाज · वापरू नका',valid:'अलीकडील मॉडेल पडताळले',
@@ -160,7 +160,7 @@
   const receiptLanguage=()=>receiptStrings[state.lang]||receiptStrings.en;
 
   const intelligenceLabels={
-  en:{title:'Verified sources · independent status',intro:'Model forecasts, government history, and declared resource decisions are separate forms of evidence.',
+  en:{title:'Verified sources · independent status',intro:'Forecast, history and resources have different evidence limits.',
    api:'FastAPI decision engine',model:'Open-Meteo weather model',nasa:'NASA POWER historical grid',imd:'IMD official warnings',farm:'Farmer resource assessment',
    connected:'Connected',missing:'Unavailable / not loaded',unverified:'Not verified',pending:'Retrieving source',verified:'Verified model hours',cache:'Verified recent model cache',stale:'Stale · do not use',
    hist:'Verified historical grid',histcache:'Verified recent history',unsupported:'Unsupported location',notconnected:'Not connected',unevaluated:'Not evaluated',
@@ -169,7 +169,7 @@
    historyDetail:'Latest historical day ',historyTail:' · not a field measurement or a future forecast.',historyMissing:'No verified NASA historical grid available.',
    imdDetail:'Official live warning data is not connected; no warning or clearance may be inferred.',
    assessmentDetail:'Computed from farmer declarations only, not verified physical availability or crop safety.',assessmentMissing:'Requires farmer declarations and a real FastAPI evaluation.',
-   backend:'Backend assessment: ',diag:'Why did FastAPI return this result?',notassessed:'Not evaluated. Save declarations and a candidate deadline, then run FastAPI.',
+   backend:'Backend assessment: ',diag:'Why did FastAPI return this result?',notassessed:'Save resources and a deadline, then run FastAPI.',
    outcome:'Server result: ',outcomeFoot:'. Declared-resource/time feasibility only, not a crop-safety certificate.',
    readiness:'Handling-location readiness',capacity:'Declared handling capacity',timing:'Candidate deadline and time',
    provenance:'Backend provenance: ',none:'No blocked/unknown constraints returned. This does not prove field safety.',completed:'Completed is farmer-declared, not physically verified.',
@@ -220,7 +220,7 @@
       dayExportNote:'Choose one IST date to export only those verified model hours.',
       dayExport:'Export selected day (CSV)',
       qualityTitle:'Forecast evidence quality',
-      qualityIntro:'Open-Meteo provides modeled weather, not a field rain gauge or a crop-safe onset threshold. Missing hours and missing values are never interpreted as dry weather.',
+      qualityIntro:'Open-Meteo is a model, not a rain gauge. Missing rain is unknown, not dry weather.',
       qualityExport:'Export verified modeled hours (CSV)',
       qualityFoot:'Export is available only for the supported Jalna pilot and a validated current model response. No farmer declarations are included.',
       qualityMissing:'No validated current model readings to audit or export. Refresh the forecast to retrieve genuine evidence.',
@@ -233,17 +233,17 @@
       rainValues:'hours reported a modeled millimeter value',chanceValues:'hours reported a model probability',
       duplicateUnits:'duplicate record(s)',gapUnits:'absent hourly position(s)',
       gapLong:'Range too long to verify in this view',
-      timeline:'Full model-hour timeline',timelineIntro:'Source-native modeled rain in millimeters and hourly probability, not observed rain or a crop-safety threshold.',
+      timeline:'Full model-hour timeline',timelineIntro:'Modeled hourly rain (mm) and probability, not observed rain or safe-work advice.',
       filter:'Filter by model date (IST)',allDates:'All available model dates',dateSuffix:'(IST)',
       timeHeader:'Model hour · IST',rainHeader:'Modeled rain · mm',chanceHeader:'Model rain probability · %',actionHeader:'Planning action',
       hourAction:'Use as proposed deadline',unavailable:'Unavailable',pastHour:'Past/current model hours cannot be selected as future deadlines.',
-      hourlyNoData:'No eligible current model forecast. Refresh weather to inspect genuine source hours.',
+      hourlyNoData:'No current model hours. Refresh the forecast.',
       hourlyWrongPlace:'Hourly model data is unavailable for locations outside the Jalna pilot.',
       hourlyEmpty:'Unavailable, expired and unsupported sources never display sample data.',
       showing:'Displaying',of:'of',records:'authenticated model hour record(s); all times are IST. Each selected hour is only a proposed planning deadline.',
       selected:'Model hour selected. Click Save candidate deadline to confirm this assumption.',
       selectedSource:'Proposed hour chosen from source-validated Open-Meteo model evidence. Not a safe-rain threshold.',
-      expiredHour:'The model hour is no longer valid. Refresh the forecast before selecting another.'
+      expiredHour:'That model hour expired. Refresh to choose another.'
     },
     mr:{
       dayExportNote:'फक्त त्या दिवसाचे पडताळलेले मॉडेल तास मिळवण्यासाठी IST दिवस निवडा.',
@@ -387,7 +387,7 @@
   qcPanel.setAttribute('aria-label','Forecast data coverage and export');
   qcPanel.append(el('h2','','Forecast evidence quality'));
   qcPanel.append(el('p','source-qc-disclosure',
-    'Open-Meteo provides modeled weather, not a field rain gauge or a crop-safe onset threshold. Missing hours and missing values are never interpreted as dry weather.'));
+    'Open-Meteo is a model, not a rain gauge. Missing rain is unknown, not dry weather.'));
   const qcMetrics=el('div','source-qc-metrics');
   qcMetrics.id='forecastQualityMetrics';qcMetrics.setAttribute('aria-live','polite');
   qcPanel.append(qcMetrics);
@@ -398,18 +398,18 @@
   qcPanel.append(qcInspector);
   let qcFocus='reported';
   const qcHelp={
-    provenance:'This is an Open-Meteo numerical forecast, not a field station observation or official IMD warning.',
-    retrieved:'UTC indicates when the backend retrieved the model, not when rainfall occurred.',
-    elapsed:'Forecasts older than 120 minutes cannot supply selectable candidate deadlines.',
-    reported:'These are source-native modeled hours. Only future hours can become candidate deadlines.',
-    rainCount:'Unavailable precipitation values are unknown, never 0 mm. Modeled 0 mm never guarantees a dry field.',
-    chanceCount:'Hourly probabilities must not be summed or interpreted as a probability for the whole period.',
-    duplicates:'Duplicate timestamps could distort evidence and are reported for inspection.',
+    provenance:'Open-Meteo is a model, not measured rain or an IMD warning.',
+    retrieved:'UTC is retrieval time, not when rain occurred.',
+    elapsed:'Forecasts over 2 hours old cannot supply candidate times.',
+    reported:'Only future model hours can become deadlines.',
+    rainCount:'Missing rain is unknown, not 0 mm. Modeled 0 mm cannot guarantee a dry field.',
+    chanceCount:'Do not add hourly probabilities into a period total.',
+    duplicates:'Duplicate model hours are flagged.',
     gaps:'A missing timestamp is missing evidence, not evidence of zero rainfall.'
   };
   function showQcDetail(d){
     qcInspector.replaceChildren();
-    if(!d){qcInspector.append(el('p','','No current validated Jalna model. Refresh the forecast for quality inspection; manually chosen deadlines remain possible.'));return;}
+    if(!d){qcInspector.append(el('p','','No current Jalna model. Refresh or enter a deadline.'));return;}
     const current=qcMetrics.querySelector('[data-quality="'+qcFocus+'"] strong');
     qcInspector.append(el('strong','',current?.textContent||'Quality inspection'),el('p','',qcHelp[qcFocus]));
     let affected=[];
@@ -469,7 +469,7 @@
   hourlyPanel.setAttribute('aria-label','All verified modeled forecast hours');
   const hourlyTitle=el('h2','','Full model-hour timeline');
   const hourlyIntro=el('p','hourly-evidence-note',
-    'Source-native modeled rain in millimeters and hourly probability, not observed rain or a crop-safety threshold.');
+    'Modeled hourly rain (mm) and probability, not observed rain or safe-work advice.');
   const hourlyControls=el('div','hourly-evidence-controls');
   const hourlyLabel=el('label','hourly-evidence-filter');
   hourlyLabel.append(el('span','','Filter by model date (IST)'));
@@ -572,7 +572,7 @@
     }
     table.append(body);
     if(!filtered.length)hourlyTableContainer.append(el('p','hourly-evidence-note',
-      'No model records match these filters. This does not establish dry weather.'));
+      'No matching model hours; dry weather is not confirmed.'));
     else hourlyTableContainer.append(table);
   }
 
@@ -790,8 +790,8 @@
     }
     deadlineGuide.append(el('h3','','Your planning pathway'),steps);
     let explanation;
-    if(!selected)explanation='Select a future model hour or enter your own IST deadline. Weather data is not a safe-work threshold.';
-    else if(!future)explanation='The selected deadline is not in the future. Select a later hour before saving.';
+    if(!selected)explanation='Choose a future model hour or a deadline (IST); neither proves field safety.';
+    else if(!future)explanation='Choose a future deadline before saving.';
     else{
       const hours=(stamp-Date.now())/3600000;
       explanation='Candidate time remaining: '+num(hours)+' hours, based only on the browser clock. '+
@@ -812,7 +812,7 @@
       here('deadlineInput').value=candidate.time;
       live.selectedHour=candidate.time;additional.deadlineSource='model';
       here('deadlineOriginPreview').textContent=evidenceText('selectedSource');
-      here('deadlineNotice').textContent='Source hour drafted. Confirm the candidate deadline; the model does not certify field safety.';
+      here('deadlineNotice').textContent='Hour selected. Save your deadline; it is not a safety clearance.';
       clearResult();renderDeadlineGuide();
     });
     const confirm=el('button','btn primary','Save selected deadline');
@@ -843,9 +843,9 @@
     if(!isCurrent()){
       const old=Number.isFinite(forecastAgeMilliseconds())&&forecastAgeMilliseconds()>2*60*60*1000;
       chip.textContent=f.status==='stale_cache'||old?'STALE · DO NOT USE':'UNAVAILABLE';
-      mode.textContent=old?'Model forecast age exceeds the backend two-hour current-data limit. Refresh to retrieve genuine evidence.':
+      mode.textContent=old?'Forecast is over 2 hours old. Refresh it.':
         f.notice||f.error||'No current verified forecast available';
-      chart.append(el('div','weather-empty','No current forecast hours can be selected. Manual deadlines remain possible.'));
+      chart.append(el('div','weather-empty','No selectable model hours. You can enter a deadline.'));
       here('weatherValue').textContent=f.status;return;
     }
     chip.textContent=navigator.onLine===false?'OFFLINE · LAST-RECEIVED MODEL':
@@ -1179,7 +1179,7 @@
   const multiPanel=el('section','panel multi-deadline');
   multiPanel.id='multiDeadlinePanel';
   multiPanel.append(el('h2','','Compare up to 3 model-hour deadlines'));
-  multiPanel.append(el('p','multi-disclosure','Select distinct future forecast hours. Each is independently authenticated and evaluated by FastAPI. This is a declared-resource timing comparison, not a rain-onset prediction or crop-safety recommendation.'));
+  multiPanel.append(el('p','multi-disclosure','Compare future model hours using FastAPI. This checks resources and time, not field safety.'));
   const multiFields=el('div','multi-fields');
   const multiSelects=[1,2,3].map(n=>{
     const label=el('label','multi-field');
@@ -1194,7 +1194,7 @@
   const multiRun=el('button','btn primary','Compare with real FastAPI');multiRun.id='runMultiDeadline';multiRun.type='button';
   const multiCsv=el('button','btn','Export attested CSV');multiCsv.id='exportMultiDeadline';multiCsv.type='button';multiCsv.disabled=true;
   multiButtons.append(multiRun,multiCsv);multiPanel.append(multiButtons);
-  const multiStatus=el('p','multi-status','A verified model forecast and a completed resource assessment are required.');
+  const multiStatus=el('p','multi-status','Requires a current model and resource assessment.');
   multiStatus.id='multiDeadlineStatus';multiStatus.setAttribute('role','status');
   const multiResults=el('div','multi-results');multiResults.id='multiDeadlineResults';
   multiPanel.append(multiStatus,multiResults);
@@ -1236,8 +1236,8 @@
     const ready=!!live.request&&!!live.evaluation&&hours.length>0;
     for(const sel of multiSelects)sel.disabled=!ready;
     multiRun.disabled=!ready;
-    if(!hours.length)multiStatus.textContent='No recent, source-authenticated future model hours. Comparison unavailable.';
-    else if(!ready)multiStatus.textContent='Model forecast available. First evaluate farmer-declared resources on Page 04.';
+    if(!hours.length)multiStatus.textContent='No current future model hours to compare.';
+    else if(!ready)multiStatus.textContent='Forecast ready. Assess resources on Feasibility first.';
     else if(!attestedDeadlineRows.length)multiStatus.textContent='Ready · '+
       (live.selectedPackage===null?'baseline resources only':'selected confirmed-resource package')+
       '. Select 1–3 unique hours and request genuine backend calculations.';
@@ -1329,7 +1329,7 @@
   const manualPanel=el('section','panel manual-time-panel');manualPanel.id='manualDeadlinePanel';
   manualPanel.append(el('h2','','Manual deadline alternatives · no weather required'));
   manualPanel.append(el('p','manual-disclosure',
-    'When a reliable model forecast is unavailable, enter up to three distinct future planning deadlines. FastAPI compares declared resources and hours only; these dates are farmer-selected assumptions, not observed or predicted rain onset.'));
+    'No current model? Choose up to three future deadlines. FastAPI checks resources and time, not rain onset.'));
   const manualFields=el('div','manual-fields');
   const manualInputs=[1,2,3].map(n=>{
     const label=el('label','manual-field');label.append(el('span','','Candidate '+n+' · IST'));
@@ -1346,7 +1346,7 @@
   const manualOutput=el('div','manual-output');manualOutput.id='manualDeadlineResults';
   manualPanel.append(manualRun,manualStatus,manualOutput);
   manualPanel.append(el('small','',
-    'No model source, rainfall probability or forecast safety claim is attached to manual comparisons. Successful results are included in Download evidence JSON on Page 06.'));
+    'Manual deadlines have no forecast source. Export FastAPI results on Evidence.'));
   multiPanel.insertAdjacentElement('afterend',manualPanel);
   function resetManualComparisons(){
     ++manualGeneration;manualDeadlineRows=[];manualOutput.replaceChildren();
@@ -1520,26 +1520,26 @@
   govPanel.setAttribute('aria-label','Official NASA POWER historical climate evidence');
   const govTitle=el('h2','', 'Government climate evidence · NASA POWER');
   const govIntro=el('p','gov-intro',
-    'Historical daily gridded rainfall and temperature from NASA (US government). Not live observed rainfall, a future forecast, or a measurement at your farm.');
+    'NASA historical grid: daily rain and temperature, not a forecast or farm readings.');
 
   // EX-11: translate presentation only; NASA source name, units, numbers and
   // downloaded raw JSON remain exact, unmodified government data.
   const historyLanguage={
     en:{
       title:'Government climate evidence · NASA POWER',
-      intro:'Historical daily gridded rainfall and temperature from NASA (US government). Not live observed rainfall, a future forecast, or a measurement at your farm.',
+      intro:'NASA historical grid: daily rain and temperature, not a forecast or farm readings.',
       refresh:'Refresh official data',fetching:'Contacting NASA POWER…',
       range:'Government history display range',seven:'Latest 7 available days',all:'All available days',
       download:'Download verified NASA JSON',csv:'Download verified NASA CSV',
       grid:'NASA historical grid',days:'available calendar days',rain:'Rainfall',rainUnknown:'Rainfall: unavailable',
       air:'Mean air temperature',airUnknown:'Air temperature unavailable',dayUnit:'days with values',
-      avg:'Mean of available daily temperatures',dayRain:'mm/day',historic:'These are arithmetic summaries of historical government grid values, NOT operational forecasts.',
+      avg:'Mean of available daily temperatures',dayRain:'mm/day',historic:'Historical grid summaries, not forecasts.',
       retrieved:'Verified government response',cached:'Verified recent response',historyDays:'historical days',
       unsupported:'Unavailable for selected location',unsupportedIntro:'Official Jalna reference data cannot be applied to the selected place.',
       unsupportedDetail:'Switch to Jalna, Maharashtra to retrieve its government historical context.',
       unavailable:'Official source unavailable',unavailableIntro:'NASA POWER unavailable. No values are shown.',
       invalid:'Could not verify official data',invalidIntro:'No government climate values displayed',
-      invalidDetail:'Only verified NASA POWER responses are eligible; no offline example is substituted.',
+      invalidDetail:'Only verified NASA POWER data is shown.',
       source:'Source',latest:'Latest provided day',retrievedUtc:'Retrieved (UTC)'
     },
     mr:{
