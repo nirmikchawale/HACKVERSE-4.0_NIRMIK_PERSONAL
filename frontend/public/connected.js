@@ -1283,7 +1283,7 @@
       weatherLoading:'Checking Open-Meteo',weatherMissing:'Refresh weather evidence',
       weatherMissingNote:'Source readings cannot be verified; refresh on Weather',
       rainHours:'future model hours',rainNote:'Open-Meteo · {count}/24 upcoming rainfall values · IST',
-      completeRain:'mm / 24h',completeNote:'Open-Meteo modeled rainfall · 24/24 source hours · {time} IST',
+      completeRain:'mm / 24h',completeNote:'Open-Meteo · 24/24 source hours · fetched {time} IST',
       missingFuture:'Inspect weather timeline',missingFutureNote:'No eligible future model hours in the current response',
       deadlineChosenNote:'Farmer-chosen candidate · {hours} h remaining · not a rain threshold',
       deadlinePast:'Review past deadline',deadlinePastNote:'The saved candidate has passed; propose a future IST time',
@@ -1291,7 +1291,7 @@
       manualWindow:'Plan an IST deadline',manualWindowNote:'A manual candidate is possible without model weather',
       resources:'4 planning inputs',resourcesNote:'Target · capacity · duration · site readiness',
       draft:'resource fields drafted',draftNote:'Review and save your declarations before evaluation',
-      reported:'units capacity / target',reportedNote:'Farmer-reported · {hours}h duration · readiness: {ready}',
+      reported:'units',reportedNote:'Farmer-reported capacity / target · {hours}h duration · readiness: {ready}',
       verifySaved:'Review resource draft',verifySavedNote:'Reconfirm locally saved quantities before evaluating',
       readyYes:'yes',readyNo:'no',readyUnknown:'unknown',
       apiLoading:'Connecting FastAPI',apiMissing:'Check Python service',
@@ -1318,7 +1318,7 @@
       manualWindow:'IST वेळ ठरवा',manualWindowNote:'मॉडेल डेटा नसतानाही स्वतः वेळ निवडता येते',
       resources:'४ नियोजन माहिती',resourcesNote:'प्रमाण · क्षमता · कालावधी · जागेची तयारी',
       draft:'साधनांचा मसुदा',draftNote:'माहिती तपासा आणि गणनेपूर्वी जतन करा',
-      reported:'एकके क्षमता / लक्ष्य',reportedNote:'शेतकऱ्याच्या माहितीनुसार · {hours} तास · तयारी: {ready}',
+      reported:'एकके',reportedNote:'शेतकऱ्याने सांगितलेली क्षमता / लक्ष्य · {hours} तास · तयारी: {ready}',
       verifySaved:'साधनांची माहिती तपासा',verifySavedNote:'गणनेपूर्वी जतन केलेली माहिती पुन्हा खात्री करा',
       readyYes:'होय',readyNo:'नाही',readyUnknown:'अज्ञात',
       apiLoading:'FastAPI जोडत आहे',apiMissing:'Python सेवा तपासा',apiMissingNote:'खरे मूल्यमापन करण्यासाठी सेवा आवश्यक आहे',
@@ -1343,7 +1343,7 @@
       manualWindow:'IST समय तय करें',manualWindowNote:'मॉडल के बिना भी समय चुना जा सकता है',
       resources:'४ जरूरी जानकारी',resourcesNote:'लक्ष्य · क्षमता · अवधि · जगह की तैयारी',
       draft:'साधनों का मसौदा',draftNote:'पुष्टि से पहले जानकारी जाँचकर सहेजें',
-      reported:'इकाई क्षमता / लक्ष्य',reportedNote:'किसान द्वारा बताई गई · {hours} घंटे · तैयारी: {ready}',
+      reported:'इकाई',reportedNote:'किसान की बताई क्षमता / लक्ष्य · {hours} घंटे · तैयारी: {ready}',
       verifySaved:'साधन विवरण जाँचें',verifySavedNote:'गणना से पहले सहेजी जानकारी की पुष्टि करें',
       readyYes:'हाँ',readyNo:'नहीं',readyUnknown:'अज्ञात',
       apiLoading:'FastAPI जुड़ रहा है',apiMissing:'Python सेवा जाँचें',apiMissingNote:'असली गणना के लिए सेवा चाहिए',
@@ -1412,7 +1412,10 @@
     const r=state.resources;
     const numbersValid=!!r&&[r.target,r.capacity,r.hours].every(x=>typeof x==='number'&&Number.isFinite(x)&&x>=0);
     const acknowledged=!!here('confirmInputs')?.checked;
-    if(numbersValid&&acknowledged){
+    const formMatches=numbersValid&&[['quantity',r.target],['capacity',r.capacity],['duration',r.hours]].every(([id,value])=>
+      here(id)?.value.trim()!==''&&Number(here(id).value)===value)&&here('readiness')?.value===r.readiness&&
+      (here('baseline')?.value||'')===(r.baseline||'');
+    if(numbersValid&&acknowledged&&formMatches){
       const values={target:num(r.target),capacity:num(r.capacity),hours:num(r.hours),
         ready:t[r.readiness==='yes'?'readyYes':r.readiness==='no'?'readyNo':'readyUnknown']};
       set('resourcesValue',values.capacity+' / '+values.target+' '+t.reported);
@@ -1422,7 +1425,8 @@
       set('resourcesValue',t.verifySaved);set('resourcesEvidenceNote',t.verifySavedNote);
       set('snapshotResource',t.snapshotResource);
     }else{
-      const filled=['quantity','capacity','duration'].filter(id=>here(id)?.value.trim()!=='').length;
+      const filled=['quantity','capacity','duration'].filter(id=>here(id)?.value.trim()!=='').length+
+        (['yes','no'].includes(here('readiness')?.value)?1:0);
       set('resourcesValue',filled?filled+'/4 '+t.draft:t.resources);
       set('resourcesEvidenceNote',filled?t.draftNote:t.resourcesNote);
       set('snapshotResource',t.snapshotResource);
@@ -1453,6 +1457,9 @@
   renderAssessment=function(){precedingAssessment();renderHomepageReadiness();};
   updateAssessmentUI=renderAssessment;
   renderHomepageReadiness();
+  // Source-age display only; never fetches or invents data on a timer.
+  window.setInterval(renderHomepageReadiness,60_000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)renderHomepageReadiness();});
   changeLanguage();
   updateAllNew();
   void boot();
