@@ -1,0 +1,29 @@
+/* EX-05 — compact source verification receipt; works in light/dark and mobile. */
+.source-matrix{margin:18px 0 24px}
+.source-matrix-intro{color:var(--muted);font-size:13px;line-height:1.55}
+.source-matrix-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,215px),1fr));gap:12px;margin-top:14px}
+.source-matrix-card{min-width:0;border:1px solid var(--border);border-radius:14px;padding:15px;background:var(--card);color:var(--ink)}
+.source-matrix-card strong,.source-matrix-card span,.source-matrix-card small{display:block}
+.source-matrix-card strong{font-size:13px;line-height:1.4}
+.source-matrix-card .source-matrix-state{font-size:13px;font-weight:750;margin:7px 0;color:var(--teal)}
+.source-matrix-card[data-kind=unavailable] .source-matrix-state{color:var(--muted)}
+.source-matrix-card small{font-size:11px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+@media(max-width:600px){.source-matrix-card{padding:12px}}
+
+/* EX-05 — server-sourced decision clarity, without a second planner. */
+.backend-diagnosis{margin-top:16px;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--card)}
+.backend-diagnosis h3{margin-top:0;line-height:1.35}
+.backend-diagnosis-body{display:grid;gap:10px;color:var(--ink)}
+.backend-diagnosis-item{padding:12px;border:1px solid var(--border);border-radius:12px;min-width:0}
+.backend-diagnosis-item strong{font-size:13px}
+.backend-diagnosis-item p{margin:6px 0;font-size:13px;line-height:1.55}
+.backend-diagnosis-item small{display:block;font-size:11px;color:var(--muted);line-height:1.5}
+.backend-diagnosis-item[data-status=excluded]{background:var(--soft)}
+@media(max-width:600px){.backend-diagnosis{padding:12px}.backend-diagnosis-item{padding:10px}}
+
+
+.backend-diagnosis{margin-top:14px;padding:14px;border:1px solid var(--border);border-radius:13px;background:var(--soft)}
+.backend-diagnosis h3{margin:0 0 12px}
+.backend-diagnosis-item{background:var(--card)}
+.backend-diagnosis-item[data-status=excluded]{background:var(--soft)}
+@media(max-width:680px){.source-matrix-grid{grid-template-columns:1fr}.backend-diagnosis{padding:11px}}

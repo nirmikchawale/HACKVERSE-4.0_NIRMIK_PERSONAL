@@ -18,10 +18,65 @@
   const windowsStyle=document.createElement('link');
   windowsStyle.rel='stylesheet';windowsStyle.href='/forecast-windows.css';
   document.head.append(windowsStyle);
+  const intelligenceStyle=document.createElement('link');
+  intelligenceStyle.rel='stylesheet';intelligenceStyle.href='/source-intelligence.css';
+  document.head.append(intelligenceStyle);
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;};
   const num=n=>Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'Unknown';
   const okLocation=()=>state.place?.state==='Maharashtra'&&state.place?.city?.trim().toLowerCase()==='jalna';
   const statuses=['feasible','blocked','unknown','completed'];
+  const intelligenceLabels={
+  en:{title:'Verified sources · independent status',intro:'Model forecasts, government history, and declared resource decisions are separate forms of evidence.',
+   api:'FastAPI decision engine',model:'Open-Meteo weather model',nasa:'NASA POWER historical grid',imd:'IMD official warnings',farm:'Farmer resource assessment',
+   connected:'Connected',missing:'Unavailable / not loaded',unverified:'Not verified',pending:'Retrieving source',verified:'Verified model hours',cache:'Verified recent model cache',stale:'Stale · do not use',
+   hist:'Verified historical grid',histcache:'Verified recent history',unsupported:'Unsupported location',notconnected:'Not connected',unevaluated:'Not evaluated',
+   engineDetail:'Backend source registry verified; no field-safety validation.',engineMissing:'A valid backend health and source response is missing.',
+   pilot:'The pilot serves Jalna, Maharashtra only.',forecastDetail:'Modeled hours only, not observed rain. Retrieved: ',forecastMissing:'No current model hours verified.',
+   historyDetail:'Latest historical day ',historyTail:' · not a field measurement or a future forecast.',historyMissing:'No verified NASA historical grid available.',
+   imdDetail:'Official live warning data is not connected; no warning or clearance may be inferred.',
+   assessmentDetail:'Computed from farmer declarations only, not verified physical availability or crop safety.',assessmentMissing:'Requires farmer declarations and a real FastAPI evaluation.',
+   backend:'Backend assessment: ',diag:'Why did FastAPI return this result?',notassessed:'Not evaluated. Save declarations and a candidate deadline, then run FastAPI.',
+   outcome:'Server result: ',outcomeFoot:'. Declared-resource/time feasibility only, not a crop-safety certificate.',
+   readiness:'Handling-location readiness',capacity:'Declared handling capacity',timing:'Candidate deadline and time',
+   provenance:'Backend provenance: ',none:'No blocked/unknown constraints returned. This does not prove field safety.',completed:'Completed is farmer-declared, not physically verified.',
+   excluded:'Not counted · ',rejected:'The backend did not accept this as a confirmed resource.',receipt:'Farmer declarations evaluated by FastAPI',
+   target:'Target',resource:'Capacity',hours:'Required hours',deadline:'Deadline',ready:'Readiness',units:'handling units',
+   foot:'All constraints and exclusions are from FastAPI; no resource is automatically confirmed.'},
+  mr:{title:'स्वतंत्र स्रोत स्थिती',intro:'हवामान मॉडेल, सरकारी इतिहास आणि शेतकरी नोंदी वेगवेगळे पुरावे आहेत.',
+   api:'FastAPI निर्णय इंजिन',model:'Open-Meteo हवामान मॉडेल',nasa:'NASA POWER ऐतिहासिक ग्रिड',imd:'IMD अधिकृत इशारे',farm:'शेतकरी संसाधन मूल्यमापन',
+   connected:'जोडलेले',missing:'उपलब्ध नाही',unverified:'पडताळले नाही',pending:'माहिती घेत आहे',verified:'मॉडेल तास पडताळले',cache:'अलीकडील मॉडेल कॅश',stale:'जुने · वापरू नका',
+   hist:'ऐतिहासिक ग्रिड पडताळले',histcache:'अलीकडील इतिहास',unsupported:'ठिकाण समर्थित नाही',notconnected:'जोडलेले नाही',unevaluated:'मूल्यमापन नाही',
+   engineDetail:'बॅकएंड स्रोत नोंद पडताळली; शेतातील सुरक्षितता पडताळलेली नाही.',engineMissing:'बॅकएंड आरोग्य/स्रोत नोंद पडताळलेली नाही.',
+   pilot:'हा पायलट फक्त जालना, महाराष्ट्र येथे चालतो.',forecastDetail:'मॉडेल तास; प्रत्यक्ष पाऊस नाही. वेळ: ',forecastMissing:'सध्या पडताळलेले मॉडेल तास नाहीत.',
+   historyDetail:'शेवटचा ऐतिहासिक दिवस ',historyTail:' · शेतातील मोजमाप किंवा भविष्यातील अंदाज नाही.',historyMissing:'पडताळलेला NASA इतिहास नाही.',
+   imdDetail:'IMD इशारे जोडलेले नाहीत; चालू इशारा किंवा सुरक्षिततेचा दावा नाही.',
+   assessmentDetail:'फक्त शेतकऱ्याच्या नोंदींवर गणना; प्रत्यक्ष उपलब्धता/सुरक्षिततेचा पुरावा नाही.',assessmentMissing:'FastAPI मूल्यमापनासाठी शेतकरी नोंदी आवश्यक.',
+   backend:'बॅकएंड निकाल: ',diag:'FastAPI ने हा निकाल का दिला?',notassessed:'मूल्यमापन नाही. वेळ व संसाधने नोंदवून FastAPI चालवा.',
+   outcome:'सर्व्हर निकाल: ',outcomeFoot:'. फक्त संसाधन/वेळ मूल्यमापन; पीक सुरक्षिततेचे प्रमाणपत्र नाही.',
+   readiness:'ठिकाणाची तयारी',capacity:'घोषित क्षमता',timing:'नियोजन अंतिम वेळ',
+   provenance:'बॅकएंड स्रोत: ',none:'अडथळे नोंदलेले नाहीत; शेत सुरक्षा सिद्ध होत नाही.',completed:'पूर्ण झाले ही शेतकऱ्याची नोंद; स्वतंत्र पडताळणी नाही.',
+   excluded:'मोजलेले नाही · ',rejected:'बॅकएंडने हे पुष्टी केलेले संसाधन मानले नाही.',receipt:'FastAPI ला दिलेल्या शेतकरी नोंदी',
+   target:'लक्ष्य',resource:'क्षमता',hours:'लागणारे तास',deadline:'अंतिम वेळ',ready:'तयारी',units:'हाताळणी एकके',
+   foot:'सर्व निर्बंध आणि नाकारलेल्या बाबी FastAPI कडून; संसाधने आपोआप पुष्टी होत नाहीत.'},
+  hi:{title:'स्वतंत्र स्रोत की स्थिति',intro:'मौसम मॉडल, सरकारी इतिहास और किसान विवरण अलग-अलग प्रमाण हैं।',
+   api:'FastAPI निर्णय इंजन',model:'Open-Meteo मौसम मॉडल',nasa:'NASA POWER ऐतिहासिक ग्रिड',imd:'IMD आधिकारिक चेतावनियाँ',farm:'किसान संसाधन मूल्यांकन',
+   connected:'जुड़ा हुआ',missing:'अनुपलब्ध',unverified:'सत्यापित नहीं',pending:'स्रोत प्राप्त हो रहा है',verified:'मॉडल घंटे सत्यापित',cache:'हालिया मॉडल कैश',stale:'पुराना · उपयोग न करें',
+   hist:'ऐतिहासिक ग्रिड सत्यापित',histcache:'हालिया इतिहास',unsupported:'यह स्थान समर्थित नहीं',notconnected:'जुड़ा नहीं',unevaluated:'मूल्यांकन नहीं',
+   engineDetail:'बैकएंड स्रोत सूची सत्यापित; खेत की सुरक्षा सत्यापित नहीं।',engineMissing:'सत्यापित बैकएंड स्वास्थ्य/स्रोत नहीं हैं।',
+   pilot:'केवल जालना, महाराष्ट्र समर्थित है।',forecastDetail:'केवल मॉडल घंटे, वास्तविक बारिश नहीं। समय: ',forecastMissing:'कोई वर्तमान सत्यापित मॉडल घंटे नहीं हैं।',
+   historyDetail:'अंतिम ऐतिहासिक दिन ',historyTail:' · खेत का माप या भविष्यवाणी नहीं।',historyMissing:'सत्यापित NASA इतिहास उपलब्ध नहीं है।',
+   imdDetail:'IMD चेतावनियाँ जुड़ी नहीं हैं; वर्तमान चेतावनी या सुरक्षित होने का दावा नहीं है।',
+   assessmentDetail:'केवल किसान के विवरण से गणना; वास्तविक उपलब्धता या फसल सुरक्षा का प्रमाण नहीं।',assessmentMissing:'FastAPI गणना के लिए किसान विवरण दें।',
+   backend:'बैकएंड परिणाम: ',diag:'FastAPI ने यह परिणाम क्यों दिया?',notassessed:'मूल्यांकन नहीं। समय और संसाधन सहेजकर FastAPI चलाएँ।',
+   outcome:'सर्वर परिणाम: ',outcomeFoot:'. केवल संसाधन/समय की व्यवहार्यता; फसल सुरक्षा का प्रमाण नहीं।',
+   readiness:'स्थान की तैयारी',capacity:'बताई गई क्षमता',timing:'नियोजित अंतिम समय',
+   provenance:'बैकएंड स्रोत: ',none:'कोई बाधा नहीं बताई गई; खेत की सुरक्षा सिद्ध नहीं।',completed:'पूरा होने का किसान विवरण; स्वतंत्र जाँच नहीं।',
+   excluded:'शामिल नहीं · ',rejected:'बैकएंड ने इसे पुष्टि किया संसाधन नहीं माना।',receipt:'FastAPI को दिए किसान विवरण',
+   target:'लक्ष्य',resource:'क्षमता',hours:'आवश्यक घंटे',deadline:'अंतिम समय',ready:'तैयारी',units:'हैंडलिंग इकाइयाँ',
+   foot:'सभी प्रतिबंध और अस्वीकृत विकल्प FastAPI से हैं; संसाधन स्वतः पुष्टि नहीं होते।'}
+  };
+  const intel=()=>intelligenceLabels[state.lang]||intelligenceLabels.en;
+
   let comparisonGeneration=0,attestedDeadlineRows=[],candidateSignature='';
   let manualGeneration=0,manualDeadlineRows=[];
 
@@ -163,17 +218,19 @@
       const [health,sources]=await Promise.all([json('/api/health'),json('/api/sources')]);
       if(health?.ok!==true||!Array.isArray(sources?.sources)||!Array.isArray(sources?.input_categories))throw new Error('Backend returned invalid health or source registry metadata.');
       live.health=health;live.sources=sources;
+      renderSourceMatrix();
       alert.textContent='FastAPI connected · '+health.version+' · '+health.disclaimer;
       entries.replaceChildren();
       for(const s of sources.sources){if(typeof s.title!=='string'||typeof s.url!=='string'||!/^https:\/\//.test(s.url))continue;
         const article=el('article','source-entry');const a=el('a','',s.title);a.href=s.url;a.rel='noopener noreferrer';a.target='_blank';article.append(a,el('p','',s.short_supported_statement||''),el('small','',s.limitations||''));entries.append(article);}
       if(!entries.children.length)entries.textContent='No validated source entries returned.';
       await refreshForecast(false);
-    } catch(e){live.forecast=null;alert.textContent=e.message;entries.textContent='Source registry unavailable. No source evidence can be assumed.';renderWeather();}
+    } catch(e){live.health=null;live.sources=null;live.forecast=null;alert.textContent=e.message;entries.textContent='Source registry unavailable. No source evidence can be assumed.';renderWeather();renderSourceMatrix();}
   }
   function clearResult(){
     live.error=null;live.evaluation=null;live.request=null;live.comparison=null;live.replan=null;live.selectedPackage=null;
     resetCandidateComparisons();resetManualComparisons();
+    renderSourceMatrix();renderDecisionDiagnostics();
   }
   const oldNote=noteChange;
   noteChange=function(){clearResult();oldNote();};
@@ -183,7 +240,7 @@
     if(previousPlace!==place){previousPlace=place;live.forecast=null;live.selectedHour=null;clearResult();}
     oldSummaries();
     renderForecastQuality();
-    renderHourlyEvidence();
+    renderHourlyEvidence();renderSourceMatrix();
     here('weatherValue').textContent=live.forecast?(isCurrent()?'Model forecast '+(live.forecast.hours.length)+' h':live.forecast.status.toUpperCase()):'No verified forecast';
   };
   updateWeatherUI=renderWeather;
@@ -460,6 +517,7 @@
     chart.append(grid);
   }
   function renderWeather(){
+    renderSourceMatrix();
     renderCandidateComparisonChoices();
     renderForecastQuality();
     renderHourlyEvidence();
@@ -617,7 +675,56 @@
       live.request=req;live.evaluation=result;
       here('resourceNotice').textContent='Farmer-reported inputs saved for this session; evaluated by FastAPI. Resources are not independently certified.';
     } catch(e){live.error=e.message;here('resourceNotice').textContent=e.message;here('resultReason').textContent=e.message;}
-    finally{live.busy=false;button.disabled=false;button.textContent='Evaluate using FastAPI';renderAssessment();renderPackages();renderSummary();}
+    finally{live.busy=false;button.disabled=false;button.textContent='Evaluate using FastAPI';renderAssessment();renderPackages();renderSummary();renderSourceMatrix();}
+  }
+  // EX-16 / F17 — organize, never recompute, FastAPI explanations.
+  const diagnosis=el('section','backend-diagnosis');
+  diagnosis.id='decisionDiagnostics';
+  diagnosis.setAttribute('aria-label','FastAPI feasibility explanation and input lineage');
+  const diagnosisTitle=el('h3','','Why did FastAPI return this result?');
+  const decisionNotes=el('div','backend-diagnosis-body');
+  decisionNotes.id='decisionDiagnosticNotes';
+  decisionNotes.setAttribute('aria-live','polite');
+  diagnosis.append(diagnosisTitle,decisionNotes);
+  here('constraintList').insertAdjacentElement('afterend',diagnosis);
+  function renderDecisionDiagnostics(){
+    const t=intel(),report=live.evaluation,request=live.request;
+    diagnosisTitle.textContent=t.diag;decisionNotes.replaceChildren();
+    if(!report||!request){
+      decisionNotes.append(el('p','gov-intro',t.notassessed));return;
+    }
+    decisionNotes.append(el('p','gov-intro',t.outcome+report.status.toUpperCase()+t.outcomeFoot));
+    const receipt=el('article','backend-diagnosis-item');
+    receipt.dataset.status='declared';
+    receipt.append(el('strong','',t.receipt));
+    receipt.append(el('p','',[
+      t.target+': '+num(request.target_units)+' '+t.units,
+      t.resource+': '+num(request.capacity_units)+' '+t.units,
+      t.hours+': '+num(request.required_hours),
+      t.deadline+': '+request.deadline,
+      t.ready+': '+String(request.readiness)
+    ].join(' · ')));
+    decisionNotes.append(receipt);
+    const names={readiness:t.readiness,capacity:t.capacity,timing:t.timing};
+    let found=0;
+    for(const c of report.baseline?.constraints||[]){
+      if(c.status==='pass')continue;
+      ++found;
+      const note=el('article','backend-diagnosis-item');
+      note.dataset.status=c.status;
+      note.append(el('strong','',(names[c.id]||c.id)+' · '+c.status.toUpperCase()),
+        el('p','',c.explanation),el('small','',t.provenance+(c.provenance||'FastAPI')));
+      decisionNotes.append(note);
+    }
+    if(!found)decisionNotes.append(el('p','gov-intro',
+      report.status==='completed'?t.completed:t.none));
+    for(const x of report.excluded_changes||[]){
+      const note=el('article','backend-diagnosis-item');
+      note.dataset.status='excluded';
+      note.append(el('strong','',t.excluded+x.id),el('p','',x.reason||t.rejected));
+      decisionNotes.append(note);
+    }
+    decisionNotes.append(el('small','',t.foot));
   }
   updateAssessmentUI=renderAssessment;
   function renderAssessment(){
@@ -632,13 +739,14 @@
     here('resultReason').textContent=r?r.message:(live.error||'Enter farmer-declared resources and a candidate deadline, then evaluate with the real FastAPI engine.');
     here('engineIndicator').textContent=r?'FASTAPI DETERMINISTIC ENGINE · RESPONSE VERIFIED':'FASTAPI ENGINE · NO RESULT';
     const list=here('constraintList');list.replaceChildren();
-    if(!r){list.append(el('div','empty',live.error||'No API assessment yet.'));return;}
+    if(!r){list.append(el('div','empty',live.error||'No API assessment yet.'));renderDecisionDiagnostics();return;}
     for(const c of base.constraints){
       const row=el('div','constraint-line '+(c.status==='pass'?'':c.status==='blocked'?'problem':'unknown'));
       row.append(el('span','symbol',c.status==='pass'?'✓':c.status==='blocked'?'×':'?'));
       const content=el('div');content.append(el('strong','',c.id+' · '+c.status),el('small','',c.explanation),el('small','', 'Provenance: '+c.provenance));row.append(content);list.append(row);
     }
     for(const rejected of r.excluded_changes){list.append(el('div','live-excluded',rejected.id+': '+rejected.reason));}
+    renderDecisionDiagnostics();
   }
   updateChangeUI=renderPackages;
   function renderPackages(){
@@ -1067,6 +1175,56 @@
   let governmentClimateRequest=0;
   let governmentClimateVisibleState='loading';
   let governmentClimateErrorMessage='';
+  // EX-16 / F12 — five independent data/source status receipts.
+  const sourcePanel=el('section','panel source-matrix');
+  sourcePanel.id='evidenceSourceMatrix';
+  sourcePanel.setAttribute('aria-label','Verified data source and engine status');
+  const sourceTitle=el('h2','','Verified sources');
+  const sourceIntro=el('p','source-matrix-intro');
+  const sourceGrid=el('div','source-matrix-grid');
+  sourceGrid.id='evidenceSourceGrid';
+  sourceGrid.setAttribute('aria-live','polite');
+  sourcePanel.append(sourceTitle,sourceIntro,sourceGrid);
+  document.querySelector('section.section[data-page="0"]').append(sourcePanel);
+  function renderSourceMatrix(){
+    const t=intel(),supported=okLocation();
+    sourceTitle.textContent=t.title;sourceIntro.textContent=t.intro;
+    sourceGrid.replaceChildren();
+    const add=(name,status,detail,kind)=>{
+      const card=el('article','source-matrix-card');card.dataset.kind=kind;
+      card.append(el('strong','',name),el('span','source-matrix-state',status),el('small','',detail));
+      sourceGrid.append(card);
+    };
+    const connected=live.health?.ok===true&&Array.isArray(live.sources?.sources);
+    add(t.api,connected?t.connected:t.unverified,connected?t.engineDetail:t.engineMissing,
+      connected?'ready':'unavailable');
+    if(!supported){
+      add(t.model,t.unsupported,t.pilot,'unavailable');
+      add(t.nasa,t.unsupported,t.pilot,'unavailable');
+    }else{
+      const f=live.forecast,current=isCurrent()&&Array.isArray(f?.hours)&&f.hours.length>0;
+      const stale=f&&['retrieved_live','cached_recent','stale_cache'].includes(f.status)&&
+        (!isCurrent()||f.status==='stale_cache');
+      add(t.model,current?(f.status==='cached_recent'?t.cache:t.verified):
+        stale?t.stale:live.forecastLoading?t.pending:t.missing,
+        current?t.forecastDetail+f.retrieved_at_utc+' · '+f.hours.length+' h':t.forecastMissing,
+        current?'model':'unavailable');
+      const g=governmentClimateData;
+      const verified=governmentClimateVisibleState==='verified'&&g&&
+        ['retrieved_live','cached_recent'].includes(g.status)&&
+        g.data_kind==='government_gridded_historical'&&
+        g.source==='NASA POWER (US government)'&&
+        Array.isArray(g.days)&&g.days.length>0;
+      add(t.nasa,verified?(g.status==='cached_recent'?t.histcache:t.hist):
+        governmentClimateVisibleState==='loading'?t.pending:t.missing,
+        verified?t.historyDetail+g.latest_data_date+' · '+g.retrieved_at_utc+t.historyTail:
+        t.historyMissing,verified?'historical':'unavailable');
+    }
+    add(t.imd,t.notconnected,t.imdDetail,'unavailable');
+    const result=live.evaluation;
+    add(t.farm,result?t.backend+result.status.toUpperCase():t.unevaluated,
+      result?t.assessmentDetail:t.assessmentMissing,result?'decision':'unavailable');
+  }
   function translateGovernmentPanel(){
     govTitle.textContent=historyText('title');
     govIntro.textContent=historyText('intro');
@@ -1134,6 +1292,7 @@
   async function loadGovernmentClimate(refresh=false){
     const token=++governmentClimateRequest;
     governmentClimateData=null;governmentClimateVisibleState='loading';governmentClimateErrorMessage='';
+    renderSourceMatrix();
     govDownload.disabled=true;
     govCSV.disabled=true;
     govSummary.textContent='';
@@ -1173,6 +1332,7 @@
       govStatus.textContent=(data.status==='cached_recent'?historyText('cached'):historyText('retrieved'))+' · '+data.days.length+' '+historyText('historyDays');
       governmentClimateVisibleState='verified';
       governmentClimateData=data;
+      renderSourceMatrix();
       govDownload.disabled=false;
       govCSV.disabled=false;
       renderGovernmentClimate(data);
@@ -1187,7 +1347,7 @@
       govStatus.textContent=historyText('invalid');
       govRows.replaceChildren(el('p','gov-intro',historyText('invalidIntro')+': '+e.message));
       govDetail.textContent=historyText('invalidDetail');
-    }finally{if(token===governmentClimateRequest)govRefresh.disabled=false;}
+    }finally{if(token===governmentClimateRequest){govRefresh.disabled=false;renderSourceMatrix();}}
   }
   govRefresh.addEventListener('click',()=>{void loadGovernmentClimate(true);});
   govRange.addEventListener('change',()=>{if(governmentClimateData&&okLocation())renderGovernmentClimate(governmentClimateData);});
@@ -1201,6 +1361,7 @@
     link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
   here('language').addEventListener('change',translateGovernmentPanel);
+  here('language').addEventListener('change',()=>{renderSourceMatrix();renderDecisionDiagnostics();});
   govCSV.addEventListener('click',()=>{
     if(!governmentClimateData||!okLocation()||govCSV.disabled)return;
     const d=governmentClimateData;
@@ -1290,6 +1451,7 @@
   additional.sampleWeather=false;additional.demoInputs=false;additional.previewResult=null;
   changeLanguage();
   updateAllNew();
+  renderSourceMatrix();renderDecisionDiagnostics();
   void boot();
   if(location.pathname==='/interactive-review.html')history.replaceState({},'', '/');
 })();
