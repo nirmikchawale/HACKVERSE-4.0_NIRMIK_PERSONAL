@@ -144,15 +144,14 @@ html[data-theme="dark"] .brand-gold{color:#f4d676}
     <p class="muted" data-i18n="timelineIntro">Inspect sourced model hours. Missing values stay unknown.</p>
     <div class="chart-tools"><button class="btn primary" id="toggleForecast" type="button" data-i18n="showSample">Refresh forecast</button><button class="btn" id="clearForecast" type="button" data-i18n="clearSample">Clear chart</button><span class="chip-outline" id="weatherChartMode">No forecast loaded</span></div>
     <div id="weatherChart" class="weather-visual" aria-label="Weather evidence timeline"><div class="weather-empty"><div class="weather-empty-icon">☁</div><b data-i18n="noLiveForecast">Forecast not loaded</b><p data-i18n="noTimeline">Refresh to load real model hours.</p></div></div>
-    <div class="source-strip"><span>◈ <b data-i18n="modelSource">Forecast source</b>: Open-Meteo model via FastAPI</span><span>⌁ <b data-i18n="retrieval">Retrieval</b>: See source timestamp above</span><span>⏱ <b data-i18n="timezone">Timezone</b>: Asia/Kolkata (IST)</span></div>
+    
    </div>
    <div class="panel deadline-card">
      <div class="section-label tight">YOUR PLANNING WINDOW</div><h2 data-i18n="deadlineTitle">Choose your deadline</h2><p data-i18n="deadlineExplanation">You choose this time. It is not a rain-safety guarantee.</p>
      <label class="field"><span data-i18n="deadlineLabel">Finish by (IST)</span><input type="datetime-local" id="deadlineInput"><small data-i18n="deadlineHint">Choose a date and time in India Standard Time.</small></label>
      <div class="deadline-source"><span class="soft-icon">◎</span><div><b data-i18n="deadlineOrigin">Deadline origin</b><small id="deadlineOriginPreview">No candidate hour selected</small></div></div>
      <button id="saveDeadline" type="button" class="btn primary full" data-i18n="saveDeadline">Save candidate deadline</button><div class="notice" role="status" id="deadlineNotice"></div>
-     <div class="micro-divider"></div><p class="muted" data-i18n="weatherCaution">Rain chance does not tell the exact onset or prove field safety.</p>
-     <button class="btn full goto" data-target="2" type="button"><span data-i18n="nextResources">Continue to resources</span> →</button>
+     <button id="deadlineGuideContinue" class="btn full goto" data-target="2" type="button"><span data-i18n="nextResources">Continue to resources</span> →</button>
    </div>
   </div>
 </section>
