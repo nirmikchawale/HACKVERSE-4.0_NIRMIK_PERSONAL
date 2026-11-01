@@ -688,8 +688,8 @@
     line(t.lastModel,receipts.model);line(t.lastNASA,receipts.nasa);
     networkDisclosure.textContent=t.metadata;
   }
-  window.addEventListener('online',()=>{renderConnectivity();renderEvidenceContrast();});
-  window.addEventListener('offline',()=>{renderConnectivity();renderEvidenceContrast();});
+  window.addEventListener('online',()=>{renderConnectivity();renderEvidenceContrast();renderWeather();});
+  window.addEventListener('offline',()=>{renderConnectivity();renderEvidenceContrast();renderWeather();});
   function renderWeather(){
     renderSourceMatrix();
     renderConnectivity();
@@ -710,7 +710,8 @@
       chart.append(el('div','weather-empty','No current forecast hours can be selected. Manual deadlines remain possible.'));
       here('weatherValue').textContent=f.status;return;
     }
-    chip.textContent=f.status==='retrieved_live'?'LIVE MODEL FORECAST':'RECENT VERIFIED CACHE';
+    chip.textContent=navigator.onLine===false?'OFFLINE · LAST-RECEIVED MODEL':
+      f.status==='retrieved_live'?'LIVE MODEL FORECAST':'RECENT VERIFIED CACHE';
     mode.textContent='Open-Meteo • '+(f.hours.length)+' model hours • precipitation (mm), probability (%) • IST';
     const provenance=el('p','live-provenance','Retrieved '+f.retrieved_at_utc+' · age '+num(f.forecast_age_hours)+' h · '+(f.attribution||'Open-Meteo')+'. Model output, not observed rain or safe crop timing.');
     chart.append(provenance);
