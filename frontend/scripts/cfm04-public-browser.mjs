@@ -89,11 +89,20 @@ try{
     'Old unfinished server assessment text returned to homepage');
   assert(!(await page.locator('#sourceActivityReceipt').textContent()).includes('IMD official warnings'),
     'Old disconnected official warning text returned to homepage');
+  // Live provider responses may update between clicks: validate each filter
+  // against the currently displayed source kind, not two different snapshots.
   await page.locator('[data-filter="available"]').click();
-  const available=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
+  assert(await page.locator('[data-filter="available"]').getAttribute('aria-pressed')==='true',
+    'Available evidence filter must be activated');
+  const availableValid=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').evaluateAll(
+    nodes=>nodes.every(node=>node.dataset.kind!=='unavailable'));
+  assert(availableValid,'Available filter must only display sources with genuine responses');
   await page.locator('[data-filter="attention"]').click();
-  const needReview=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
-  assert(available+needReview===3,'Active evidence filters must partition three source choices');
+  assert(await page.locator('[data-filter="attention"]').getAttribute('aria-pressed')==='true',
+    'Attention filter must be activated');
+  const needsReviewValid=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').evaluateAll(
+    nodes=>nodes.every(node=>node.dataset.kind==='unavailable'));
+  assert(needsReviewValid,'Attention filter must only display sources lacking a verified response');
   await page.locator('[data-filter="all"]').click();
   assert(await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count()===3,
     'All three interactive sources must be restored');
