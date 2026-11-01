@@ -27,6 +27,9 @@
   const climateStyle=document.createElement('link');
   climateStyle.rel='stylesheet';climateStyle.href='/ex18-climate.css';
   document.head.append(climateStyle);
+  const overviewLayoutStyle=document.createElement('link');
+  overviewLayoutStyle.rel='stylesheet';overviewLayoutStyle.href='/overview-layout.css';
+  document.head.append(overviewLayoutStyle);
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;};
   const num=n=>Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'Unknown';
   const okLocation=()=>state.place?.state==='Maharashtra'&&state.place?.city?.trim().toLowerCase()==='jalna';
@@ -311,9 +314,9 @@
   const title=el('h2','', 'Live source ledger');ledger.append(title);
   ledger.append(el('p','', 'Source descriptions are returned by /api/sources. Model output is a forecast, not a measured rain-onset time or safety certification.'));
   const entries=el('div','live-sources','Source registry: connecting…');ledger.append(entries);
-  const alert=el('p','live-note','Loading real source and application status…');
+  const alert=el('span','sr-only','Checking FastAPI connection…');
   alert.id='apiConnectionStatus';alert.setAttribute('role','status');
-  document.querySelectorAll('section.section')[0].append(alert);
+  document.querySelectorAll('section.section')[5].append(alert);
 
   async function json(path,init={}){
     let response;
