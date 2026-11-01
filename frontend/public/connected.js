@@ -929,7 +929,7 @@
         }
         here('deadlineInput').value=h.time;live.selectedHour=h.time;additional.deadlineSource='model';
         here('deadlineOriginPreview').textContent='Candidate hour chosen from verified Open-Meteo forecast; not a rain-onset threshold.';
-        here('deadlineNotice').textContent='Model hour selected (future). Review its source context, then Save candidate deadline to confirm.';
+        here('deadlineNotice').textContent='Model hour selected (future). Review its source context. Click Save candidate deadline to confirm.';
         renderDeadlineGuide();
         here('deadlineInput').scrollIntoView({behavior:'smooth',block:'center'});
       });bars.append(b);
