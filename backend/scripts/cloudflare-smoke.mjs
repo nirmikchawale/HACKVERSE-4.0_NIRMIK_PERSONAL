@@ -55,6 +55,15 @@ const run=async()=>{
  assert(scenarios.records.every(x=>x.input_kind==='configured_example_not_farm_observation'),'Scenario inputs mislabeled');
  assert(new Set(scenarios.records.map(x=>x.id)).size===100,'Scenario IDs not unique');
  assert(['feasible','blocked','unknown'].every(kind=>scenarios.records.some(x=>x.result.status===kind)),'Scenario coverage inadequate');
+ const snapshot=JSON.parse((await get('/feasibility-examples-snapshot.json')).text);
+ assert(snapshot.catalog_source==='prebuilt_python_engine_snapshot' &&
+   snapshot.count===100 && snapshot.records?.length===100,
+   'Python-build snapshot must preserve all 100 engine-evaluated scenarios');
+ assert(snapshot.records.every(x=>x.input_kind==='configured_example_not_farm_observation'),
+   'Snapshot must not present teaching cases as observed farm data');
+ if(process.env.EXPECTED_SHA)
+   assert(snapshot.snapshot_source_sha===process.env.EXPECTED_SHA,
+     'Snapshot commit does not match exact deployed source');
  const [f,n]=await Promise.all([
    get('/api/forecast').then(x=>JSON.parse(x.text)),
    get('/api/government-climate').then(x=>JSON.parse(x.text))
