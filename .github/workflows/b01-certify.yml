@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/unlockplan-app-deploy
+      - 'feat/cf-*'
   pull_request:
     branches:
       - main
