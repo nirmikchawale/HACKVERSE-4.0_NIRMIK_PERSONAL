@@ -1,0 +1,109 @@
+/* FE-02/03: one understandable farmer journey; all detailed views remain intact. */
+.farmer-weather-v2,.fv2-weight-form,.fv2-extra,.fv2-controls,.fv2-decision,.fv2-purpose,.fv2-crop,.fw-extra{display:none}
+body[data-experience="farmer"] .farmer-weather-v2,
+body[data-experience="farmer"] .fv2-weight-form,
+body[data-experience="farmer"] .fv2-extra,
+body[data-experience="farmer"] .fv2-controls,
+body[data-experience="farmer"] .fv2-decision,
+body[data-experience="farmer"] .fv2-purpose,
+body[data-experience="farmer"] .fv2-crop,
+body[data-experience="farmer"] .fw-extra{display:block}
+body[data-experience="farmer"] section[data-page="1"] .weather-layout,
+body[data-experience="farmer"] section[data-page="1"]>.farmer-step-link,
+body[data-experience="farmer"] section[data-page="1"] #hourlyEvidencePanel,
+body[data-experience="farmer"] section[data-page="1"] #forecastQualityPanel,
+body[data-experience="farmer"] section[data-page="1"] .source-intelligence,
+body[data-experience="farmer"] section[data-page="1"] .source-workbench,
+body[data-experience="farmer"] section[data-page="1"] .ex18-climate-panel,
+body[data-experience="farmer"] section[data-page="1"] .ex18-forecast-panel,
+body[data-experience="farmer"] section[data-page="2"] .form-grid label:has(#quantity),
+body[data-experience="farmer"] section[data-page="2"] .form-grid label:has(#capacity),
+body[data-experience="farmer"] section[data-page="2"] .options-panel,
+body[data-experience="farmer"] section[data-page="2"] .resource-layout>.panel>.btn-grid,
+body[data-experience="farmer"] section[data-page="2"] .resource-layout>.panel>p[data-i18n="unitsIntro"],
+body[data-experience="farmer"] #farmerResourceSummary>p:first-of-type,
+body[data-experience="farmer"] section[data-page="3"] #farmerCheckCard,
+body[data-experience="farmer"] section[data-page="3"] #resultHero,
+body[data-experience="farmer"] section[data-page="3"] #farmResultMetrics,
+body[data-experience="farmer"] section[data-page="3"] #farmResultPanel,
+body[data-experience="farmer"] section[data-page="4"] #farmerActionCard,
+body[data-experience="farmer"] section[data-page="4"] .feature-stripe,
+body[data-experience="farmer"] section[data-page="4"]>.grid2,
+body[data-experience="farmer"] section[data-page="4"]>.panel:not(#farmerActionV2),
+body[data-experience="farmer"] section[data-page="4"] .multi-deadline-panel,
+body[data-experience="farmer"] section[data-page="4"] .manual-deadline-panel{display:none!important}
+body[data-experience="detailed"] .fw-extra{display:block}
+body[data-experience="detailed"] .fw-extra>summary{display:none}
+body[data-experience="detailed"] .fw-extra[open] #jalnaContext{display:block}
+.farmer-weather-v2{padding:22px!important;min-width:0}
+.farmer-weather-v2>h2{margin:0 0 7px;font-size:clamp(19px,2.1vw,27px);line-height:1.35}
+.fw-sub{color:var(--muted);font-size:14px;margin:0 0 10px;line-height:1.65}
+.fw-crop,.fv2-crop{display:inline-flex!important;align-items:center;font-weight:750;border:1px solid var(--border);background:var(--soft);border-radius:999px;padding:7px 12px;font-size:12px;color:var(--ink);max-width:100%;white-space:normal}
+.fw-layout{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:14px;margin-top:18px}
+.fw-weather-card,.fw-deadline-card{background:var(--soft);border:1px solid var(--border);border-radius:17px;padding:18px;min-width:0}
+.fw-weather-card h3,.fw-deadline-card h3{font-size:16px;margin:0 0 12px;line-height:1.5}
+.fw-deadline-card p{font-size:13px;color:var(--muted);line-height:1.6}
+.fw-days{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.fw-day{border:1px solid var(--border);padding:10px 13px;border-radius:11px;background:var(--card);color:var(--ink);font-weight:750;min-height:44px}
+.fw-day.is-selected,.fw-day:hover{background:var(--teal);border-color:var(--teal);color:#fff}
+.fw-summary{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.fw-metric{display:flex;flex:1;flex-direction:column;gap:3px;border-radius:13px;background:var(--card);border:1px solid var(--border);padding:12px;min-width:180px}
+.fw-metric span{font-size:12px;color:var(--muted)}.fw-metric strong{font-size:23px;line-height:1.35}.fw-metric small{font-size:11px;color:var(--muted)}
+.fw-hour-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.fw-hour{border:1px solid var(--border);background:var(--card);padding:11px 7px;border-radius:11px;min-width:0;display:flex;flex-direction:column;gap:5px;align-items:center;text-align:center}
+.fw-hour strong{font-size:12px}.fw-hour span{font-size:13px;font-weight:800}.fw-hour small{font-size:10px;color:var(--muted);line-height:1.45}
+.fw-weather-card h4{font-size:13px;margin:15px 0 9px}
+.fw-more,.fw-refresh{min-height:44px;margin-top:11px}
+.fw-source,.fw-time-status{display:block;font-size:11px;color:var(--muted);margin:12px 0;line-height:1.7}
+.fw-message{font-size:13px;color:var(--muted);line-height:1.6}
+.fw-warning{font-size:12px;color:#9b5a23;line-height:1.65}
+.fw-deadline-card input{width:100%;min-height:48px}
+.fw-deadline-card .field{display:flex;flex-direction:column;gap:7px;margin-top:16px}
+.fw-deadline-card .field span{font-weight:750}
+.fw-continue{width:100%;min-height:49px;white-space:normal;line-height:1.45}
+.fw-next{font-weight:750;color:var(--ink)!important;margin-top:13px}
+.fw-caution{background:var(--card);border-left:3px solid var(--gold);padding:10px 12px;border-radius:8px}
+.fw-extra{margin-top:13px}
+.fw-extra>summary{cursor:pointer;color:var(--teal);padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-weight:750;min-height:44px}
+.fw-extra #jalnaContext{margin-top:11px}
+.fv2-purpose{font-size:clamp(16px,1.45vw,19px)!important;line-height:1.65!important;font-weight:650;max-width:700px;color:inherit}
+.fv2-crop{margin:12px 0 20px}
+.fv2-weight-form{background:color-mix(in srgb,var(--teal) 6%,var(--card));border:1px solid var(--border);padding:16px;border-radius:15px;margin:12px 0 16px}
+.fv2-weight-form .field{display:flex;flex-direction:column;gap:6px}
+.fv2-weight-form .field span{font-size:13px;font-weight:800;line-height:1.5}
+.fv2-weight-form select{min-height:44px;max-width:300px}
+.fv2-unit-help{font-size:12px;color:var(--muted);line-height:1.65;display:block;margin:7px 0 15px}
+.fv2-weight-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fv2-weight-grid input{width:100%;min-height:46px}
+.fv2-weight-grid small{font-size:12px;color:var(--muted);line-height:1.6}
+.fv2-extra{margin:15px 0;border:1px solid var(--border);border-radius:15px;padding:15px;background:var(--soft)}
+.fv2-extra h3{font-size:16px;margin:0 0 6px}
+.fv2-extra>p{font-size:12px;line-height:1.65;color:var(--muted)}
+.fv2-extra>.field{margin:10px 0;display:flex;flex-direction:column;gap:5px}
+.fv2-extra .field span{font-size:13px;font-weight:750}
+.fv2-extra .field input,.fv2-extra .field select{min-height:45px}
+.fv2-controls{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0}
+.fv2-controls .btn{min-height:46px;white-space:normal;text-align:center}
+.fv2-controls .btn.primary{flex:1;min-width:220px}
+.fv2-notice,.fv2-legacy{flex-basis:100%;font-size:12px;line-height:1.6;color:var(--muted)}
+.fv2-legacy:empty{display:none}
+.fv2-decision{padding:23px!important}
+.fv2-decision>h2{margin:0 0 10px;font-size:clamp(20px,2vw,25px)}
+.fv2-decision>h3{font-size:15px;margin:14px 0 6px}
+.fv2-status{font-size:18px!important;color:var(--ink)}
+.fv2-result-line{font-size:14px;line-height:1.65;margin:6px 0}
+.fv2-disclosure{color:var(--muted);font-size:12px;line-height:1.65;margin:12px 0}
+.fv2-demo{border-left:3px solid var(--gold);padding:12px;border-radius:9px;background:var(--soft)}
+.fv2-package{border:1px solid var(--border);border-radius:13px;background:var(--soft);padding:15px;margin:12px 0;display:grid;gap:6px}
+.fv2-package h3{font-size:15px;margin:0}
+.fv2-package p{font-size:13px;line-height:1.6;margin:4px 0}
+.fv2-package .btn{width:fit-content;min-height:44px}
+body[data-experience="farmer"] section[data-page="2"] .resource-layout{display:block!important}
+body[data-experience="farmer"] section[data-page="2"] .resource-layout>.panel{max-width:100%;width:100%}
+body[data-experience="farmer"] section[data-page="2"] .resource-layout>.resource-side{display:none!important}
+body[data-experience="farmer"] section[data-page="2"] #farmerResourceSummary{display:block!important;margin-top:12px}
+body[data-experience="farmer"] section[data-page="2"] .resource-layout>.resource-side{display:block!important}
+body[data-experience="farmer"] section[data-page="2"] .resource-layout>.resource-side>*:not(#farmerResourceSummary){display:none!important}
+@media(max-width:900px){.fw-layout{grid-template-columns:1fr}.fw-hour-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:600px){.farmer-weather-v2,.fv2-decision{padding:14px!important}.fw-weather-card,.fw-deadline-card{padding:13px}.fw-hour-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.fv2-weight-grid{grid-template-columns:1fr}.fv2-controls{flex-direction:column}.fv2-controls .btn{width:100%}}
+.fw-day:focus-visible,.fw-extra summary:focus-visible,.fw-continue:focus-visible,.fv2-controls button:focus-visible,.fv2-package button:focus-visible{outline:3px solid var(--aqua);outline-offset:3px}
