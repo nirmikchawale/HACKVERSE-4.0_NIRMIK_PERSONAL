@@ -6,14 +6,14 @@ const sources={sources:[{id:'open_meteo_forecast',title:'Open-Meteo model foreca
 const historical={
   status:'retrieved_live',data_kind:'government_gridded_historical',
   source:'NASA POWER (US government)',
-  retrieved_at_utc:'2026-11-01T01:00:00+00:00',latest_data_date:'2026-10-26',
+  retrieved_at_utc:new Date().toISOString(),latest_data_date:'2026-10-26',
   notice:'Historical grid only; not an operational forecast.',
   days:[{date:'2026-10-26',precipitation_mm_day:1,temperature_c:23}]
 };
 const forecast={
   status:'retrieved_live',hours:[{time:'2099-01-01T09:00',precipitation_mm:2,precipitation_probability_pct:40}],
   validated:{timezone:'Asia/Kolkata',units:{precipitation:'mm',precipitation_probability:'%'}},
-  retrieved_at_utc:'2026-11-01T01:00:00+00:00',forecast_age_hours:0,attribution:'Open-Meteo model'
+  retrieved_at_utc:new Date().toISOString(),forecast_age_hours:0,attribution:'Open-Meteo model'
 };
 const base={
   status:'unknown',known_blockers:['capacity'],
@@ -91,6 +91,10 @@ test('backend constraint explanation shows both blocked and unknown statuses wit
   await expect(notes).toContainText('Declared handling capacity · BLOCKED');
   await expect(notes).toContainText('Backend confirmed capacity shortfall of 4');
   await expect(notes).toContainText('Not counted · optional-worker');
+  await expect(notes).toContainText('Farmer declarations evaluated by FastAPI');
+  await expect(notes).toContainText('Target: 10 handling units');
+  await expect(notes).toContainText('Capacity: 6 handling units');
+  await expect(notes).toContainText('Deadline: 2099-01-01T12:00:00+05:30');
   await expect(notes).not.toContainText('Candidate deadline and time · BLOCKED');
   await page.locator('#navDesktop [data-nav="2"]').click();
   await page.locator('#capacity').fill('10');
@@ -113,4 +117,38 @@ test('location directory provider outage does not throw when optional credit ele
   await page.waitForTimeout(100);
   expect(errors).toEqual([]);
   await expect(page.locator('#placeDialog')).toBeVisible();
+});
+
+test('expired model cache is marked stale and not called verified live data',async({page})=>{
+  const aged={...forecast,retrieved_at_utc:new Date(Date.now()-3*3600000).toISOString()};
+  await setup(page,{forecast:aged});
+  await page.goto('/');
+  const grid=page.locator('#evidenceSourceGrid');
+  await expect(grid).toContainText('Stale · do not use');
+  await expect(grid).not.toContainText('Verified model hours');
+  await expect(grid).toContainText('Verified historical grid');
+});
+test('three interface languages retain five statuses and mobile source cards fit the viewport',async({page})=>{
+  await setup(page);
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/');
+  const matrix=page.locator('#evidenceSourceMatrix');
+  const cards=matrix.locator('.source-matrix-card');
+  await expect(cards).toHaveCount(5);
+  await page.locator('#language').selectOption('mr');
+  await expect(matrix).toContainText('स्वतंत्र स्रोत स्थिती');
+  await expect(matrix).toContainText('जोडलेले नाही');
+  await page.locator('#language').selectOption('hi');
+  await expect(matrix).toContainText('स्वतंत्र स्रोत की स्थिति');
+  await page.locator('#language').selectOption('en');
+  await expect(matrix).toContainText('Not connected');
+  const rects=await cards.evaluateAll(nodes=>nodes.map(n=>({left:n.getBoundingClientRect().left,right:n.getBoundingClientRect().right,width:n.getBoundingClientRect().width})));
+  expect(rects.every(r=>r.left>=0&&r.right<=390&&r.width>100)).toBe(true);
+});
+test('no verified backend health does not claim a connected decision engine',async({page})=>{
+  await setup(page);
+  await page.route('**/api/health',r=>r.fulfill({status:503,json:{detail:'Service down'}}));
+  await page.goto('/');
+  await expect(page.locator('#evidenceSourceGrid')).toContainText('Not verified');
+  await expect(page.locator('#evidenceSourceGrid')).not.toContainText('Connected');
 });
