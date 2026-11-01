@@ -202,10 +202,19 @@ def test_forecast_replan_api_rejects_unavailable_and_accepts_stubbed_recent(monk
     import unlockplan.api as api
     client=TestClient(app)
     case=_feasible()
-    payload={'before':case,'after':case,'selected_hour_local':'2026-11-01T09:00'}
+    # Keep the synthetic model hour in the future: the old fixed 09:00 IST
+    # fixture expired on 1 November and correctly triggered an API 422.
+    now_utc=datetime.now(timezone.utc)
+    ist=timezone(timedelta(hours=5,minutes=30))
+    next_hour=(now_utc.astimezone(ist)+timedelta(hours=1)).replace(minute=0,second=0,microsecond=0)
+    chosen=next_hour.strftime('%Y-%m-%dT%H:%M')
+    case['now']=now_utc.isoformat()
+    case['deadline']=(now_utc+timedelta(hours=4)).isoformat()
+    payload={'before':case,'after':case,'selected_hour_local':chosen}
     monkeypatch.setattr(api,'get_forecast',lambda refresh=False:{'status':'unavailable'})
     assert client.post('/api/replan',json=payload).status_code==409
     fresh=_weather(datetime.now(timezone.utc))  # Synthetic test-only stub.
+    fresh['hours'][0]['time']=chosen
     monkeypatch.setattr(api,'get_forecast',lambda refresh=False:fresh)
     response=client.post('/api/replan',json=payload)
     assert response.status_code==200
@@ -217,7 +226,15 @@ def test_forecast_replan_api_rejects_unlisted_hour(monkeypatch):
     import unlockplan.api as api
     client=TestClient(app)
     case=_feasible()
-    monkeypatch.setattr(api,'get_forecast',lambda refresh=False:_weather(datetime.now(timezone.utc)))
-    response=client.post('/api/replan',json={'before':case,'after':case,'selected_hour_local':'2026-11-01T10:00'})
+    now_utc=datetime.now(timezone.utc)
+    ist=timezone(timedelta(hours=5,minutes=30))
+    next_hour=(now_utc.astimezone(ist)+timedelta(hours=1)).replace(minute=0,second=0,microsecond=0)
+    case['now']=now_utc.isoformat()
+    case['deadline']=(now_utc+timedelta(hours=4)).isoformat()
+    fresh=_weather(now_utc)  # Exactly one future model hour in the stub.
+    fresh['hours'][0]['time']=next_hour.strftime('%Y-%m-%dT%H:%M')
+    monkeypatch.setattr(api,'get_forecast',lambda refresh=False:fresh)
+    unlisted=(next_hour+timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M')
+    response=client.post('/api/replan',json={'before':case,'after':case,'selected_hour_local':unlisted})
     assert response.status_code==422
     assert 'not present' in response.json()['detail']
