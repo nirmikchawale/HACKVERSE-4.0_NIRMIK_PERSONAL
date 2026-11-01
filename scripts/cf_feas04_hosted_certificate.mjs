@@ -22,6 +22,7 @@ const run=async()=>{
  assert(snapshot.catalog_source==='prebuilt_python_engine_snapshot','Build-time source is not Python-certified');
  assert(snapshot.count===100&&snapshot.records?.length===100,'100-case static snapshot not served');
  assert(snapshot.records.every(r=>r.input_kind==='configured_example_not_farm_observation'),'Teaching-source label missing');
+ assert(snapshot.snapshot_generated_at_utc===snapshot.evaluated_at_utc,'Snapshot evaluation timestamp mismatch');
  assert(new Set(snapshot.records.map(r=>r.id)).size===100,'Duplicate IDs');
  const health=await get('/api/health');
  assert(health.ok===true,'Cloudflare FastAPI health not confirmed');
