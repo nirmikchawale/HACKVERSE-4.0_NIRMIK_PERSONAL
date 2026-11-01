@@ -419,7 +419,7 @@
       unknown:'Unavailable',selected:'Selected source record',detail:'Source-native readings · not field measurements',
       open:'Open this hour in full timeline',drillRain:'Inspect missing rainfall hours',
       drillChance:'Inspect missing probability hours',records:'hourly records',choice:'Choose an hour to inspect its two source values.',
-      noEvidence:'No current validated model response is available for quality inspection.',
+      noEvidence:'No current validated Jalna model response is available for quality inspection.',
       refresh:'Refresh authentic forecast',unsupported:'Current model-hour inspection only supports the Jalna pilot.',
       missing:'Affected source hours',noneAffected:'No affected hours in the validated response for this category.',
       issueFilter:'Inspect exceptions',all:'All exceptions',missingRain:'Missing rainfall value',
@@ -671,7 +671,7 @@
         card.append(details,el('p','qc-workbench-disclaimer',t.detail));
         const duplicates=d.source.hours.filter(h=>h.time===hour.time).length;
         if(duplicates>1)card.append(el('p','qc-duplicate-note',t.duplicateNote+' ('+duplicates+')'));
-        const open=el('button','btn source-qc-drill',t.open);
+        const open=el('button','btn qc-hour-open',t.open);
         open.type='button';open.addEventListener('click',()=>{
           qcOpenHourlyScope('all',hour.time.slice(0,10));
           const target=[...hourlyTableContainer.querySelectorAll('tbody tr')].find(tr=>
