@@ -20,3 +20,12 @@
 .section[data-page="0"] .snaprow strong{
  overflow-wrap:anywhere;max-width:66%
 }
+
+/* CF-OV-KPI-01: all four at-a-glance metrics share the same vertical anchors.
+   Legacy `.kpi-value{margin-top:auto}` pushed Farm Resources down because its
+   caption needed only one line, unlike neighboring two-line descriptions.
+   Use normal flex flow; varying caption heights now leave space below rather
+   than moving the value/caption. Limited to Overview, all themes and widths. */
+.section[data-page="0"] .kpis > .kpi > .kpi-value{
+ margin-top:0;
+}
