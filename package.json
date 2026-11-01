@@ -1,0 +1,11 @@
+{
+  "name": "agri-foresight-cloudflare-build",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Dependency-free root build entry for the Agri Foresight Cloudflare full-stack Worker",
+  "scripts": {
+    "build": "node scripts/prepare-cloudflare-release.mjs && npm --prefix frontend install && npm --prefix frontend run build",
+    "deploy:cloudflare": "uv run pywrangler deploy",
+    "preview:cloudflare": "uv run pywrangler preview"
+  }
+}
