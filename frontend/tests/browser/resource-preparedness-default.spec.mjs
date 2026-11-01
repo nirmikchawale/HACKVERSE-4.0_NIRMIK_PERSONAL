@@ -99,7 +99,7 @@ test('mobile preparedness tree has usable actions and no horizontal scrolling',a
   await page.goto('/');
   await gotoResources(page,true);
   await expect(page.locator('.resource-tree-node')).toHaveCount(4);
-  await page.locator('[data-resource-focus="deadlineInput"]').click();
+  await page.locator('.prep-action[data-field="deadlineInput"]').click();
   await expect(page.locator('section[data-page="1"]')).toHaveClass(/active/);
   await expect(page.locator('#deadlineInput')).toBeFocused();
   await gotoResources(page,true);

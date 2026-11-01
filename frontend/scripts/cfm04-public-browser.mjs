@@ -108,7 +108,7 @@ try{
   assert(await page.locator('section[data-page="1"] .feature-stripe').count()===0 &&
          await page.locator('section[data-page="1"] .insight-row').count()===0,
     'Passive Weather theory blocks have returned');
-  const methodology=page.locator('section[data-page="2"] .resource-method-details');
+  const methodology=page.locator('section[data-page="2"] .resource-method-disclosure');
   assert(await methodology.count()===1&&
     !await methodology.evaluate(e=>e.open),
     'Resource arithmetic must be available but collapsed by default');

@@ -41,7 +41,7 @@ test('Overview and Weather have no duplicated passive theory cards, but weather 
 });
 test('Farm Resources hides optional formula until requested but preserves units and declaration',async({page})=>{
   await page.goto('/');await page.locator('#navDesktop [data-nav="2"]').click();
-  const panel=page.locator('.resource-method-details');
+  const panel=page.locator('.resource-method-disclosure');
   await expect(panel).toHaveCount(1);
   await expect(panel).not.toHaveAttribute('open',/.+/);
   const formula=panel.locator('[data-i18n="resourceMethod"]');
@@ -58,9 +58,9 @@ test('all three languages keep concise page copy and translated method disclosur
   await page.locator('#language').selectOption('mr');
   await expect(page.locator('[data-i18n="heroBody"]')).toContainText('वेचलेल्या');
   await page.locator('#navDesktop [data-nav="2"]').click();
-  await expect(page.locator('.resource-method-details summary')).toContainText('आकडे कसे');
+  await expect(page.locator('.resource-method-disclosure summary')).toContainText('आकडेवारी कशी');
   await page.locator('#language').selectOption('hi');
-  await expect(page.locator('.resource-method-details summary')).toContainText('आंकड़े कैसे');
+  await expect(page.locator('.resource-method-disclosure summary')).toContainText('संख्याएँ कैसे');
   await page.locator('#navDesktop [data-nav="0"]').click();
   await expect(page.locator('[data-i18n="heroBody"]')).toContainText('मौसम अनुमान');
   await page.locator('#language').selectOption('en');
