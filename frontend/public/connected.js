@@ -747,13 +747,6 @@
   const qcExport=el('button','btn','Export verified modeled hours (CSV)');
   qcExport.id='exportForecastEvidence';qcExport.type='button';qcExport.disabled=true;
   qcPanel.append(qcExport);
-  // The optional evidence receipt stays available, but outside the two decision cards.
-  const networkFold=el('details','wx-network-disclosure');
-  networkFold.id='weatherNetworkDetails';
-  networkFold.append(el('summary','wx-network-toggle',
-    state.lang==='mr'?'नेटवर्क पावत्या तपासा':state.lang==='hi'?'नेटवर्क रसीद देखें':'Inspect network receipts'));
-  networkFold.append(connectivity);
-  qcPanel.append(networkFold);
   qcPanel.append(el('small','source-qc-disclosure',
     'Export is available only for the supported Jalna pilot and a validated current model response. No farmer declarations are included.'));
   document.querySelector('section.section[data-page="1"]').append(qcPanel);
@@ -1081,6 +1074,13 @@
   const networkTitle=el('h3'),networkState=el('strong','network-state'),networkDetails=el('p','network-details');
   const networkReceipt=el('div','network-receipts'),networkDisclosure=el('small','network-disclosure');
   connectivity.append(networkTitle,networkState,networkDetails,networkReceipt,networkDisclosure);
+  // The optional evidence receipt stays available, but outside the two decision cards.
+  const networkFold=el('details','wx-network-disclosure');
+  networkFold.id='weatherNetworkDetails';
+  networkFold.append(el('summary','wx-network-toggle',
+    state.lang==='mr'?'नेटवर्क पावत्या तपासा':state.lang==='hi'?'नेटवर्क रसीद देखें':'Inspect network receipts'));
+  networkFold.append(connectivity);
+  qcPanel.append(networkFold);
   // The receipt is preserved below, as opt-in evidence outside the two planning cards.
   function renderConnectivity(){
     const t=climateL(),receipts=readLastReceipts(),offline=navigator.onLine===false;
