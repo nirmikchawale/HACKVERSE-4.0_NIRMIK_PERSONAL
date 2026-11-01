@@ -102,6 +102,21 @@ try{
     y:node.getBoundingClientRect().y,height:node.getBoundingClientRect().height})));
   assert(receiptBoxes.length===2&&Math.abs(receiptBoxes[0].y-receiptBoxes[1].y)<=2,
     'Two expanded evidence receipts must align on desktop');
+  // CF-COPY-01: certified public UI must not regress to lengthy static cards.
+  assert(await page.locator('section[data-page="0"] [data-i18n="pathBody"]').count()===0,
+    'Redundant Overview pathway theory has returned');
+  assert(await page.locator('section[data-page="1"] .feature-stripe').count()===0 &&
+         await page.locator('section[data-page="1"] .insight-row').count()===0,
+    'Passive Weather theory blocks have returned');
+  const methodology=page.locator('section[data-page="2"] .resource-method-details');
+  assert(await methodology.count()===1&&
+    !await methodology.evaluate(e=>e.open),
+    'Resource arithmetic must be available but collapsed by default');
+  await methodology.locator('summary').click();
+  assert(await methodology.evaluate(e=>e.open),
+    'Resource calculation disclosure must work');
+  await methodology.locator('summary').click();
+
   // Guard core planning controls as well as the newer evidence modules. This
   // frontend-path change also causes the mandatory real-backend gate to run.
   const selectors=['#apiConnectionStatus','#sourceLedger','#deadlineInput',
@@ -112,8 +127,12 @@ try{
   for(const key of selectors){
     await page.locator(key).waitFor({state:'attached',timeout:20000});
   }
+  const leadKeys=['heroBody','weatherLead','resourceLead','feasLead','changesLead','summaryLead'];
   for(let index=0;index<6;index++){
     await page.locator('#navDesktop [data-nav="'+index+'"]').click();
+    const lead=await page.locator('section.section.active [data-i18n="'+leadKeys[index]+'"]').first().textContent();
+    assert(lead?.trim().length>0&&lead.trim().length<95,
+      'Overlong or missing plain-language introduction on page '+(index+1));
     await page.locator('section.section.active').waitFor({state:'visible'});
     assert(await page.locator('section.section.active').getAttribute('data-page')===String(index),
       'Desktop navigation did not activate page '+index);
@@ -144,7 +163,7 @@ try{
   console.log(JSON.stringify({
     result:'PUBLIC_BROWSER_PASS',url:origin,commit:expected,
     sourceMarkers:Object.keys(features),sixPages:true,desktop:true,mobile:true,
-    languages:['en','mr','hi'],print:true,realBackendSeparateSmoke:true,interactiveSourceWorkbench:true,cleanOverviewReceipts:true
+    languages:['en','mr','hi'],print:true,realBackendSeparateSmoke:true,interactiveSourceWorkbench:true,cleanOverviewReceipts:true,conciseCopy:true
   }));
   await mobile.close();await desktop.close();
 }finally{
