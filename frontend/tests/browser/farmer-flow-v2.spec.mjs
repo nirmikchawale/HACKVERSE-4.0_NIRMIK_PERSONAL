@@ -55,6 +55,22 @@ test('quintal and kilogram inputs normalize consistently without inventing work 
   await page.locator('#language').selectOption('hi');
   await expect(page.locator('#farmerWeightForm')).toContainText('कपास');
 });
+test('fractional quintals remain exact on unit changes and extra help is truly conditional',async({page})=>{
+  await page.goto('/');
+  await page.locator('#navDesktop [data-nav="2"]').click();
+  await page.locator('#farmerTargetWeight').fill('0.125');
+  await page.locator('#farmerCapacityWeight').fill('0.1');
+  await expect(page.locator('#quantity')).toHaveValue('12.5');
+  await expect(page.locator('#capacity')).toHaveValue('10');
+  await expect(page.locator('#farmerExtraAmount')).toBeHidden();
+  await page.locator('#farmerExtraStatus').selectOption('requested');
+  await expect(page.locator('#farmerExtraAmount')).toBeVisible();
+  await page.locator('#farmerWeightUnit').selectOption('kg');
+  await expect(page.locator('#farmerTargetWeight')).toHaveValue('12.5');
+  await expect(page.locator('#quantity')).toHaveValue('12.5');
+  await page.locator('#farmerWeightUnit').selectOption('quintal');
+  await expect(page.locator('#farmerTargetWeight')).toHaveValue('0.125');
+});
 test('a farmer selects their own finish time and can continue without suggested safe-hour claims',async({page})=>{
   await page.route('**/api/forecast**',route=>route.fulfill({
     status:200,contentType:'application/json',
