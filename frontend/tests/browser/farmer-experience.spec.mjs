@@ -82,9 +82,9 @@ test('mobile switch and Help work without hiding the only navigation controls',a
 test('no invented feasibility result is shown before a real server assessment',async({page})=>{
   await page.goto('/');
   await page.locator('#navDesktop [data-nav="3"]').click();
-  await expect(page.locator('#farmerCheckCard')).toBeVisible();
-  await expect(page.locator('#farmerCheckCard')).toContainText('has not been checked');
+  await expect(page.locator('#farmerDecisionV2')).toBeVisible();
+  await expect(page.locator('#farmerDecisionV2')).toContainText('has not been checked');
   await expect(page.locator('#farmResultMetrics')).toBeHidden();
   await page.locator('#navDesktop [data-nav="4"]').click();
-  await expect(page.locator('#farmerActionCard')).toContainText('Check your plan first');
+  await expect(page.locator('#farmerActionV2')).toContainText('First check your plan');
 });
