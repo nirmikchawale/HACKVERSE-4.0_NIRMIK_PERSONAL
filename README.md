@@ -32,7 +32,7 @@ entrypoint is \`backend/worker.py\`, serving the FastAPI ASGI app
 ### Cloudflare build configuration
 
 Cloudflare Workers Builds: repository root \`/\`, production branch \`main\`.
-- Build: \`node scripts/prepare-cloudflare-release.mjs && cd frontend && npm ci && npm run build\`
+- Build: \`node scripts/prepare-cloudflare-release.mjs && cd frontend && npm install && npm run build\`
 - Production deploy: \`uv run pywrangler deploy\`
 - Preview deploy: \`uv run pywrangler preview\`
 - Production and preview builds must use the repo root \`wrangler.jsonc\`
