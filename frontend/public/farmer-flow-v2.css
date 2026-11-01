@@ -107,3 +107,12 @@ body[data-experience="farmer"] section[data-page="2"] .resource-layout>.resource
 @media(max-width:900px){.fw-layout{grid-template-columns:1fr}.fw-hour-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:600px){.farmer-weather-v2,.fv2-decision{padding:14px!important}.fw-weather-card,.fw-deadline-card{padding:13px}.fw-hour-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.fv2-weight-grid{grid-template-columns:1fr}.fv2-controls{flex-direction:column}.fv2-controls .btn{width:100%}}
 .fw-day:focus-visible,.fw-extra summary:focus-visible,.fw-continue:focus-visible,.fv2-controls button:focus-visible,.fv2-package button:focus-visible{outline:3px solid var(--aqua);outline-offset:3px}
+
+/* Home: say what AgriForesight does immediately below the product name. */
+.fv2-home-name{display:none}
+body[data-experience="farmer"] .fv2-home-name{display:block;font-size:clamp(25px,3vw,39px);line-height:1.3;margin:2px 0 7px;color:inherit}
+body[data-experience="farmer"] section[data-page="0"] .hero .content>h1,
+body[data-experience="farmer"] section[data-page="0"] .hero .content>p.eyebrow,
+body[data-experience="farmer"] section[data-page="0"] .hero .content>[data-i18n="heroBody"]{display:none!important}
+body[data-experience="farmer"] .fv2-purpose{display:block!important;margin:0 0 12px!important}
+body[data-experience="farmer"] .fv2-crop{margin:0 0 18px}
