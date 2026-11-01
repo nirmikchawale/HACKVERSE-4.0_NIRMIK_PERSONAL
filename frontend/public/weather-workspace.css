@@ -36,3 +36,67 @@
 @media(max-width:600px){.wx-explorer,.wx-deadline-guide{padding:12px}.wx-explorer-field{flex:1 1 100%}.wx-explorer-page{flex:1 1 100%}.source-qc-inspector{padding:13px}.hourly-evidence-controls .hourly-evidence-filter{max-width:100%;flex:1 1 100%}}
 @media(prefers-reduced-motion:reduce){#forecastQualityMetrics .source-qc-item{transition:none;transform:none!important}}
 @media print{.wx-explorer-page,.wx-guide-actions,.source-qc-drill{display:none!important}}
+
+
+/* WXR-03: actionable model evidence. Coverage is provider-field completeness,
+   not statistical forecast skill, measured precipitation or agricultural safety. */
+#forecastQualityPanel{min-width:0}
+#forecastQualityPanel .source-qc-inspector{overflow:visible}
+.qc-inspector-heading{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px 18px;margin:0 0 14px}
+.qc-inspector-heading h3{font-size:clamp(16px,1.4vw,19px);letter-spacing:-.02em;line-height:1.35;margin:0;color:var(--ink)}
+.qc-inspector-heading p{font-size:12px;line-height:1.55;margin:0;max-width:680px;color:var(--muted)}
+.qc-focus-note{border:1px solid var(--border);border-radius:11px;padding:13px 15px;background:color-mix(in srgb,var(--teal) 5%,var(--card));min-width:0}
+.qc-focus-note>strong{font-weight:750;font-size:13px;line-height:1.4;color:var(--ink)}
+.qc-focus-note p{margin:7px 0 0;font-size:12px;line-height:1.65;color:var(--muted);overflow-wrap:anywhere}
+.qc-focus-note .qc-affected{margin-top:12px;padding-top:8px;border-top:1px solid var(--border)}
+.qc-focus-note .source-qc-drill{margin:12px 0 0}
+.qc-workbench-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 12px;min-width:0}
+.qc-workbench-tab{font:inherit;font-size:12px;font-weight:750;min-height:44px;min-width:115px;flex:1 1 auto;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--ink);padding:10px 13px;text-align:center;cursor:pointer}
+.qc-workbench-tab:hover{border-color:var(--teal)}
+.qc-workbench-tab.is-active,.qc-workbench-tab[aria-pressed=true]{border-color:var(--teal);color:var(--teal);background:color-mix(in srgb,var(--teal) 8%,var(--card))}
+.qc-workbench-tab:focus-visible,.qc-hour-chip:focus-visible,.qc-exception-row .btn:focus-visible,.qc-day-filter select:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.qc-workbench-content{min-width:0}
+.qc-day-filter{display:grid;gap:7px;max-width:335px;margin:12px 0 15px;font-size:12px;font-weight:700;color:var(--ink)}
+.qc-day-filter select{width:100%;min-width:0}
+.qc-coverage-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0 13px}
+.qc-coverage-total{padding:14px 15px;border-radius:12px;border:1px solid var(--border);background:var(--card);min-width:0}
+.qc-coverage-total span,.qc-coverage-total strong{display:block;overflow-wrap:anywhere}
+.qc-coverage-total span{font-size:12px;color:var(--muted);line-height:1.45}
+.qc-coverage-total strong{font-size:clamp(14px,1.45vw,17px);color:var(--ink);font-weight:750;line-height:1.6;margin-top:3px}
+.qc-coverage-track{height:7px;border-radius:999px;border:1px solid var(--border);background:color-mix(in srgb,var(--muted) 12%,var(--card));overflow:hidden;margin-top:10px}
+.qc-coverage-fill{height:100%;border-radius:inherit;background:var(--teal)}
+.qc-workbench-disclaimer{font-size:12px;line-height:1.6;color:var(--muted);margin:8px 0 12px}
+.qc-hour-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;margin:12px 0}
+.qc-hour-chip{padding:9px 4px;border:1px solid var(--border);border-radius:10px;min-width:0;min-height:48px;cursor:pointer;font:inherit;font-size:11px;font-weight:700;line-height:1.45;color:var(--ink);background:var(--card);overflow-wrap:anywhere}
+.qc-hour-chip:hover{border-color:var(--teal)}
+.qc-hour-chip[data-coverage="1"]{border-style:dashed}
+.qc-hour-chip[data-coverage="0"]{border-style:dotted;opacity:.8}
+.qc-hour-chip.is-active,.qc-hour-chip[aria-pressed=true]{border:2px solid var(--teal);background:color-mix(in srgb,var(--teal) 9%,var(--card));color:var(--ink)}
+.qc-hour-detail{margin-top:14px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--card);min-width:0}
+.qc-hour-detail>strong{font-size:14px;display:block;line-height:1.5;color:var(--ink)}
+.qc-hour-readings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.qc-hour-reading{padding:12px;border:1px solid var(--border);border-radius:10px;min-width:0}
+.qc-hour-reading dt{font-size:12px;color:var(--muted);line-height:1.5}
+.qc-hour-reading dd{font-size:16px;color:var(--ink);font-weight:750;margin:4px 0 0;overflow-wrap:anywhere}
+.qc-hour-reading[data-missing=true]{border-style:dashed}
+.qc-duplicate-note{font-size:12px;color:var(--muted);line-height:1.5}
+.qc-exception-summary{font-size:12px;font-weight:750;line-height:1.55;color:var(--ink);margin:0 0 10px}
+.qc-exception-list{display:grid;gap:8px;max-height:410px;overflow:auto;overscroll-behavior:contain;min-width:0;padding:1px 4px 1px 1px}
+.qc-exception-row{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);font-size:12px;color:var(--muted)}
+.qc-exception-row strong{color:var(--ink);font-weight:700}
+.qc-exception-row span,.qc-exception-row small{overflow-wrap:anywhere;line-height:1.6}
+.qc-exception-row .btn{min-height:44px;font-size:12px;white-space:normal}
+.qc-exception-row:has(small){grid-template-columns:1fr 1fr;gap:8px}
+.qc-exception-row small{grid-column:1/-1}
+.qc-clear-note{font-size:12px;line-height:1.6;margin:8px 0;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--muted)}
+.qc-receipt{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:8px 0 16px}
+.qc-receipt-row{min-width:0;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--card)}
+.qc-receipt-row dt{font-size:11px;font-weight:650;color:var(--muted);line-height:1.6}
+.qc-receipt-row dd{font-size:13px;font-weight:650;color:var(--ink);line-height:1.65;overflow-wrap:anywhere;margin:3px 0 0}
+.qc-workbench-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px 16px;border-top:1px solid var(--border);padding-top:12px;margin-top:16px}
+.qc-workbench-footer small{font-size:12px;color:var(--muted);line-height:1.6;max-width:740px}
+.qc-data-unavailable{margin:2px 0 12px}
+#hourlyEvidenceTable .qc-linked-row{outline:2px solid var(--teal);outline-offset:-2px;background:color-mix(in srgb,var(--teal) 7%,var(--card))}
+@media(max-width:980px){.qc-hour-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.qc-coverage-totals{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.qc-hour-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.qc-coverage-totals,.qc-receipt{grid-template-columns:1fr}.qc-hour-readings{grid-template-columns:1fr}.qc-exception-row{grid-template-columns:1fr}.qc-workbench-tabs{display:grid;grid-template-columns:1fr}.qc-workbench-tab{width:100%}}
+@media print{.qc-workbench-tabs,.qc-hour-grid,.qc-day-filter,.qc-exception-row button,.qc-hour-detail button{display:none!important}}
