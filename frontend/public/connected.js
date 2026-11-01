@@ -1087,6 +1087,10 @@
   let forecastMetric='precipitation_mm';
   let forecastDay='all';
   let forecastOffset=0;
+  // Reuse the original page navigation button instead of creating a disabled
+  // duplicate. The existing .goto handler remains attached when the element moves.
+  const continueButton=here('deadlineGuideContinue');
+  if(!continueButton)throw new Error('Missing genuine Continue to resources control');
   const deadlineGuide=el('section','wx-deadline-guide');
   deadlineGuide.id='deadlinePlanningGuide';
   deadlineGuide.setAttribute('aria-label','Guided candidate deadline workflow');
@@ -1132,11 +1136,10 @@
     const confirm=el('button','btn primary','Save selected deadline');
     confirm.type='button';confirm.id='deadlineGuideSave';
     confirm.disabled=!future||saved;confirm.addEventListener('click',()=>here('saveDeadline').click());
-    const continueButton=el('button','btn','Continue to resources');
-    continueButton.type='button';continueButton.id='deadlineGuideContinue';
-    continueButton.disabled=!saved;
-    continueButton.addEventListener('click',()=>here('deadlineNotice').closest('.deadline-card')
-      .querySelector('.goto[data-target="2"]')?.click());
+    // Navigation remains available even if the farmer has not saved a deadline,
+    // matching the original working button. A deadline is still required later
+    // for any valid farm-specific feasibility result.
+    continueButton.disabled=false;
     actions.append(nextHour,confirm,continueButton);deadlineGuide.append(actions);
   }
   here('deadlineInput').addEventListener('input',renderDeadlineGuide);
