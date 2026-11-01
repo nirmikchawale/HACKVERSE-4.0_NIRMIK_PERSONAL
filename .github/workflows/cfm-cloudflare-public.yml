@@ -1,0 +1,44 @@
+name: CFM Public Cloudflare Preview Certification
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'scripts/**'
+      - 'pyproject.toml'
+      - 'wrangler.jsonc'
+      - 'package.json'
+      - '.github/workflows/cfm-cloudflare-public.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview-public:
+    if: github.event_name == 'pull_request' && github.head_ref == 'migration/cloudflare-typography-01'
+    name: Public preview exact-SHA + real FastAPI/official sources
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact branch HEAD
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Node 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '22'
+      - name: Wait for public Cloudflare Preview at exact source revision
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+          EDGE_URL: https://migration-cloudflare-typography-01-agri-foresight.nirmikchawale1.workers.dev
+        run: node scripts/wait-cloudflare-public.mjs
+      - name: Exercise live FastAPI and authentic climate sources
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+          EDGE_URL: https://migration-cloudflare-typography-01-agri-foresight.nirmikchawale1.workers.dev
+          REQUIRE_LIVE_CLIMATE: '1'
+        run: node backend/scripts/cloudflare-smoke.mjs
