@@ -300,12 +300,12 @@
   hourlyDayExport.addEventListener('click',()=>{
     const evidence=forecastCoverage();
     const date=hourlyDate.value;
-    if(!evidence||hourlyDayExport.disabled||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date))return;
+    if(!evidence||hourlyDayExport.disabled||!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
     const rows=evidence.source.hours.filter(h=>h.time.startsWith(date));
     if(!rows.length)return;
     const safe=value=>{
       let content=String(value??'');
-      if(/^\\s*[=+\\-@\\t\\r]/.test(content))content="'"+content;
+      if(/^\s*[=+\-@\t\r]/.test(content))content="'"+content;
       return '"'+content.replace(/"/g,'""')+'"';
     };
     const numValue=value=>typeof value==='number'&&Number.isFinite(value)?String(value):'';
@@ -317,7 +317,7 @@
       safe(evidence.source.status),safe(evidence.source.retrieved_at_utc),
       safe('Selected-day source-native model hours only; not measured rainfall or agricultural safety')
     ].join(','));
-    const data='\\uFEFF'+cols.join(',')+'\\r\\n'+lines.join('\\r\\n')+'\\r\\n';
+    const data='\uFEFF'+cols.join(',')+'\r\n'+lines.join('\r\n')+'\r\n';
     const url=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8'}));
     const link=el('a');link.href=url;
     link.download='agri-foresight-model-hours-jalna-'+date+'.csv';
