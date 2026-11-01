@@ -28,7 +28,7 @@ const copy={
    legacy:'Your saved Detailed View contains additional options in old abstract units. Review or remove them in Detailed View before checking a weight-based plan.',
    advanced:'Review other saved options in Detailed View',
    check:'Save my answers and check my plan',edit:'Change my answers',
-   resultTitle:'What does your plan mean?',waiting:'Your plan has not been checked yet.',checking:'Checking your answers using the real Python engine…',failed:'The plan check did not work. Check your details and try again.',
+   resultTitle:'What does your plan mean?',waiting:'Your plan has not been checked yet.',waitingAction:'First check your plan. Possible changes will appear only after the real server responds.',checking:'Checking your answers using the real Python engine…',failed:'The plan check did not work. Check your details and try again.',
    ready:'Based on your answers, the work plan fits.',blocked:'Your plan needs a change.',unknown:'Some details still need checking.',completed:'You said this work is already completed.',
    why:'Why?',next:'What can you do?',good:'Your declared capacity and working time meet the engine checks. This does not confirm the cotton will be safe from rain.',
    gap:'You need to manage {a} {u}, but you can currently handle {b} {u}. That leaves {g} {u} needing a plan.',
@@ -69,7 +69,7 @@ const copy={
    legacy:'सविस्तर माहितीत आधीचे वेगळे पर्याय आहेत. वजनाचा नवीन प्लॅन तपासण्याआधी ते पर्याय पाहा.',
    advanced:'इतर पर्याय सविस्तर माहितीत पाहा',
    check:'माहिती जतन करा आणि माझा प्लॅन तपासा',edit:'माझी माहिती बदला',
-   resultTitle:'तुमच्या प्लॅनचा अर्थ काय?',waiting:'तुमचा प्लॅन अजून तपासलेला नाही.',checking:'तुमची माहिती सर्व्हरवर तपासत आहोत…',failed:'प्लॅन तपासता आला नाही. माहिती पुन्हा पाहा.',
+   resultTitle:'तुमच्या प्लॅनचा अर्थ काय?',waiting:'तुमचा प्लॅन अजून तपासलेला नाही.',waitingAction:'आधी प्लॅन तपासा. खरा सर्व्हर उत्तर दिल्यावरच शक्य बदल दिसतील.',checking:'तुमची माहिती सर्व्हरवर तपासत आहोत…',failed:'प्लॅन तपासता आला नाही. माहिती पुन्हा पाहा.',
    ready:'तुम्ही सांगितलेल्या माहितीनुसार हे काम जमू शकतं.',blocked:'प्लॅनमध्ये काही बदल हवेत.',unknown:'अजून काही गोष्टींची खात्री हवी.',completed:'तुम्ही काम झालं असं सांगितलं आहे.',
    why:'असं का?',next:'आता काय करता येईल?',good:'तुम्ही दिलेली क्षमता आणि वेळ या अटी जुळल्या. पण कापूस पावसापासून सुरक्षित राहील याची हमी नाही.',
    gap:'तुम्हाला {a} {u} कापूस हाताळायचा आहे. सध्या {b} {u} होऊ शकतो. अजून {g} {u} कापसाचा प्लॅन हवा.',
@@ -110,7 +110,7 @@ const copy={
    legacy:'पूरी जानकारी में पुराने दूसरे विकल्प मौजूद हैं। वजन वाला प्लान जाँचने से पहले उन्हें देखें।',
    advanced:'पुराने विकल्प पूरी जानकारी में देखें',
    check:'मेरे जवाब सेव करके प्लान जाँचें',edit:'मेरे जवाब बदलें',
-   resultTitle:'मेरे प्लान का क्या मतलब है?',waiting:'आपका प्लान अभी जाँचा नहीं गया है।',checking:'असली सर्वर से प्लान जाँच रहे हैं…',failed:'प्लान जाँच नहीं पाया। अपने जवाब दोबारा देखें।',
+   resultTitle:'मेरे प्लान का क्या मतलब है?',waiting:'आपका प्लान अभी जाँचा नहीं गया है।',waitingAction:'पहले प्लान जाँचें। असली सर्वर का जवाब आने के बाद ही बदलाव दिखेंगे।',checking:'असली सर्वर से प्लान जाँच रहे हैं…',failed:'प्लान जाँच नहीं पाया। अपने जवाब दोबारा देखें।',
    ready:'आपके दिए हिसाब से काम हो सकता है।',blocked:'प्लान में कुछ बदलाव जरूरी हैं।',unknown:'कुछ बातों की अभी पुष्टि चाहिए।',completed:'आपने बताया कि काम पूरा हो गया।',
    why:'ऐसा क्यों?',next:'अब क्या करें?',good:'आपकी बताई क्षमता और समय का हिसाब ठीक है। इससे कपास बारिश से सुरक्षित होने की गारंटी नहीं है।',
    gap:'आपको {a} {u} कपास संभालना है, लेकिन अभी {b} {u} संभाल सकते हैं। बाकी {g} {u} के लिए प्लान चाहिए।',
@@ -298,7 +298,7 @@ function conclusion(){
  if(!r){
    decision.append(make('p','',s?.error?t('failed'):t('waiting')));
    const b=make('button','btn primary',t('again'));b.type='button';b.addEventListener('click',runPlan);decision.append(b);
-   action.append(make('p','',t('noPackages')));
+   action.append(make('p','',t('waitingAction')));
    return;
  }
  decision.append(make('h3','',t('why')));
