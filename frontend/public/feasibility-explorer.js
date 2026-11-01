@@ -47,7 +47,7 @@
   const about = node('details', 'fw-about');
   const aboutSummary = node('summary', '', 'About the examples');
   about.append(aboutSummary, node('p', '',
-    'These are 20 configured planning cases × 5 sensitivity variants, recalculated by FastAPI or supplied as a verified build-time Python snapshot. They are not farmer records, government measurements, crop-safety advice, or live predictions. All units are abstract handling units.'));
+    'These are 20 configured planning cases × 5 sensitivity variants, recalculated by FastAPI or supplied as a verified build-time Python snapshot. They are not actual farmer records, government measurements, crop-safety advice, or live predictions. All units are abstract handling units.'));
   heading.append(headingCopy, sourceLabel, about);
   root.append(heading);
 
@@ -123,6 +123,7 @@
   diagnostics.id='fwCheckAPI';
   const download=makeButton('Export CSV',exportCases,'btn');
   download.id='fwExport';download.disabled=true;
+  download.setAttribute('aria-label','Export assessed cases CSV');
   const mine=makeButton('My farm →',()=>jump(2),'btn fw-my-farm');
   const actions=node('div','fw-lab-actions');
   actions.append(refresh,diagnostics,download,mine);
