@@ -244,7 +244,7 @@
   }
   function paintHelp(){
     const root=byId('farmerHelpPanel');root.replaceChildren();
-    root.append(node('h1','',t('helpTitle')),node('p','',t('helpText')));
+    root.append(node('h2','',t('helpTitle')),node('p','',t('helpText')));
     const steps=[['helpWeather',1],['helpFarm',2],['helpCheck',3],['helpAction',4]];
     steps.forEach(([label,page],i)=>{
       root.append(button((i+1)+'. '+t(label),()=>showPage(page),'farmer-help-step'));
