@@ -21,15 +21,16 @@ async function fixture(page,opts={}){
    status:'unavailable',source:'NASA POWER (US government)',data_kind:'government_gridded_historical',
    days:[],notice:'Source unavailable'}:nasa}));
 }
-test('source cards are interactive, preserve five independent statuses and show actual metadata',async({page})=>{
+test('source cards are interactive, preserve three actionable source statuses and show actual metadata',async({page})=>{
  await fixture(page);await page.goto('/');
  const cards=page.locator('#evidenceSourceGrid .source-matrix-card');
- await expect(cards).toHaveCount(5);
+ await expect(cards).toHaveCount(3);
  await expect(cards.nth(0)).toContainText('Connected');
  await expect(cards.nth(1)).toContainText('Verified model hours');
  await expect(cards.nth(2)).toContainText('2026-10-27');
- await expect(cards.nth(3)).toContainText('Not connected');
- await expect(cards.nth(4)).toContainText('Not evaluated');
+ await expect(page.locator('#evidenceSourceGrid')).not.toContainText('IMD official warnings');
+ await expect(page.locator('#evidenceSourceGrid')).not.toContainText('Farmer resource assessment');
+ await expect(page.locator('#sourceActivityRows .source-activity-item')).toHaveCount(2);
  await expect(page.locator('#sourceWorkbenchDetail')).toContainText('1/2');
  await expect(page.locator('#sourceWorkbenchDetail')).toContainText('Modeled rainfall cannot prove observed rain');
  await cards.nth(2).click();
@@ -40,20 +41,21 @@ test('source cards are interactive, preserve five independent statuses and show 
  await page.locator('#sourceWorkbenchDetail .source-detail-action.primary').click();
  await expect(page.locator('section.section[data-page="1"]')).toHaveClass(/active/);
 });
-test('filtering is functional and absent IMD data can only be reviewed externally',async({page})=>{
+test('homepage filters only verified source/engine evidence and has no warning or assessment tiles',async({page})=>{
  await fixture(page);await page.goto('/');
+ const panel=page.locator('#evidenceSourceMatrix');
+ await expect(panel.locator('.source-matrix-card')).toHaveCount(3);
  await page.locator('[data-filter="available"]').click();
  await expect(page.locator('#evidenceSourceGrid .source-matrix-card:visible')).toHaveCount(3);
  await page.locator('[data-filter="attention"]').click();
- await expect(page.locator('#evidenceSourceGrid .source-matrix-card:visible')).toHaveCount(2);
- await page.locator('#evidenceSourceGrid [data-source-id="imd"]').click();
- const detail=page.locator('#sourceWorkbenchDetail');
- await expect(detail).toContainText('no validated live IMD feed');
- await expect(detail.locator('a.source-detail-action')).toHaveAttribute('href','https://mausam.imd.gov.in/responsive/districtWiseWarning.php');
- await expect(detail.locator('a.source-detail-action')).toHaveAttribute('target','_blank');
- await expect(detail).not.toContainText('No warning');
+ await expect(page.locator('#evidenceSourceGrid .source-matrix-card:visible')).toHaveCount(0);
  await page.locator('[data-filter="all"]').click();
- await expect(page.locator('#evidenceSourceGrid .source-matrix-card:visible')).toHaveCount(5);
+ await expect(page.locator('#evidenceSourceGrid .source-matrix-card:visible')).toHaveCount(3);
+ await expect(page.locator('#sourceActivityRows .source-activity-item')).toHaveCount(2);
+ await expect(panel).not.toContainText('IMD official warnings');
+ await expect(panel).not.toContainText('Farmer resource assessment');
+ await expect(panel).not.toContainText('No verified server assessment');
+ await expect(panel).not.toContainText('Not connected · no official live warnings');
 });
 test('stale or unavailable sources are never called fresh and the filter follows actual validity',async({page})=>{
  await fixture(page,{stale:true,nasaUnavailable:true});await page.goto('/');
@@ -73,29 +75,28 @@ test('real source refresh reuses provider routes and exports a status-only recei
  await page.locator('#evidenceSourceGrid [data-source-id="nasa"]').click();
  await page.locator('#sourceWorkbenchDetail button').filter({hasText:'Refresh NASA history'}).click();
  await expect.poll(()=>nasaRefreshes).toBe(1);
- await page.locator('#evidenceSourceGrid [data-source-id="farm"]').click();
  const dl=page.waitForEvent('download');
  await page.locator('#sourceWorkbenchDetail button').filter({hasText:'Download status receipt'}).click();
  const file=await dl;
- expect(file.suggestedFilename()).toContain('farm-status.json');
- await expect(page.locator('#sourceWorkbenchDetail')).toContainText('not confirm physical equipment availability');
+ expect(file.suggestedFilename()).toContain('nasa-status.json');
+ await expect(page.locator('#sourceWorkbenchDetail')).toContainText('nor measurements at the farm');
 });
 test('mobile workbench fits viewport, supports tri-language changes and keyboard selection',async({page})=>{
  await fixture(page);await page.setViewportSize({width:390,height:844});await page.goto('/');
  const cards=page.locator('#evidenceSourceGrid .source-matrix-card');
- await expect(cards).toHaveCount(5);
+ await expect(cards).toHaveCount(3);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
- await cards.nth(3).focus();await page.keyboard.press('Enter');
- await expect(cards.nth(3)).toHaveAttribute('aria-pressed','true');
+ await cards.nth(2).focus();await page.keyboard.press('Enter');
+ await expect(cards.nth(2)).toHaveAttribute('aria-pressed','true');
  await page.locator('#language').selectOption('mr');
  await expect(page.locator('#evidenceSourceMatrix')).toContainText('स्वतंत्र स्रोत स्थिती');
- await expect(page.locator('#sourceWorkbenchDetail')).toContainText('जोडलेले नाही');
+ await expect(page.locator('#sourceWorkbenchDetail')).toContainText('NASA POWER');
  await page.locator('#language').selectOption('hi');
  await expect(page.locator('#evidenceSourceMatrix')).toContainText('स्वतंत्र स्रोत की स्थिति');
  await page.locator('#language').selectOption('en');
- await expect(page.locator('#evidenceSourceGrid .source-matrix-card:visible')).toHaveCount(5);
+ await expect(page.locator('#evidenceSourceGrid .source-matrix-card:visible')).toHaveCount(3);
 });
-test('validated backend assessment appears only after FastAPI responds and clears on edits',async({page})=>{
+test('real FastAPI remains on planning page while Overview hides pending assessment tiles',async({page})=>{
  await fixture(page);
  await page.route('**/api/evaluate',r=>r.fulfill({json:{
    status:'blocked',unit:'handling_unit',message:'Declared capacity shortfall',
@@ -110,11 +111,12 @@ test('validated backend assessment appears only after FastAPI responds and clear
  await page.locator('#duration').fill('1');await page.locator('#readiness').selectOption('yes');
  await page.locator('#confirmInputs').check();await page.locator('#saveResources').click();
  await page.locator('#navDesktop [data-nav="3"]').click();await page.locator('#runAssessment').click();
+ await expect(page.locator('#decisionDiagnosticNotes')).toContainText('Server result: BLOCKED');
  await page.locator('#navDesktop [data-nav="0"]').click();
- await page.locator('#evidenceSourceGrid [data-source-id="farm"]').click();
- await expect(page.locator('#sourceWorkbenchDetail')).toContainText('BLOCKED');
- await expect(page.locator('#sourceWorkbenchDetail')).toContainText('1');
+ await expect(page.locator('#evidenceSourceGrid .source-matrix-card')).toHaveCount(3);
+ await expect(page.locator('#evidenceSourceMatrix')).not.toContainText('Farmer resource assessment');
+ await expect(page.locator('#sourceActivityRows .source-activity-item')).toHaveCount(2);
  await page.locator('#navDesktop [data-nav="2"]').click();await page.locator('#capacity').fill('8');
- await page.locator('#navDesktop [data-nav="0"]').click();
- await expect(page.locator('#evidenceSourceGrid [data-source-id="farm"]')).toContainText('Not evaluated');
+ await page.locator('#navDesktop [data-nav="3"]').click();
+ await expect(page.locator('#decisionDiagnosticNotes')).toContainText('Not evaluated');
 });

@@ -75,20 +75,33 @@ try{
   assert(await page.locator('#navDesktop button[data-nav]:visible').count()===6,
     'Esc must restore all workspace routes');
 
-  // Interactive Cloudflare workbench must work on the exact deployed production SHA.
-  await page.locator('#evidenceSourceGrid [data-source-id="imd"]').waitFor({state:'attached',timeout:25000});
-  assert(await page.locator('#evidenceSourceGrid .source-matrix-card').count()===5,'Five source choices missing');
-  await page.locator('#evidenceSourceGrid [data-source-id="imd"]').click();
-  assert((await page.locator('#sourceWorkbenchDetail').textContent()).includes('no validated live IMD feed'),'Do not imply live IMD connection');
-  const official=page.locator('#sourceWorkbenchDetail a.source-detail-action.primary');
-  assert(await official.getAttribute('href')==='https://mausam.imd.gov.in/responsive/districtWiseWarning.php','Official IMD handoff missing');
+  // CF-OVERVIEW-02: only genuine weather/history receipts belong on Home.
+  const cards=page.locator('#evidenceSourceGrid .source-matrix-card');
+  await cards.first().waitFor({state:'attached',timeout:25000});
+  assert(await cards.count()===3,'Overview must present engine, model and NASA only');
+  assert(await page.locator('#evidenceSourceGrid [data-source-id="imd"]').count()===0,'Disconnected IMD tile returned to Overview');
+  assert(await page.locator('#evidenceSourceGrid [data-source-id="farm"]').count()===0,'Unverified assessment tile returned to Overview');
+  const receipts=page.locator('#sourceActivityRows .source-activity-item');
+  assert(await receipts.count()===2,'Only weather and historical source receipts may appear on Overview');
+  assert(await page.locator('#sourceActivityRows [data-source="model"]').count()===1,'Forecast receipt missing');
+  assert(await page.locator('#sourceActivityRows [data-source="nasa"]').count()===1,'NASA historical receipt missing');
+  assert(!(await page.locator('#sourceActivityReceipt').textContent()).includes('No verified server assessment'),
+    'Old unfinished server assessment text returned to homepage');
+  assert(!(await page.locator('#sourceActivityReceipt').textContent()).includes('IMD official warnings'),
+    'Old disconnected official warning text returned to homepage');
   await page.locator('[data-filter="available"]').click();
-  const responsive=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
+  const available=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
   await page.locator('[data-filter="attention"]').click();
-  const missing=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
-  assert(responsive+missing===5,'Source filters do not represent exactly five independent statuses');
+  const needReview=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
+  assert(available+needReview===3,'Active evidence filters must partition three source choices');
   await page.locator('[data-filter="all"]').click();
-  assert(await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count()===5,'All sources not restored');
+  assert(await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count()===3,
+    'All three interactive sources must be restored');
+  const receiptBoxes=await receipts.evaluateAll(nodes=>nodes.map(node=>({
+    left:node.getBoundingClientRect().left,right:node.getBoundingClientRect().right,
+    y:node.getBoundingClientRect().y,height:node.getBoundingClientRect().height})));
+  assert(receiptBoxes.length===2&&Math.abs(receiptBoxes[0].y-receiptBoxes[1].y)<=2,
+    'Two expanded evidence receipts must align on desktop');
   // Guard core planning controls as well as the newer evidence modules. This
   // frontend-path change also causes the mandatory real-backend gate to run.
   const selectors=['#apiConnectionStatus','#sourceLedger','#deadlineInput',
@@ -99,6 +112,55 @@ try{
   for(const key of selectors){
     await page.locator(key).waitFor({state:'attached',timeout:20000});
   }
+  // WXR-03: public exact-SHA behavioral certificate for the actual Weather page.
+  // Source values may be genuinely unavailable; never use test fixtures here.
+  const weatherCSS=await page.request.get(origin+'/weather-workspace.css',{timeout:15000});
+  assert(weatherCSS.status()===200&&(await weatherCSS.text()).includes('qc-hour-grid'),
+    'WXR-03 coverage visualization stylesheet is missing from public Cloudflare');
+  assert(source.includes('qcHourGrid')&&source.includes('qcExceptions')&&source.includes('qcReceipt'),
+    'Public connected.js does not contain the certified weather workbench');
+  await page.locator('#navDesktop [data-nav="1"]').click();
+  const weatherPage=page.locator('section.section[data-page="1"]');
+  await weatherPage.waitFor({state:'visible',timeout:20000});
+  assert(await weatherPage.locator('.insight-row').count()===0,
+    'The three passive Weather summary cards are still present');
+  await page.locator('#forecastQualityInspector').waitFor({state:'attached',timeout:20000});
+  await page.waitForFunction(()=>{
+    const metrics=document.querySelectorAll('#forecastQualityMetrics button.source-qc-item');
+    const empty=document.querySelector('#forecastQualityMetrics .source-qc-empty');
+    return metrics.length===8 || Boolean(empty && !document.querySelector('#toggleForecast')?.disabled);
+  },null,{timeout:25000});
+  let certifiedQualityMode='unavailable';
+  const publicMetrics=page.locator('#forecastQualityMetrics button.source-qc-item');
+  if(await publicMetrics.count()===8){
+    certifiedQualityMode='source-current';
+    await page.locator('[data-quality="reported"]').click();
+    assert(await page.locator('[data-quality="reported"]').getAttribute('aria-expanded')==='true',
+      'The data-quality metric did not open its evidence inspection');
+    const modelHours=page.locator('#qcHourGrid button.qc-hour-chip');
+    assert(await modelHours.count()>0,'No selectable real model-hour completeness cells');
+    await modelHours.first().click();
+    assert((await page.locator('#qcHourDetail').textContent()).includes('IST'),
+      'Model-hour selection does not show its exact authenticated time');
+    await page.locator('[data-qc-view="issues"]').click();
+    await page.locator('#qcIssueFilter').selectOption('gap');
+    assert((await page.locator('#qcWorkbenchContent').textContent()).length>20,
+      'Anomaly inspection failed to render a truthful source-derived state');
+    await page.locator('[data-qc-view="receipt"]').click();
+    assert((await page.locator('#qcWorkbenchContent').textContent()).includes('Asia/Kolkata'),
+      'Current model source receipt does not expose the validated timezone');
+    assert(await page.locator('#exportForecastEvidence').isEnabled(),
+      'Current authenticated model CSV unexpectedly unavailable');
+  }else{
+    assert(!(await page.locator('#exportForecastEvidence').isEnabled()),
+      'Unavailable model evidence must not enable a misleading CSV');
+    assert((await page.locator('#forecastQualityInspector').textContent()).includes('No current validated'),
+      'Unavailable model data must display an honest recovery explanation');
+  }
+  console.log('WXR03_PUBLIC_WEATHER_PASS '+JSON.stringify({
+    removedSummaryCards:true,workbench:certifiedQualityMode,sourceNativeOnly:true
+  }));
+
   for(let index=0;index<6;index++){
     await page.locator('#navDesktop [data-nav="'+index+'"]').click();
     await page.locator('section.section.active').waitFor({state:'visible'});
@@ -131,7 +193,7 @@ try{
   console.log(JSON.stringify({
     result:'PUBLIC_BROWSER_PASS',url:origin,commit:expected,
     sourceMarkers:Object.keys(features),sixPages:true,desktop:true,mobile:true,
-    languages:['en','mr','hi'],print:true,realBackendSeparateSmoke:true,interactiveSourceWorkbench:true
+    languages:['en','mr','hi'],print:true,realBackendSeparateSmoke:true,interactiveSourceWorkbench:true,cleanOverviewReceipts:true
   }));
   await mobile.close();await desktop.close();
 }finally{
