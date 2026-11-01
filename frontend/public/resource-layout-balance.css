@@ -1,0 +1,81 @@
+/*
+  CF-RES-04 | Farm Resources balanced evidence layout
+  Visual-only change: no inputs, JS handlers, agricultural maths or data sources modified.
+  Desktop: [Planned work       | Preparedness check  ]
+           [What we use/don't  | Preparedness check  ]
+           [Permitted alternatives — full width        ]
+  Narrow/mobile: retain DOM order and single-column, screen-reader order.
+*/
+@media (min-width: 1151px) {
+  section.section[data-page="2"] .resource-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, .8fr);
+    grid-template-rows: auto minmax(min-content, 1fr);
+    align-items: start;
+    gap: 14px;
+  }
+  section.section[data-page="2"] .resource-layout > .panel {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+    min-width: 0;
+  }
+  /* Promote only the existing direct children into the grid. */
+  section.section[data-page="2"] .resource-layout > .resource-side {
+    display: contents;
+  }
+  section.section[data-page="2"] .resource-layout .preparedness-card {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+    min-width: 0;
+  }
+  section.section[data-page="2"] .resource-layout .resource-evidence {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: stretch;
+    min-width: 0;
+    min-height: 190px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: space-between;
+  }
+  section.section[data-page="2"] .resource-evidence-grid {
+    flex: 1 1 auto;
+    align-items: stretch;
+    margin-top: 0;
+    gap: 12px;
+  }
+  section.section[data-page="2"] .resource-evidence-grid > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    padding: 15px;
+  }
+  section.section[data-page="2"] .resource-evidence-grid p {
+    line-height: 1.65;
+  }
+  section.section[data-page="2"] .resource-method {
+    flex: 0 0 auto;
+    margin: 0;
+    padding-top: 14px;
+  }
+}
+/* Prevent the full-width next section from colliding with the new grid. */
+section.section[data-page="2"] > .options-panel {
+  clear: both;
+  margin-top: 14px;
+}
+/* The original single-column form sequence remains intact at <=1150px. */
+@media (max-width: 1150px) {
+  section.section[data-page="2"] .resource-layout > .resource-side {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+  }
+  section.section[data-page="2"] .resource-evidence {
+    min-height: 0;
+  }
+}
