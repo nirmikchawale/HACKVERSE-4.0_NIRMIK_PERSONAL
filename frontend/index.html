@@ -130,6 +130,7 @@ html[data-theme="dark"] .brand-gold{color:#f4d676}
 <link rel="stylesheet" href="/resource-layout-balance.css">
 <link rel="stylesheet" href="/resource-pictogram-preparedness.css">
 <link rel="stylesheet" href="/weather-panel-compact.css">
+<link rel="stylesheet" href="/farm-evaluation-compact.css">
 </head>
 <body>
 <div class="app">
@@ -231,10 +232,69 @@ html[data-theme="dark"] .brand-gold{color:#f4d676}
 </section>
 <section class="section" data-page="3">
   <div class="page-head elevated"><div><div class="section-label">04 / EXPLAINED ASSESSMENT</div><h1 data-i18n="pageFeasibility">Feasibility analysis</h1><p data-i18n="feasLead">Check your resources with FastAPI. Not a field-safety rating.</p></div><span class="prototype-tag">SERVER-AUTHORITATIVE FEASIBILITY</span></div>
-  <div class="panel hero-result" id="resultHero"><div class="result-head"><span class="soft-icon big">◈</span><div><div class="section-label tight" data-i18n="assessment">Assessment</div><h2 id="resultTitle">Not evaluated</h2><p id="resultReason">Run FastAPI to see the assessment.</p></div></div><div class="result-cta"><button id="runAssessment" type="button" class="btn primary" data-i18n="runPreview">Run FastAPI assessment</button><button id="resetAssessment" type="button" class="btn" data-i18n="clearAssessment">Clear result</button></div><div class="calculation-warning">ⓘ <span data-i18n="simDisclosure">FastAPI checks declared resources and time, not crop safety.</span></div></div>
-  <div class="metric-grid"><div class="metric-box"><span data-i18n="goalQuantity">Planned quantity</span><strong id="resultGoal">—</strong><small data-i18n="unitsGeneric">Comparable handling units</small></div><div class="metric-box"><span data-i18n="baseCapacity">Confirmed baseline capacity</span><strong id="resultCap">—</strong><small data-i18n="unitsGeneric">Comparable handling units</small></div><div class="metric-box"><span data-i18n="capacityGap">Capacity shortfall</span><strong id="resultGap">—</strong><small data-i18n="unitsGeneric">Comparable handling units</small></div><div class="metric-box"><span data-i18n="timeSlack">Time slack</span><strong id="resultSlack">—</strong><small data-i18n="hoursUnit">Hours (declared duration)</small></div></div>
-  <div class="grid2"><div class="panel"><div class="panel-head"><h2 data-i18n="whyDecision">Why this result?</h2><span class="status-chip">EXPLAINED</span></div><div id="constraintList" class="constraint-list"><div class="empty"><b data-i18n="noAssessment">No verified feasibility result</b><p data-i18n="noAssessmentBody">Run FastAPI to check your saved plan.</p></div></div><div class="btn-grid"><button class="btn goto" data-target="2" type="button"><span data-i18n="editResources">Edit resources</span> ↗</button><button class="btn primary goto" data-target="4" type="button"><span data-i18n="exploreChanges">Explore permitted changes</span> →</button></div></div>
-  <div class="panel"><div class="panel-head"><h2 data-i18n="decisionChecklist">Decision readiness</h2><span class="bubble">◷</span></div><div class="snapshot"><div class="snaprow"><span data-i18n="planningWindow">Planning window</span><strong id="feasDeadline">Not selected</strong></div><div class="snaprow"><span data-i18n="resourceSummary">Resource inputs</span><strong id="feasResource">Not entered</strong></div><div class="snaprow"><span data-i18n="siteReady">Handling location</span><strong id="resultReadiness">Unknown</strong></div><div class="snaprow"><span data-i18n="engineStatus">Feasibility engine</span><strong id="engineIndicator">Preview calculator only</strong></div></div><div class="notice" data-i18n="feasCaution">FastAPI checks reported units and blockers, not field safety.</div></div></div>
+  <!-- CF-FEAS-06: Only actionable farm inputs before evaluation; real API results appear on demand. -->
+  <section class="panel hero-result farm-eval" id="resultHero" aria-label="Your farm assessment">
+    <div class="farm-eval-head">
+      <div class="farm-eval-title">
+        <span class="section-label tight" data-i18n="assessment">Assessment</span>
+        <h2 id="resultTitle">Not evaluated</h2>
+        <p id="resultReason" role="status" aria-live="polite">Enter your resources and deadline, then evaluate.</p>
+      </div>
+      <details class="farm-eval-disclosure">
+        <summary>Assessment scope <span aria-hidden="true">⌄</span></summary>
+        <p>FastAPI checks your declared capacity, time and readiness. Results are conditional, not a crop-safety or weather suitability certificate.</p>
+        <div class="farm-eval-provenance">
+          <span><span data-i18n="siteReady">Handling location</span>: <strong id="resultReadiness">Unknown</strong></span>
+          <span id="engineIndicator">FASTAPI ENGINE · NO RESULT</span>
+        </div>
+      </details>
+    </div>
+    <div class="farm-eval-actions" role="group" aria-label="Complete and evaluate your farm plan">
+      <button class="farm-eval-step goto" id="feasPlanningAction" type="button" data-target="1">
+        <span class="farm-eval-step-label" data-i18n="planningWindow">Planning window</span>
+        <strong id="feasDeadline">Not selected</strong><span class="farm-eval-arrow" aria-hidden="true">↗</span>
+      </button>
+      <button class="farm-eval-step goto" id="feasResourcesAction" type="button" data-target="2">
+        <span class="farm-eval-step-label" data-i18n="resourceSummary">Resource inputs</span>
+        <strong id="feasResource">Not entered</strong><span class="farm-eval-arrow" aria-hidden="true">↗</span>
+      </button>
+      <button id="runAssessment" type="button" class="btn primary farm-eval-run" data-i18n="runPreview">Run FastAPI assessment</button>
+      <button id="resetAssessment" type="button" class="btn farm-eval-clear" data-i18n="clearAssessment" hidden>Clear result</button>
+    </div>
+  </section>
+
+  <!-- Conditional, clickable metrics replace four permanently empty scorecards. -->
+  <div class="metric-grid farm-eval-metrics" id="farmResultMetrics" hidden aria-label="Your calculated farm metrics">
+    <button type="button" class="metric-box goto" data-target="2">
+      <span data-i18n="goalQuantity">Planned quantity</span><strong id="resultGoal">—</strong>
+      <small data-i18n="unitsGeneric">Comparable handling units</small><span class="farm-metric-arrow" aria-hidden="true">↗</span>
+    </button>
+    <button type="button" class="metric-box goto" data-target="2">
+      <span data-i18n="baseCapacity">Confirmed baseline capacity</span><strong id="resultCap">—</strong>
+      <small data-i18n="unitsGeneric">Comparable handling units</small><span class="farm-metric-arrow" aria-hidden="true">↗</span>
+    </button>
+    <button type="button" class="metric-box goto" data-target="2">
+      <span data-i18n="capacityGap">Capacity shortfall</span><strong id="resultGap">—</strong>
+      <small data-i18n="unitsGeneric">Comparable handling units</small><span class="farm-metric-arrow" aria-hidden="true">↗</span>
+    </button>
+    <button type="button" class="metric-box goto" data-target="1">
+      <span data-i18n="timeSlack">Time slack</span><strong id="resultSlack">—</strong>
+      <small data-i18n="hoursUnit">Hours (declared duration)</small><span class="farm-metric-arrow" aria-hidden="true">↗</span>
+    </button>
+  </div>
+
+  <!-- A single, opt-in explanation replaces duplicate passive explanation/readiness panels. -->
+  <section class="panel farm-eval-outcome" id="farmResultPanel" hidden aria-label="Calculated constraints and next steps">
+    <details class="farm-eval-explanation" id="farmExplanation">
+      <summary><span data-i18n="whyDecision">Why this result?</span><span id="farmCheckCount" class="farm-eval-check-count">Review engine checks</span><span aria-hidden="true">⌄</span></summary>
+      <div id="constraintList" class="constraint-list" aria-live="polite"></div>
+    </details>
+    <nav class="farm-eval-next" aria-label="Actions after assessment">
+      <button type="button" class="btn goto" data-target="2"><span data-i18n="editResources">Edit resources</span> ↗</button>
+      <button type="button" class="btn primary goto" data-target="4"><span data-i18n="exploreChanges">Explore permitted changes</span> →</button>
+      <button type="button" class="btn goto" data-target="5"><span data-i18n="viewSummary">View summary</span> ↗</button>
+    </nav>
+  </section>
 </section>
 <section class="section" data-page="4">
  <div class="page-head elevated"><div><div class="section-label">05 / RESOURCE SCENARIOS</div><h1 data-i18n="pageChanges">Minimum changes & replanning</h1><p data-i18n="changesLead">Compare changes returned by FastAPI.</p></div><button class="btn goto" type="button" data-target="2"><span data-i18n="editOptions">Edit options</span> ↗</button></div>
