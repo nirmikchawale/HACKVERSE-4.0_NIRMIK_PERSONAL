@@ -1207,18 +1207,18 @@
     const explorer=el('div','wx-explorer');
     explorer.id='forecastExplorerControls';
     const metricField=el('label','wx-explorer-field');
-    metricField.append(el('span','','Show model measure'));
+    metricField.append(el('span','',state.lang==='mr'?'मोजमाप':state.lang==='hi'?'माप':'Measure'));
     const metricSelect=el('select','hourly-evidence-select');metricSelect.id='forecastExploreMetric';
-    for(const [v,label] of [['precipitation_mm','Modeled rainfall · mm'],['precipitation_probability_pct','Hourly rain probability · %']]){
+    for(const [v,label] of [['precipitation_mm',state.lang==='mr'?'पाऊस · mm':state.lang==='hi'?'वर्षा · mm':'Rain · mm'],['precipitation_probability_pct',state.lang==='mr'?'पावसाची शक्यता · %':state.lang==='hi'?'वर्षा संभावना · %':'Rain chance · %']]){
       const op=el('option','',label);op.value=v;metricSelect.append(op);
     }
     metricSelect.value=forecastMetric;metricSelect.addEventListener('change',()=>{
       forecastMetric=metricSelect.value;renderWeather();
     });metricField.append(metricSelect);
     const dayField=el('label','wx-explorer-field');
-    dayField.append(el('span','','Model day · IST'));
+    dayField.append(el('span','',state.lang==='mr'?'तारीख · IST':state.lang==='hi'?'तारीख · IST':'Date · IST'));
     const daySelect=el('select','hourly-evidence-select');daySelect.id='forecastExploreDay';
-    const all=el('option','','All upcoming dates');all.value='all';daySelect.append(all);
+    const all=el('option','',state.lang==='mr'?'सर्व पुढील तारखा':state.lang==='hi'?'सभी अगली तारीखें':'All dates');all.value='all';daySelect.append(all);
     for(const day of dates){const op=el('option','',day);op.value=day;daySelect.append(op);}
     daySelect.value=forecastDay;daySelect.addEventListener('change',()=>{
       forecastDay=daySelect.value;forecastOffset=0;renderWeather();
