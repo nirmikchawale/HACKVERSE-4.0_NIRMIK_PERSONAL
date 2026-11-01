@@ -315,6 +315,17 @@
     if (visible.length && !visible.some(item => item.id === selectedId)) selectedId = visible[0].id;
     drawList(); drawCase();
   });
-  void loadCases();
-  void loadClimate();
+  // Only initialize on Page 04. This avoids duplicate NASA requests and
+  // preserves the existing one-request-per-source behaviour on other pages.
+  let activated = false;
+  const activate = () => {
+    if (activated || !page.classList.contains('active')) return;
+    activated = true;
+    watch.disconnect();
+    void loadCases();
+    void loadClimate();
+  };
+  const watch = new MutationObserver(activate);
+  watch.observe(page, { attributes: true, attributeFilter: ['class'] });
+  activate();
 })();
