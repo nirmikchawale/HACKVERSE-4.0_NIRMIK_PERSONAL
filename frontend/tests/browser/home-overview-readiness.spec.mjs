@@ -98,3 +98,37 @@ test('overview remains legible on narrow mobile, with user-input-free state',asy
   await expect(page.locator('#feasibilityValue')).toHaveText('FastAPI ready');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
 });
+
+test('all At a Glance values and captions share vertical anchors even when one caption is shorter',async({page})=>{
+  await sources(page,forecast());
+  for(const width of [1545,1440,1024,390]){
+    await page.setViewportSize({width,height:900});
+    await page.goto('/');
+    await expect(page.locator('#resourcesValue')).toHaveText('4 planning inputs');
+    const items=await page.locator('section[data-page="0"] .kpis > .kpi').evaluateAll(cards=>
+      cards.map(card=>{
+        const bounds=card.getBoundingClientRect();
+        const value=card.querySelector('.kpi-value');
+        const note=card.querySelector('.kpi-sub');
+        const valueBounds=value.getBoundingClientRect();
+        const noteBounds=note.getBoundingClientRect();
+        return {x:bounds.x,y:bounds.y,
+          valueY:valueBounds.y,noteY:noteBounds.y,
+          valueH:valueBounds.height,noteH:noteBounds.height,
+          autoMargin:getComputedStyle(value).marginTop};
+      }));
+    expect(items).toHaveLength(4);
+    expect(items.every(row=>row.autoMargin==='0px')).toBe(true);
+    for(const row of [items.slice(0,width<=1050?2:4),...(width<=1050?[items.slice(2,4)]:[])]){
+      const anchor=row[0].valueY;
+      expect(row.every(card=>Math.abs(card.valueY-anchor)<=2),
+        'All KPI values should align within each grid row at '+width+'px').toBe(true);
+    }
+    if(width>=1440){
+      const noteAnchor=items[0].noteY;
+      expect(items.every(card=>Math.abs(card.noteY-noteAnchor)<=2),
+        'Forecast, deadline, farm resources and feasibility captions must align at '+width+'px').toBe(true);
+    }
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
+  }
+});
