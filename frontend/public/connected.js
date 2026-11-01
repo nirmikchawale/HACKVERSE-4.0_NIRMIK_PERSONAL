@@ -829,7 +829,12 @@
         availability:row.querySelector('[data-x=availability]').value};
     });
     additional.changes=uiChanges;saveExtra();
-    const changes=uiChanges.map((c,i)=>{
+    // A visible untouched starter editor is not a declared or confirmed option.
+    // Preserve validation of every partially completed or explicitly changed row.
+    const changes=uiChanges.filter(c=>!(
+      String(c.amount??'').trim()===''&&String(c.rid??'').trim()===''&&
+      c.type==='add_capacity'&&c.availability==='unknown'
+    )).map((c,i)=>{
       const value=Number(c.amount);if(!Number.isFinite(value)||value<=0)throw new Error('Option '+(i+1)+' needs a positive amount.');
       const rid=c.type==='add_capacity'?String(c.rid||'').trim():null;
       if(c.type==='add_capacity'&&!rid)throw new Error('Option '+(i+1)+' requires a unique resource identifier.');
