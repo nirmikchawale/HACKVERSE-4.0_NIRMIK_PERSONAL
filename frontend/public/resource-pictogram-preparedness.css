@@ -1,0 +1,263 @@
+/*
+ * CF-RES-05 — concise pictogram evidence + actionable readiness.
+ * Scope deliberately limited to Farm Resources (Page 03); inherits every theme
+ * through existing --card/--soft/--teal/--ink/--muted/--border tokens.
+ */
+section.section[data-page="2"] .resource-evidence{
+  justify-content:flex-start;
+  gap:12px;
+  min-height:0;
+}
+section.section[data-page="2"] .resource-evidence-grid{
+  display:grid;
+  flex:0 0 auto;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;
+  gap:10px;
+  margin:0;
+}
+section.section[data-page="2"] .resource-proof-card{
+  min-width:0;
+  border:1px solid var(--border);
+  border-radius:15px;
+  background:var(--soft);
+  color:var(--ink);
+  padding:0;
+  overflow:hidden;
+  transition:border-color .18s ease,background .18s ease;
+}
+section.section[data-page="2"] .resource-proof-card:hover,
+section.section[data-page="2"] .resource-proof-card[open]{
+  border-color:var(--teal);
+}
+section.section[data-page="2"] .resource-proof-card > summary{
+  display:grid;
+  grid-template-columns:52px minmax(0,1fr);
+  gap:12px;
+  align-items:center;
+  padding:14px;
+  min-height:122px;
+  cursor:pointer;
+  list-style:none;
+  color:var(--ink);
+}
+section.section[data-page="2"] .resource-proof-card > summary::-webkit-details-marker{display:none}
+section.section[data-page="2"] .resource-proof-card > summary:focus-visible,
+section.section[data-page="2"] .resource-method-disclosure > summary:focus-visible,
+section.section[data-page="2"] .prep-pathway > summary:focus-visible,
+section.section[data-page="2"] .prep-action:focus-visible,
+section.section[data-page="2"] .resource-insight:focus-visible{
+  outline:3px solid var(--teal);
+  outline-offset:-3px;
+}
+section.section[data-page="2"] .resource-proof-icon{
+  display:grid;
+  place-items:center;
+  width:52px;
+  height:60px;
+  border-radius:15px;
+  color:var(--teal);
+  background:color-mix(in srgb,var(--teal) 11%,transparent);
+}
+section.section[data-page="2"] .proof-unverified .resource-proof-icon{
+  color:var(--teal);
+  background:color-mix(in srgb,var(--teal) 7%,var(--card));
+}
+section.section[data-page="2"] .resource-proof-icon svg{width:42px;height:42px;display:block}
+section.section[data-page="2"] .resource-proof-copy{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:5px;
+  min-width:0;
+}
+section.section[data-page="2"] .resource-proof-copy strong{
+  font-size:13px;
+  line-height:1.32;
+  font-weight:800;
+  color:var(--ink);
+}
+section.section[data-page="2"] .resource-proof-copy .proof-synopsis{
+  color:var(--muted);
+  line-height:1.55;
+  font-size:11px;
+  overflow-wrap:anywhere;
+}
+section.section[data-page="2"] .resource-proof-copy .proof-open{
+  color:var(--teal);
+  font-size:10px;
+  font-weight:750;
+  margin-top:2px;
+}
+section.section[data-page="2"] .resource-proof-card[open] .proof-open{opacity:.7}
+section.section[data-page="2"] .proof-expanded{
+  border-top:1px solid var(--border);
+  padding:11px 14px 13px;
+}
+section.section[data-page="2"] .proof-expanded p{
+  margin:0 0 8px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.55;
+}
+section.section[data-page="2"] .proof-expanded .text-link{
+  cursor:pointer;
+  color:var(--teal);
+  font-size:11px;
+}
+section.section[data-page="2"] .resource-evidence .resource-method-disclosure{
+  margin:0;
+  padding:10px 0 0;
+  line-height:1.55;
+  font-size:11px;
+  border-top:1px solid var(--border);
+}
+section.section[data-page="2"] .resource-method-disclosure > summary,
+section.section[data-page="2"] .prep-pathway > summary{
+  cursor:pointer;
+  padding:5px 1px;
+  font-size:11px;
+  color:var(--teal);
+  font-weight:750;
+}
+section.section[data-page="2"] .resource-method-disclosure > p{
+  margin:8px 0 0;
+  line-height:1.6;
+  color:var(--muted);
+}
+/* Input-first readiness: six short, native focusable buttons, not a duplicate theory list. */
+section.section[data-page="2"] .preparedness-card{
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  gap:12px;
+}
+section.section[data-page="2"] .preparedness-card .panel-head{margin:0}
+section.section[data-page="2"] .preparedness-card .panel-head h2{
+  font-size:clamp(18px,1.55vw,23px);
+}
+section.section[data-page="2"] .prep-steps-label{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:10px;
+  color:var(--ink);
+  font-size:11px;
+  font-weight:800;
+  line-height:1.4;
+}
+section.section[data-page="2"] .prep-steps-label span:last-child{
+  color:var(--muted);
+  font-weight:500;
+  font-size:10px;
+}
+section.section[data-page="2"] .prep-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+section.section[data-page="2"] .prep-action{
+  width:100%;
+  min-width:0;
+  min-height:68px;
+  display:grid;
+  grid-template-columns:25px minmax(0,1fr) 10px;
+  align-items:center;
+  text-align:left;
+  gap:7px;
+  color:var(--ink);
+  background:var(--soft);
+  border:1px solid var(--border);
+  border-radius:13px;
+  padding:9px 8px;
+  cursor:pointer;
+  font:inherit;
+  transition:border-color .18s ease,background .18s ease;
+}
+section.section[data-page="2"] .prep-action:hover,
+section.section[data-page="2"] .resource-insight:hover{
+  border-color:var(--teal);
+  background:var(--card);
+}
+section.section[data-page="2"] .prep-action.is-complete{
+  border-color:color-mix(in srgb,var(--teal) 38%,var(--border));
+}
+section.section[data-page="2"] .prep-action.is-caution .prep-action-symbol{
+  color:#a47620;
+  background:rgba(223,168,59,.14);
+}
+section.section[data-page="2"] .prep-action-symbol{
+  width:25px;height:25px;
+  display:grid;place-items:center;
+  background:color-mix(in srgb,var(--teal) 10%,transparent);
+  color:var(--teal);
+  border-radius:9px;
+  font-size:14px;
+  font-weight:850;
+}
+section.section[data-page="2"] .prep-action-copy{
+  display:flex;flex-direction:column;gap:4px;min-width:0;
+}
+section.section[data-page="2"] .prep-action-copy strong{
+  color:var(--ink);
+  font-size:11px;
+  font-weight:750;
+  line-height:1.2;
+}
+section.section[data-page="2"] .prep-action-copy small{
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.3;
+  overflow-wrap:anywhere;
+}
+section.section[data-page="2"] .prep-action.is-complete .prep-action-copy small{color:var(--teal)}
+section.section[data-page="2"] .prep-action-arrow{font-size:10px;color:var(--teal);align-self:start}
+section.section[data-page="2"] .resource-completeness{padding:11px 12px;border-radius:12px}
+section.section[data-page="2"] .resource-completeness progress{margin:8px 0}
+section.section[data-page="2"] .resource-completeness p{font-size:10px}
+section.section[data-page="2"] .resource-insights{gap:7px}
+section.section[data-page="2"] .resource-insight{
+  cursor:pointer;
+  display:block;
+  text-align:left;
+  font:inherit;
+  width:100%;
+  padding:10px 11px;
+  min-width:0;
+  transition:border-color .18s ease,background .18s ease;
+}
+section.section[data-page="2"] .resource-insight span{font-size:10px}
+section.section[data-page="2"] .resource-insight strong{
+  font-size:clamp(14px,1.3vw,18px);
+  margin:5px 0 3px;
+  line-height:1.35;
+}
+section.section[data-page="2"] .resource-insight small{
+  font-size:10px;
+  color:var(--teal);
+}
+section.section[data-page="2"] .prep-pathway{
+  padding:1px 2px;
+  border-top:1px solid var(--border);
+}
+section.section[data-page="2"] .prep-pathway[open] .resource-tree{padding-top:8px}
+section.section[data-page="2"] .resource-next{padding:10px 11px;gap:9px}
+section.section[data-page="2"] .resource-next .btn{min-height:38px}
+section.section[data-page="2"] .preparedness-card .note-small{font-size:10px!important;line-height:1.45}
+@media (min-width:700px) and (max-width:1150px){
+  section.section[data-page="2"] .prep-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:680px){
+  section.section[data-page="2"] .resource-evidence-grid{grid-template-columns:1fr}
+  section.section[data-page="2"] .resource-proof-card > summary{min-height:90px;padding:10px 12px}
+  section.section[data-page="2"] .resource-proof-icon{height:52px}
+  section.section[data-page="2"] .resource-proof-icon svg{width:34px;height:34px}
+}
+@media (max-width:370px){
+  section.section[data-page="2"] .prep-actions{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  section.section[data-page="2"] .resource-proof-card,
+  section.section[data-page="2"] .prep-action,
+  section.section[data-page="2"] .resource-insight{transition:none}
+}

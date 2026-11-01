@@ -69,7 +69,7 @@ test.describe('CF-RES-04 Farm Resources spatial balance', () => {
     await expect(page.locator('#saveResources')).toBeVisible();
     await expect(page.locator('#resourceNextAction')).toBeVisible();
     await expect(page.locator('#addChange')).toBeVisible();
-    await expect(page.locator('.resource-evidence-grid > div')).toHaveCount(2);
+    await expect(page.locator('.resource-evidence-grid > .resource-proof-card')).toHaveCount(2);
     await expect(page.locator('.options-panel')).toContainText('Additional changes');
   });
 });
