@@ -1,0 +1,72 @@
+/* Agri Foresight sidebar v2 — neutral, compact information hierarchy
+   inspired by the user's Cloudflare navigation reference, not copied source. */
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;
+ margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
+@media(min-width:741px){
+ .app{max-width:none;min-height:100dvh;margin:0;padding:0;gap:0;
+   grid-template-columns:266px minmax(0,1fr);}
+ .app>.rail{top:0;position:sticky;height:100dvh;min-width:0;overflow-y:auto;overflow-x:hidden;
+   padding:16px 11px 17px;border-radius:0;border:0;border-right:1px solid #e1e5e3;
+   box-shadow:none;backdrop-filter:none;background:#fbfcfb;scrollbar-width:thin;}
+ .rail .brand{min-height:68px;padding:8px 11px 17px;margin-bottom:15px;
+   gap:11px;align-items:center;border-bottom:1px solid #e4e8e5;}
+ .rail .brand .brand-logo{width:42px;height:42px;flex-basis:42px;}
+ .rail .brand strong{font-size:1.0625rem;font-weight:710;letter-spacing:-.02em;color:#1e3330;}
+ .rail .brand small{font-size:.6875rem;font-weight:620;letter-spacing:.04em;color:#66726d;}
+ .rail .rail-search{position:relative;display:flex;align-items:center;margin:0 4px 12px;color:#89918c;}
+ .rail .rail-search svg{width:19px;height:19px;position:absolute;left:13px;pointer-events:none;}
+ .rail .rail-search input{width:100%;min-width:0;height:43px;border:1px solid #d7ddda;
+   border-radius:12px;background:white;padding:0 48px 0 43px;font-size:.875rem;
+   color:#2d403b;box-shadow:none;}
+ .rail .rail-search input::placeholder{color:#78837d;opacity:1;}
+ .rail .rail-search kbd{position:absolute;right:9px;font:500 .6875rem/1 var(--af-font);
+   border:1px solid #e0e5e2;border-radius:5px;padding:5px 4px;color:#858f89;background:#f6f8f7;}
+ .rail .nav{display:flex;flex-direction:column;gap:3px;min-height:0;}
+ .rail .nav-group-label{margin:15px 14px 5px;color:#818c86;letter-spacing:.018em;
+   font-size:.75rem;line-height:1.4;font-weight:650;text-transform:none;}
+ .rail .nav .nav-group-label:first-child{margin-top:8px;}
+ .rail .nav .nav-group-label[hidden],.rail .nav button[hidden]{display:none!important;}
+ .rail .nav button{min-height:44px;width:100%;display:flex;gap:12px;align-items:center;
+   border:1px solid transparent;border-radius:11px;padding:9px 12px;
+   background:transparent;color:#44524e;font-size:.875rem;font-weight:540;
+   letter-spacing:0;line-height:1.43;transition:background .15s ease,color .15s ease;}
+ .rail .nav button:hover{background:#f0f2f1;color:#173e35;border-color:transparent;}
+ .rail .nav button.active{background:#e9eeeb;color:#1d4439;border-color:transparent;font-weight:660;}
+ .rail .nav button.active:before{display:none;}
+ .rail .nav .nav-ico{display:inline-flex;flex:0 0 20px;width:20px;height:20px;align-items:center;justify-content:center;color:#6e7b74;}
+ .rail .nav button.active .nav-ico{color:#2e806c;}
+ .rail .rail-caption{display:none;}
+ .rail .rail-footer{margin-top:24px;background:#f3f6f4;border-color:#e4e8e5;
+   border-radius:13px;color:#62736a;padding:14px;font-size:.75rem;line-height:1.5;}
+ .rail .rail-footer strong{color:#315247;font-size:.8125rem;font-weight:650;margin-bottom:6px;}
+ .app>.main{min-width:0;padding:18px clamp(18px,2.5vw,42px) 48px;}
+ html[data-theme="dark"] .app>.rail{background:#102a2d;border-right-color:#36524f;}
+ html[data-theme="dark"] .rail .brand{border-bottom-color:#38504e;}
+ html[data-theme="dark"] .rail .brand strong{color:#f1f6f2;}
+ html[data-theme="dark"] .rail .brand small,
+ html[data-theme="dark"] .rail .nav-group-label{color:#b0c4bd;}
+ html[data-theme="dark"] .rail .rail-search input{background:#15373a;border-color:#45645d;color:#f1f7f2;}
+ html[data-theme="dark"] .rail .rail-search input::placeholder{color:#c0d3cb;}
+ html[data-theme="dark"] .rail .rail-search kbd{background:#244546;border-color:#4c625d;color:#d2e6db;}
+ html[data-theme="dark"] .rail .nav button{color:#d4e4dc;}
+ html[data-theme="dark"] .rail .nav button:hover{background:#1d4945;color:#fff;}
+ html[data-theme="dark"] .rail .nav button.active{background:#25534b;color:#f0fff8;}
+ html[data-theme="dark"] .rail .nav .nav-ico{color:#b9cfc7;}
+ html[data-theme="dark"] .rail .rail-footer{background:#173f3e;border-color:#42635b;color:#cee3d8;}
+ html[data-theme="dark"] .rail .rail-footer strong{color:#f2fff6;}
+}
+@media(min-width:741px) and (max-width:1050px){
+ .app{grid-template-columns:228px minmax(0,1fr);}
+ .app>.rail{padding-inline:8px;}
+ .app>.main{padding-inline:17px;}
+ .rail .rail-search kbd{display:none;}
+ .rail .rail-search input{padding-right:12px;}
+}
+@media(max-width:740px){
+ .rail{display:none!important;}
+ .mobile-nav button{min-height:52px;}
+ .mobile-nav .nav-ico{display:block;min-height:18px;}
+}
+@media(prefers-reduced-motion:reduce){
+ .rail .nav button{transition:none!important;}
+}

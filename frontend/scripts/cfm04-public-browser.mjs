@@ -36,12 +36,44 @@ try{
     assert(source.includes(key),'Main UI build is missing '+name+' / '+key);
   }
   const cssFiles=['/model-evidence.css','/forecast-windows.css',
-    '/source-intelligence.css','/source-print.css','/ex18-climate.css'];
+    '/source-intelligence.css','/source-print.css','/ex18-climate.css',
+    '/agri-typography.css','/agri-sidebar.css'];
   for(const path of cssFiles){
     const result=await page.request.get(origin+path,{timeout:15000});
     assert(result.status()===200,'Missing current theme/feature stylesheet '+path);
     assert((await result.text()).length>100,'Empty CSS asset '+path);
   }
+
+  // Post-font production certificate: verifies approved typography and
+  // grouped navigation on the actual clean workers.dev address, not a PR build.
+  await page.waitForFunction(() => {
+    const rail=document.querySelector('.app>.rail');
+    const base=getComputedStyle(document.documentElement);
+    return rail && base.getPropertyValue('--af-font').includes('Inter') &&
+      getComputedStyle(rail).position==='sticky';
+  },null,{timeout:20000});
+  const visual=await page.evaluate(() => ({
+    font:getComputedStyle(document.body).fontFamily,
+    rootSize:parseFloat(getComputedStyle(document.documentElement).fontSize),
+    navGroups:document.querySelectorAll('#navDesktop .nav-group-label').length,
+    search:!!document.querySelector('#railSearch'),
+    interCss:!!document.querySelector('link[href="https://rsms.me/inter/inter.css"]'),
+    styleLinks:['/agri-typography.css','/agri-sidebar.css']
+      .every(href=>document.querySelectorAll('link[href="'+href+'"]').length===1)
+  }));
+  assert(visual.font.includes('Inter')&&visual.font.includes('-apple-system'),
+    'The approved Inter/Apple font stack is not applied on public production');
+  assert(visual.rootSize===16&&visual.navGroups===4&&visual.search&&visual.interCss&&visual.styleLinks,
+    'The post-font grouped sidebar and loaded typography links are incomplete');
+  await page.keyboard.press('Control+k');
+  assert(await page.locator('#railSearch').evaluate(el=>document.activeElement===el),
+    'Ctrl+K did not focus actual sidebar search');
+  await page.locator('#railSearch').fill('feasibility');
+  assert(await page.locator('#navDesktop button[data-nav]:visible').count()===1,
+    'Grouped sidebar search does not filter six real routes');
+  await page.locator('#railSearch').press('Escape');
+  assert(await page.locator('#navDesktop button[data-nav]:visible').count()===6,
+    'Esc must restore all workspace routes');
 
   // Guard core planning controls as well as the newer evidence modules. This
   // frontend-path change also causes the mandatory real-backend gate to run.
