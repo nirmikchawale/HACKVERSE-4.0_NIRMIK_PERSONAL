@@ -1,0 +1,22 @@
+/* Cloudflare-only homepage: preserve the Decision Pathway + Preparation snapshot baseline.
+   This is a presentation-only rule; never stretch mobile panels or hide source state. */
+.section[data-page="0"] .lower > div{min-width:0}
+@media(min-width:1051px){
+ .section[data-page="0"] .lower{align-items:stretch}
+ .section[data-page="0"] .lower > div{display:flex;flex-direction:column}
+ .section[data-page="0"] .lower > div > .panel{flex:1 1 auto;min-width:0}
+}
+#apiConnectionStatus.sr-only{
+ position:absolute!important;width:1px!important;height:1px!important;
+ padding:0!important;margin:-1px!important;overflow:hidden!important;
+ clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important
+}
+.section[data-page="0"] .kpi-value{
+ overflow-wrap:anywhere;line-height:1.25
+}
+.section[data-page="0"] .kpi-sub{
+ line-height:1.45;overflow-wrap:anywhere
+}
+.section[data-page="0"] .snaprow strong{
+ overflow-wrap:anywhere;max-width:66%
+}
