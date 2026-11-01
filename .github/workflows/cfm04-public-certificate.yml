@@ -1,0 +1,81 @@
+name: CFM-04 Cloudflare Public Production Certification
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cfm04-public-certificate.yml'
+      - 'frontend/**'
+      - 'backend/**'
+      - 'worker.py'
+      - 'wrangler.jsonc'
+      - 'pyproject.toml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cfm04-public-production
+  cancel-in-progress: true
+
+jobs:
+  public-production:
+    name: Cloudflare public exact-SHA, real API and six-page browser
+    runs-on: ubuntu-24.04
+    timeout-minutes: 17
+    steps:
+      - name: Checkout exact released main commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Wait boundedly for public Cloudflare exact commit manifest
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          EDGE_URL: https://agri-foresight.nirmikchawale1.workers.dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          matched=0
+          for attempt in $(seq 1 48); do
+            if curl --fail --silent --show-error --max-time 8 \
+              "$EDGE_URL/_release.json" --output /tmp/agri-release-manifest.json; then
+              if node --input-type=module -e '
+                import {readFileSync} from "node:fs";
+                let m;
+                try {m=JSON.parse(readFileSync("/tmp/agri-release-manifest.json","utf8"));} catch {process.exit(1);}
+                if(m.app!=="Agri Foresight"||m.generated_from!=="git"||
+                   m.git_commit_sha!==process.env.EXPECTED_SHA)process.exit(1);
+              '; then
+                matched=1
+                echo "PUBLIC_RELEASE_MANIFEST_PASS exact SHA: $EXPECTED_SHA"
+                break
+              fi
+            fi
+            echo "Live Cloudflare revision not yet equal to exact Git SHA; bounded poll $attempt/48"
+            sleep 10
+          done
+          if [ "$matched" != 1 ]; then
+            echo "::error::Public Worker did not serve exact main release manifest after bounded retry"
+            exit 1
+          fi
+      - name: Install browser test dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Install public Chromium browser
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Verify genuine public Cloudflare API and source contracts
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          EDGE_URL: https://agri-foresight.nirmikchawale1.workers.dev
+        run: node backend/scripts/cloudflare-smoke.mjs
+      - name: Verify all six live pages and 19-feature UI asset markers
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          EDGE_URL: https://agri-foresight.nirmikchawale1.workers.dev
+        working-directory: frontend
+        run: node scripts/cfm04-public-browser.mjs
