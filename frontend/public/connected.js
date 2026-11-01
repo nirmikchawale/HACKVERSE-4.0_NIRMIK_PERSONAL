@@ -1096,60 +1096,67 @@
   let forecastDay='all';
   let forecastOffset=0;
   let forecastRange=24;
+  // One shortcut, one date editor, one save button, one continue button.
   const deadlineGuide=el('section','wx-deadline-guide');
   deadlineGuide.id='deadlinePlanningGuide';
-  deadlineGuide.setAttribute('aria-label','Guided candidate deadline workflow');
-  here('deadlineNotice').insertAdjacentElement('afterend',deadlineGuide);
+  deadlineGuide.setAttribute('aria-label','Choose a model hour or enter your own candidate');
+  here('deadlineInput').closest('label.field').insertAdjacentElement('beforebegin',deadlineGuide);
+  const deadlineLanguage={
+    en:{quick:'Use next model hour',manual:'Enter a future time or select a model hour.',invalid:'Choose a future time.',due:'Candidate time remaining: ',saved:'Saved',unsaved:'Not saved',source:'Model hour',own:'Your time',save:'Save candidate deadline'},
+    mr:{quick:'पुढचा मॉडेल तास निवडा',manual:'पुढील वेळ भरा किंवा मॉडेल तास निवडा.',invalid:'पुढील वेळ निवडा.',due:'निवडलेल्या वेळेपर्यंत उरलेले: ',saved:'जतन केले',unsaved:'जतन नाही',source:'मॉडेल तास',own:'तुमची वेळ',save:'निवडलेली वेळ जतन करा'},
+    hi:{quick:'अगला मॉडल घंटा चुनें',manual:'आने वाला समय भरें या मॉडल घंटा चुनें।',invalid:'आने वाला समय चुनें।',due:'चुने समय तक शेष: ',saved:'सहेजा गया',unsaved:'अभी नहीं सहेजा',source:'मॉडल घंटा',own:'आपका समय',save:'चुना समय सहेजें'}
+  };
   function renderDeadlineGuide(){
+    const t=deadlineLanguage[state.lang]||deadlineLanguage.en;
     deadlineGuide.replaceChildren();
     const value=here('deadlineInput').value||'';
-    const saved=!!value&&state.deadline===value;
-    const stamp=Date.parse(value+':00+05:30');
-    const future=Number.isFinite(stamp)&&stamp>Date.now()+60000;
-    const selected=!!value;
-    const steps=el('ol','wx-guide-steps');
-    for(const [label,done] of [['Choose candidate',selected],['Save assumption',saved],['Declare resources',!!live.request]]){
-      const item=el('li',done?'is-complete':'',label+(done?' ✓':''));steps.append(item);
-    }
-    deadlineGuide.append(el('h3','','Your planning pathway'),steps);
-    let explanation;
-    if(!selected)explanation='Select a future model hour or enter your own IST deadline. Weather data is not a safe-work threshold.';
-    else if(!future)explanation='The selected deadline is not in the future. Select a later hour before saving.';
-    else{
-      const hours=(stamp-Date.now())/3600000;
-      explanation='Candidate time remaining: '+num(hours)+' hours, based only on the browser clock. '+
-        (live.selectedHour===value&&isCurrent()?'This exact hour is in the currently validated Open-Meteo model. ':
-          'This is a farmer-selected time, without a source-matched rainfall claim. ')+
-        (saved?'Saved for the next resource assessment.':'Save the candidate to use it in later FastAPI calculations.');
-    }
-    deadlineGuide.append(el('p','wx-guide-status',explanation));
-    const actions=el('div','wx-guide-actions');
-    const nextHour=el('button','btn','Use next available model hour');
-    nextHour.type='button';nextHour.id='deadlineGuideNextHour';
+    const timestamp=value?Date.parse(value+':00+05:30'):NaN;
+    const valid=Number.isFinite(timestamp)&&timestamp>Date.now()+60000;
+    const saved=valid&&state.deadline===value;
+    const model=valid&&live.selectedHour===value&&isCurrent();
     const candidates=candidateHours();
-    nextHour.disabled=!candidates.length;
-    nextHour.title=candidates.length?'Select earliest available future forecast record, not a recommended safe time.':
-      'No current future forecast hour is available. Manual deadline entry remains possible.';
-    nextHour.addEventListener('click',()=>{
+    const select=el('button','btn wx-next-hour',t.quick);
+    select.type='button';select.id='deadlineGuideNextHour';
+    select.disabled=!candidates.length;
+    select.title=select.disabled?'A current authenticated future forecast hour is unavailable. Enter a manual time.':
+      'Copy the earliest source-authenticated future hour as your proposed deadline, never a safety recommendation.';
+    select.addEventListener('click',()=>{
       const candidate=candidateHours()[0];if(!candidate)return;
       here('deadlineInput').value=candidate.time;
-      live.selectedHour=candidate.time;additional.deadlineSource='model';
+      live.selectedHour=candidate.time;
+      additional.deadlineSource='model';
       here('deadlineOriginPreview').textContent=evidenceText('selectedSource');
-      here('deadlineNotice').textContent='Source hour drafted. Confirm the candidate deadline; the model does not certify field safety.';
+      here('deadlineNotice').textContent='Model hour selected. Click Save candidate deadline to confirm.';
       clearResult();renderDeadlineGuide();
+      here('deadlineInput').focus({preventScroll:true});
     });
-    const confirm=el('button','btn primary','Save selected deadline');
-    confirm.type='button';confirm.id='deadlineGuideSave';
-    confirm.disabled=!future||saved;confirm.addEventListener('click',()=>here('saveDeadline').click());
-    const continueButton=el('button','btn','Continue to resources');
-    continueButton.type='button';continueButton.id='deadlineGuideContinue';
-    continueButton.disabled=!saved;
-    continueButton.addEventListener('click',()=>here('deadlineNotice').closest('.deadline-card')
-      .querySelector('.goto[data-target="2"]')?.click());
-    actions.append(nextHour,confirm,continueButton);deadlineGuide.append(actions);
+    deadlineGuide.append(select);
+    const note=el('span','wx-deadline-state');
+    note.id='deadlineStateSummary';note.setAttribute('role','status');
+    if(!value)note.textContent='';
+    else if(!valid)note.textContent=t.invalid;
+    else note.textContent=(saved?t.saved+' · ':t.unsaved+' · ')+
+      (model?t.source:t.own)+' · '+t.due+num((timestamp-Date.now())/3600000)+' h';
+    deadlineGuide.append(note);
+    const origin=here('deadlineOriginRow');
+    origin.hidden=!valid;
+    if(valid&&!here('deadlineOriginPreview').textContent.trim()){
+      here('deadlineOriginPreview').textContent=model?'Model candidate (not observed rain)':'Farmer-selected deadline';
+    }
+    here('saveDeadline').disabled=!valid||saved;
+    here('deadlineGuideContinue').disabled=!saved;
+    here('saveDeadline').title=valid?(saved?t.saved:t.save):t.invalid;
+    here('deadlineGuideContinue').title=saved?'Continue to resource planning':'Save a future candidate deadline first';
   }
   here('deadlineInput').addEventListener('input',renderDeadlineGuide);
+  here('deadlineInput').addEventListener('change',()=>setTimeout(renderDeadlineGuide,0));
   here('saveDeadline').addEventListener('click',()=>setTimeout(renderDeadlineGuide,0));
+  here('forecastSourceChip').addEventListener('click',()=>{
+    const target=document.getElementById('forecastQualityPanel');
+    if(!target)return;
+    target.scrollIntoView({behavior:'smooth',block:'start'});
+    target.querySelector('#forecastQualityMetrics button')?.focus({preventScroll:true});
+  });
   function renderWeather(){
     renderDeadlineGuide();
     renderSourceMatrix();
