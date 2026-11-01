@@ -710,6 +710,13 @@
         historyText('cached'):historyText('retrieved'))+' · '+
         governmentClimateData.days.length+' '+historyText('historyDays');
       renderGovernmentClimate(governmentClimateData);
+      govDetail.replaceChildren();
+      const sourceLink=el('a','','NASA POWER official daily API');
+      sourceLink.href='https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
+      sourceLink.rel='noopener noreferrer';sourceLink.target='_blank';
+      govDetail.append(historyText('source')+': ',sourceLink,' · '+historyText('latest')+': '+
+        governmentClimateData.latest_data_date+' · '+historyText('retrievedUtc')+': '+
+        governmentClimateData.retrieved_at_utc+'. '+governmentClimateData.notice);
       return;
     }
     if(!okLocation()){
