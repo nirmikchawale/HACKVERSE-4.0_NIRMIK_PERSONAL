@@ -42,7 +42,7 @@ test.describe('Page 04: one hundred Cloudflare-compatible, real-engine examples'
 
     await workbench.locator('.fw-search').fill('');
     await workbench.locator('.fw-facet[data-outcome="unknown"]').click();
-    await expect(workbench.locator('.fw-facet[data-filter="unknown"]')).toHaveAttribute('aria-pressed','true');
+    await expect(workbench.locator('.fw-facet[data-outcome="unknown"]')).toHaveAttribute('aria-pressed','true');
     await expect(workbench.locator('.fw-item').first()).toContainText('UNKNOWN');
     await workbench.locator('.fw-item').first().click();
     await expect(workbench.locator('#fwCaseDetail')).toContainText('readiness');
