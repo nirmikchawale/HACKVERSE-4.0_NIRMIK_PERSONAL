@@ -112,10 +112,13 @@ try{
   assert(await methodology.count()===1&&
     !await methodology.evaluate(e=>e.open),
     'Resource arithmetic must be available but collapsed by default');
+  await page.locator('#navDesktop [data-nav="2"]').click();
+  await methodology.waitFor({state:'visible',timeout:20000});
   await methodology.locator('summary').click();
   assert(await methodology.evaluate(e=>e.open),
     'Resource calculation disclosure must work');
   await methodology.locator('summary').click();
+  await page.locator('#navDesktop [data-nav="0"]').click();
 
   // Guard core planning controls as well as the newer evidence modules. This
   // frontend-path change also causes the mandatory real-backend gate to run.
