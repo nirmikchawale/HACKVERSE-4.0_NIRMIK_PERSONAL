@@ -133,6 +133,9 @@ test('F05/F11/F27 preserve translations, semantic source values and mobile bound
   await expect(page.locator('#nasaHistoryChart')).toContainText('ऐतिहासिक वर्षा');
   await page.locator('#language').selectOption('en');
   await expect(page.locator('#nasaRainChart .nasa-bar-day')).toHaveCount(14);
+  // Mobile page 02 must be visible before measuring its layout (hidden pages have 0-width rects).
+  await page.locator('#navMobile [data-nav="1"]').click();
+  await expect(page.locator('#historicalModelComparison')).toBeVisible();
   const bounds=await page.locator('#historicalModelComparison .evidence-contrast-card').evaluateAll(
     els=>els.map(x=>({left:x.getBoundingClientRect().left,right:x.getBoundingClientRect().right,width:x.getBoundingClientRect().width})));
   expect(bounds.every(x=>x.left>=0&&x.right<=390&&x.width>100)).toBe(true);
