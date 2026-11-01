@@ -40,9 +40,9 @@ test('six-answer progress updates without equating handling units with bags or q
   await page.locator('#confirmInputs').check();
   await expect(summary).toContainText('5 of 6');
   await expect(page.locator('#farmerAdvancedToggle')).toBeVisible();
-  await expect(page.locator('#baseline').closest('label')).toBeHidden();
+  await expect(page.locator('label:has(#baseline)')).toBeHidden();
   await page.locator('#farmerAdvancedToggle').click();
-  await expect(page.locator('#baseline').closest('label')).toBeVisible();
+  await expect(page.locator('label:has(#baseline)')).toBeVisible();
 });
 test('navigation and language changes never erase farmer-entered numbers',async({page})=>{
   await page.goto('/');
@@ -69,7 +69,7 @@ test('mobile switch and Help work without hiding the only navigation controls',a
   await page.goto('/');
   await expect(page.locator('#mobileExperienceSwitch')).toBeVisible();
   await page.locator('#navMobile [data-nav="5"]').click();
-  await expect(page.locator('#farmerHelpPanel h1')).toBeVisible();
+  await expect(page.locator('#farmerHelpPanel h2')).toBeVisible();
   await page.locator('#farmerHelpPanel .farmer-help-step').nth(1).click();
   await expect(page.locator('section.section.active')).toHaveAttribute('data-page','2');
   await page.locator('#mobileExperienceSwitch button').nth(1).click();
