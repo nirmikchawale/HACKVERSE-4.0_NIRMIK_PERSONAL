@@ -1,0 +1,153 @@
+name: CF-FEAS-06 read-only public farmer assessment certificate
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/cf-feas06-live-certificate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public:
+    name: Verify live Cloudflare assessment at desktop and mobile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      EDGE_URL: https://agri-foresight.nirmikchawale1.workers.dev
+      FEATURE_SHA: d69216847ce5b0d8ac9db20111fda048b0e208fa
+    steps:
+      - name: Checkout read-only audit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Verify Cloudflare serves merged assessment assets and descendant SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import {appendFileSync} from 'node:fs';
+          const base=process.env.FEATURE_SHA,origin=process.env.EDGE_URL;
+          const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+          let deployed=null;
+          for(let attempt=1;attempt<=48;attempt++){
+            try{
+              const suffix='?public_audit='+Date.now();
+              const [releaseResponse,htmlResponse,jsResponse,cssResponse]=await Promise.all([
+                fetch(origin+'/_release.json'+suffix,{signal:AbortSignal.timeout(14000)}),
+                fetch(origin+'/'+suffix,{signal:AbortSignal.timeout(14000)}),
+                fetch(origin+'/connected.js'+suffix,{signal:AbortSignal.timeout(14000)}),
+                fetch(origin+'/farm-evaluation-compact.css'+suffix,{signal:AbortSignal.timeout(14000)})
+              ]);
+              if(![releaseResponse,htmlResponse,jsResponse,cssResponse].every(x=>x.ok))
+                throw Error('Public manifest, HTML, connected JS or scoped CSS not all HTTP 200');
+              const manifest=await releaseResponse.json();
+              const html=await htmlResponse.text(),js=await jsResponse.text(),css=await cssResponse.text();
+              const sha=manifest.git_commit_sha;
+              const feature=html.includes('id="farmResultPanel"')&&
+                html.includes('id="farmResultMetrics"')&&
+                html.includes('/farm-evaluation-compact.css')&&
+                js.includes("here('farmResultMetrics').hidden=!evaluated")&&
+                css.includes('CF-FEAS-06')&&css.includes('.farm-eval-step');
+              console.log('PUBLIC_FEAS06_RELEASE_POLL',attempt,sha,'featureAssets='+feature);
+              if(!feature||!/^[a-f0-9]{40}$/.test(sha||''))throw Error('Feature not deployed');
+              const compareUrl='https://api.github.com/repos/nirmikchawale/HACKVERSE-4.0_NIRMIK_PERSONAL/compare/'+base+'...'+sha;
+              const relationResponse=await fetch(compareUrl,{headers:{Accept:'application/vnd.github+json'},signal:AbortSignal.timeout(16000)});
+              if(!relationResponse.ok)throw Error('Unable to verify production ancestry');
+              const relation=(await relationResponse.json()).status;
+              if(['identical','ahead'].includes(relation)){deployed=sha;break;}
+            }catch(err){console.log('PUBLIC_FEAS06_NOTICE',String(err.message).slice(0,170));}
+            await sleep(10000);
+          }
+          if(!deployed)throw Error('Public Cloudflare Worker not certified: new Scenario Lab can exist but merged personal assessment is not yet served');
+          console.log('PUBLIC_FEAS06_RELEASE_PASS',deployed,'includes',base);
+          appendFileSync(process.env.GITHUB_ENV,'LIVE_SHA='+deployed+'\n');
+          const health=await fetch(origin+'/api/health',{signal:AbortSignal.timeout(20000)});
+          if(!health.ok||!(await health.json()).ok)throw Error('Cloudflare public FastAPI health failed');
+          console.log('PUBLIC_FEAS06_API_HEALTH_PASS');
+          JS
+      - name: Install frontend browser harness
+        working-directory: frontend
+        run: npm install
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Test interactive public assessment without mocked API data
+        working-directory: frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import {chromium,expect} from '@playwright/test';
+          const origin=process.env.EDGE_URL,sha=process.env.LIVE_SHA;
+          const assert=(value,why)=>{if(!value)throw Error('PUBLIC_FEAS06_BROWSER_FAIL '+why);};
+          const browser=await chromium.launch({headless:true});
+          try{
+            for(const width of [1440,390]){
+              const context=await browser.newContext({viewport:{width,height:900},acceptDownloads:true});
+              const page=await context.newPage(),errors=[];
+              page.on('pageerror',error=>errors.push(error.message));
+              await page.addInitScript(()=>{localStorage.clear();sessionStorage.clear();});
+              const home=await page.goto(origin+'/',{waitUntil:'domcontentloaded',timeout:40000});
+              assert(home?.status()===200,'Root HTTP 200');
+              const nav=width<600?'#navMobile':'#navDesktop';
+              await page.locator(nav+' [data-nav="3"]').click();
+              await expect(page.locator('#resultHero')).toBeVisible({timeout:12000});
+              await expect(page.locator('#resultTitle')).toContainText('Not evaluated');
+              await expect(page.locator('#farmResultMetrics')).toBeHidden();
+              await expect(page.locator('#farmResultPanel')).toBeHidden();
+              await expect(page.locator('#resetAssessment')).toBeHidden();
+              for(const id of ['feasPlanningAction','feasResourcesAction','runAssessment'])
+                await expect(page.locator('#'+id)).toBeVisible();
+              await expect(page.locator('.farm-eval-disclosure')).not.toHaveAttribute('open','');
+              await page.locator('.farm-eval-disclosure summary').click();
+              await expect(page.locator('.farm-eval-disclosure')).toContainText('not a crop-safety');
+              await page.locator('.farm-eval-disclosure summary').click();
+              // Public read of the preserved 100-example catalog is source-labeled.
+              await expect(page.locator('#fw-count-all')).toHaveText('100',{timeout:35000});
+              assert(!(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)),'Horizontal overflow '+width);
+              if(width===1440){
+                // Only synthetic test inputs held in this isolated browser session.
+                // The request goes to the live, unmocked public FastAPI Worker.
+                await page.locator('#feasPlanningAction').click();
+                await expect(page.locator('section.section[data-page="1"]')).toHaveClass(/active/);
+                await page.locator('#deadlineInput').fill('2099-01-01T12:00');
+                await page.locator('#saveDeadline').click();
+                await page.locator('#navDesktop [data-nav="3"]').click();
+                await page.locator('#feasResourcesAction').click();
+                await expect(page.locator('section.section[data-page="2"]')).toHaveClass(/active/);
+                await page.locator('#quantity').fill('10');
+                await page.locator('#capacity').fill('6');
+                await page.locator('#duration').fill('1');
+                await page.locator('#readiness').selectOption('yes');
+                await page.locator('#confirmInputs').check();
+                await page.locator('#saveResources').click();
+                await page.locator('#navDesktop [data-nav="3"]').click();
+                await expect(page.locator('#farmResultMetrics')).toBeHidden();
+                await page.locator('#runAssessment').click();
+                await expect(page.locator('#resultTitle')).toHaveText('API VERIFIED · BLOCKED',{timeout:40000});
+                await expect(page.locator('#resultGap')).toHaveText('4');
+                await expect(page.locator('#farmResultMetrics')).toBeVisible();
+                await expect(page.locator('#farmResultPanel')).toBeVisible();
+                await expect(page.locator('#resetAssessment')).toBeVisible();
+                await page.locator('#farmExplanation summary').click();
+                await expect(page.locator('#farmExplanation')).toHaveAttribute('open','');
+                await expect(page.locator('#constraintList .constraint-line')).not.toHaveCount(0);
+                await expect(page.locator('#decisionDiagnostics')).toContainText('BLOCKED');
+                await page.locator('#resetAssessment').click();
+                await expect(page.locator('#farmResultMetrics')).toBeHidden();
+                await expect(page.locator('#farmResultPanel')).toBeHidden();
+                await expect(page.locator('#resetAssessment')).toBeHidden();
+              } else {
+                await page.locator('#feasResourcesAction').click();
+                await expect(page.locator('section.section[data-page="2"]')).toHaveClass(/active/);
+              }
+              assert(!(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)),'Overflow after actions '+width);
+              assert(errors.length===0,'JavaScript exceptions '+errors.slice(0,2).join('; '));
+              console.log('PUBLIC_FEAS06_BROWSER_PASS',width,'sha='+sha);
+              await context.close();
+            }
+          }finally{await browser.close();}
+          JS
