@@ -164,6 +164,20 @@
   nasa.href = 'https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
   nasa.target = '_blank'; nasa.rel = 'noopener noreferrer';
   evidence.append(nasa);
+  const evidenceActions = node('div', 'fw-evidence-actions');
+  evidenceActions.append(
+    makeButton('Explain verified vs unavailable data', () => {
+      climateInfo.hidden = !climateInfo.hidden;
+    }, 'btn'),
+    makeButton('Choose a forecast planning deadline', () => jump(1), 'btn')
+  );
+  const climateInfo = node('p', 'fw-status',
+    'NASA POWER values are historical gridded observations at a district reference, not a farm sensor. ' +
+    'A government API failure means no daily readings can be shown. You can still open its official documentation ' +
+    'and use the real forecast page for a model-informed, user-selected deadline.');
+  climateInfo.hidden = true;
+  climateInfo.id = 'fwClimateInfo';
+  evidence.append(evidenceActions, climateInfo);
   root.append(evidence);
 
   hero.insertAdjacentElement('beforebegin', root);
@@ -171,6 +185,52 @@
   divider.append(node('h2', '', 'Your farm-specific assessment'),
     node('p', '', 'Use your own confirmed work quantities, handling readiness and candidate deadline on Pages 02–03. Only their genuine server result is displayed below.'));
   hero.insertAdjacentElement('beforebegin', divider);
+  // Existing farmer-specific metrics are useful navigation, never guessed farm values.
+  // A short action replaces the decorative em dash only while no server result exists.
+  const personalMetricTargets = [
+    ['resultGoal', 'Enter target →', 2, 'Set the actual work target on Farm resources.'],
+    ['resultCap', 'Confirm capacity →', 2, 'Confirm actual comparable handling capacity on Farm resources.'],
+    ['resultGap', 'Assess resources →', 2, 'Capacity shortfall requires your declared target and capacity followed by a real FastAPI assessment.'],
+    ['resultSlack', 'Set deadline →', 1, 'Time slack requires your chosen deadline and actual task-duration estimate.']
+  ];
+  const personalActions = [];
+  for (const [id, actionText, destination, help] of personalMetricTargets) {
+    const value = document.getElementById(id);
+    const tile = value?.closest('.metric-box');
+    if (!tile) continue;
+    tile.setAttribute('role', 'button');
+    tile.setAttribute('tabindex', '0');
+    tile.setAttribute('aria-label', help + ' Activate to open the relevant form.');
+    tile.classList.add('fw-personal-action');
+    const updateText = () => {
+      const valueText = (value.textContent || '').trim();
+      if (valueText === '—' || valueText === '–' || valueText === '-') value.textContent = actionText;
+    };
+    updateText();
+    const observer = new MutationObserver(updateText);
+    observer.observe(value, { childList:true, characterData:true, subtree:true });
+    tile.addEventListener('click', () => jump(destination));
+    tile.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); jump(destination); }
+    });
+    personalActions.push(tile);
+  }
+  const readinessRoutes = [1, 2, 2, 3];
+  for (const [index, tile] of [...page.querySelectorAll('.snapshot .snaprow')].entries()) {
+    if (index > 3) break;
+    const destination = readinessRoutes[index];
+    tile.classList.add('fw-personal-action');
+    tile.setAttribute('role', 'button');
+    tile.setAttribute('tabindex', '0');
+    tile.setAttribute('aria-label', 'Open ' + (tile.querySelector('span')?.textContent || 'planning check') + ' details');
+    tile.addEventListener('click', () => destination === 3 ? void checkApiHealth() : jump(destination));
+    tile.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (destination === 3) void checkApiHealth(); else jump(destination);
+      }
+    });
+  }
 
   let records = [];
   let packageOnly = false;
@@ -424,7 +484,16 @@
         (data.status === 'cached_recent' ? 'recent verified server cache' : 'live provider response') +
         ' · retrieved ' + data.retrieved_at_utc + '.';
       for (const day of data.days) {
-        const row = node('div', 'fw-history-row');
+        const row = node('button', 'fw-history-row fw-history-action');
+        row.type = 'button';
+        row.setAttribute('aria-label', 'View verified NASA historical record for ' + day.date);
+        row.addEventListener('click', () => {
+          climateInfo.hidden = false;
+          climateInfo.textContent = day.date + ' · NASA POWER district-reference grid. ' +
+            (day.precipitation_mm_day === null ? 'Rainfall value not published; ' : 'Historical rain ' + number(day.precipitation_mm_day) + ' mm/day; ') +
+            (day.temperature_c === null ? 'temperature value not published.' : 'historical temperature ' + number(day.temperature_c) + ' degrees C.') +
+            ' Neither reading is a forecast or direct measurement at your farm.';
+        });
         row.append(node('time', '', day.date),
           node('strong', '', day.precipitation_mm_day === null ? 'Rain: unavailable' : 'Rain: ' + number(day.precipitation_mm_day) + ' mm'),
           node('span', '', day.temperature_c === null ? 'Temp: unavailable' : 'Temp: ' + number(day.temperature_c) + ' °C'));
