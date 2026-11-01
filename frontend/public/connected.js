@@ -11,7 +11,7 @@
   // Original palette, layout and source-native data remain untouched.
   const typographyStyle=document.createElement('link');
   typographyStyle.rel='stylesheet';typographyStyle.href='/agri-typography.css';
-  document.head.append(typographyStyle);
+  if(!document.querySelector('link[href="/agri-typography.css"]'))document.head.append(typographyStyle);
   const deadlineStyles=document.createElement('link');
   deadlineStyles.rel='stylesheet';deadlineStyles.href='/deadline-comparisons.css';
   document.head.append(deadlineStyles);
@@ -29,7 +29,7 @@
   document.head.append(climateStyle);
   const overviewLayoutStyle=document.createElement('link');
   overviewLayoutStyle.rel='stylesheet';overviewLayoutStyle.href='/overview-layout.css';
-  document.head.append(overviewLayoutStyle);
+  if(!document.querySelector('link[href="/overview-layout.css"]'))document.head.append(overviewLayoutStyle);
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;};
   const num=n=>Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'Unknown';
   const okLocation=()=>state.place?.state==='Maharashtra'&&state.place?.city?.trim().toLowerCase()==='jalna';
