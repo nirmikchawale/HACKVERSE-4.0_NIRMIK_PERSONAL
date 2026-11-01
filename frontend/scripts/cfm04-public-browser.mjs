@@ -75,20 +75,33 @@ try{
   assert(await page.locator('#navDesktop button[data-nav]:visible').count()===6,
     'Esc must restore all workspace routes');
 
-  // Interactive Cloudflare workbench must work on the exact deployed production SHA.
-  await page.locator('#evidenceSourceGrid [data-source-id="imd"]').waitFor({state:'attached',timeout:25000});
-  assert(await page.locator('#evidenceSourceGrid .source-matrix-card').count()===5,'Five source choices missing');
-  await page.locator('#evidenceSourceGrid [data-source-id="imd"]').click();
-  assert((await page.locator('#sourceWorkbenchDetail').textContent()).includes('no validated live IMD feed'),'Do not imply live IMD connection');
-  const official=page.locator('#sourceWorkbenchDetail a.source-detail-action.primary');
-  assert(await official.getAttribute('href')==='https://mausam.imd.gov.in/responsive/districtWiseWarning.php','Official IMD handoff missing');
+  // CF-OVERVIEW-02: only genuine weather/history receipts belong on Home.
+  const cards=page.locator('#evidenceSourceGrid .source-matrix-card');
+  await cards.first().waitFor({state:'attached',timeout:25000});
+  assert(await cards.count()===3,'Overview must present engine, model and NASA only');
+  assert(await page.locator('#evidenceSourceGrid [data-source-id="imd"]').count()===0,'Disconnected IMD tile returned to Overview');
+  assert(await page.locator('#evidenceSourceGrid [data-source-id="farm"]').count()===0,'Unverified assessment tile returned to Overview');
+  const receipts=page.locator('#sourceActivityRows .source-activity-item');
+  assert(await receipts.count()===2,'Only weather and historical source receipts may appear on Overview');
+  assert(await page.locator('#sourceActivityRows [data-source="model"]').count()===1,'Forecast receipt missing');
+  assert(await page.locator('#sourceActivityRows [data-source="nasa"]').count()===1,'NASA historical receipt missing');
+  assert(!(await page.locator('#sourceActivityReceipt').textContent()).includes('No verified server assessment'),
+    'Old unfinished server assessment text returned to homepage');
+  assert(!(await page.locator('#sourceActivityReceipt').textContent()).includes('IMD official warnings'),
+    'Old disconnected official warning text returned to homepage');
   await page.locator('[data-filter="available"]').click();
-  const responsive=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
+  const available=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
   await page.locator('[data-filter="attention"]').click();
-  const missing=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
-  assert(responsive+missing===5,'Source filters do not represent exactly five independent statuses');
+  const needReview=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
+  assert(available+needReview===3,'Active evidence filters must partition three source choices');
   await page.locator('[data-filter="all"]').click();
-  assert(await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count()===5,'All sources not restored');
+  assert(await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count()===3,
+    'All three interactive sources must be restored');
+  const receiptBoxes=await receipts.evaluateAll(nodes=>nodes.map(node=>({
+    left:node.getBoundingClientRect().left,right:node.getBoundingClientRect().right,
+    y:node.getBoundingClientRect().y,height:node.getBoundingClientRect().height})));
+  assert(receiptBoxes.length===2&&Math.abs(receiptBoxes[0].y-receiptBoxes[1].y)<=2,
+    'Two expanded evidence receipts must align on desktop');
   // Guard core planning controls as well as the newer evidence modules. This
   // frontend-path change also causes the mandatory real-backend gate to run.
   const selectors=['#apiConnectionStatus','#sourceLedger','#deadlineInput',
@@ -131,7 +144,7 @@ try{
   console.log(JSON.stringify({
     result:'PUBLIC_BROWSER_PASS',url:origin,commit:expected,
     sourceMarkers:Object.keys(features),sixPages:true,desktop:true,mobile:true,
-    languages:['en','mr','hi'],print:true,realBackendSeparateSmoke:true,interactiveSourceWorkbench:true
+    languages:['en','mr','hi'],print:true,realBackendSeparateSmoke:true,interactiveSourceWorkbench:true,cleanOverviewReceipts:true
   }));
   await mobile.close();await desktop.close();
 }finally{
