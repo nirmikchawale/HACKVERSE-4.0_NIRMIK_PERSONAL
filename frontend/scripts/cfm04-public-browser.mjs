@@ -44,6 +44,22 @@ try{
     assert((await result.text()).length>100,'Empty CSS asset '+path);
   }
 
+  // FE-01: the clean public app now opens a farmer-focused navigation.
+  // Certify that default before switching to the original Detailed workspace
+  // for the unchanged grouped-sidebar, evidence, methodology and print checks.
+  assert(await page.locator('body').getAttribute('data-experience')==='farmer',
+    'Farmer View must be the public default for a clean visitor');
+  const farmerNav=page.locator('#navDesktop [data-nav]');
+  assert(await farmerNav.count()===6,'Farmer View must expose six real routes');
+  const farmerLabels=await farmerNav.allTextContents();
+  assert(farmerLabels.some(x=>x.includes('Check Weather'))&&
+         farmerLabels.some(x=>x.includes('My Farm Details'))&&
+         farmerLabels.some(x=>x.includes('Help')),
+    'Farmer View lost weather, farm details or help navigation');
+  await page.locator('#experienceSwitch button').filter({hasText:'Detailed View'}).click();
+  assert(await page.locator('body').getAttribute('data-experience')==='detailed',
+    'Farmer to Detailed switch did not restore the original workspace');
+  // The subsequent legacy assertions intentionally inspect Detailed View.
   // Post-font production certificate: verifies approved typography and
   // grouped navigation on the actual clean workers.dev address, not a PR build.
   await page.waitForFunction(() => {
