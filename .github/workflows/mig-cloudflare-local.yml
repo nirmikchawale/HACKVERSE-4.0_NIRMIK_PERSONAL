@@ -1,7 +1,7 @@
 name: MIG-Cloudflare Local Python Worker Certification
 on:
   pull_request:
-    branches: [main]
+    branches: [main, migration/cloudflare-typography-01]
     paths:
       - 'backend/**'
       - 'frontend/**'
@@ -51,6 +51,7 @@ jobs:
           with zipfile.ZipFile(paths[0]) as wheel:
               names=wheel.namelist()
           assert 'backend/unlockplan/edge.py' in names, 'Cloudflare API code not packaged'
+          assert 'backend/unlockplan/scenarios.py' in names, 'Cloudflare scenarios module not packaged'
           assert not any(s.startswith(('frontend/','contrib/','backend/tests/')) for s in names), 'Non-Python packages leaked into wheel'
           print('Cloudflare Python root wheel packaging PASS')
           PY
@@ -77,6 +78,7 @@ jobs:
           paths=[p.relative_to(bundle).as_posix() for p in bundle.rglob('*') if p.is_file()]
           assert 'worker.py' in paths
           assert any(p.endswith('unlockplan/edge.py') for p in paths)
+          assert any(p.endswith('unlockplan/scenarios.py') for p in paths)
           assert not any(p.startswith(('frontend/', '.venv/', '.venv-workers/')) for p in paths)
           print('Worker application boundary PASS; no frontend tooling or host environments bundled')
           PYCODE

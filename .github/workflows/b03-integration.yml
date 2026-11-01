@@ -6,14 +6,14 @@ on:
     paths:
       - 'backend/**'
       - 'frontend/**'
-      - 'vercel.json'
+      - 'wrangler.jsonc'
       - '.github/workflows/b03-integration.yml'
   pull_request:
-    branches: [main]
+    branches: [main, migration/cloudflare-typography-01]
     paths:
       - 'backend/**'
       - 'frontend/**'
-      - 'vercel.json'
+      - 'wrangler.jsonc'
       - '.github/workflows/b03-integration.yml'
   workflow_dispatch:
 
@@ -75,7 +75,7 @@ jobs:
         working-directory: frontend
         env:
           B03_INTEGRATION: 'true'
-        run: npm run test:browser -- tests/browser/b03-real-api.spec.mjs
+        run: npm run test:browser -- tests/browser/b03-real-api.spec.mjs tests/browser/feasibility-100-case.spec.mjs
       - name: Preserve browser evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

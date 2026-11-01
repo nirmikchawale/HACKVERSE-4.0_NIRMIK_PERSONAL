@@ -49,6 +49,12 @@ const run=async()=>{
   before:caseData,after:caseData,selected_hour_local:'bad'
  });
  assert(badReplan.status===422,'Malformed forecast hour was not rejected');
+ const scenarios=JSON.parse((await get('/api/feasibility-scenarios')).text);
+ assert(scenarios.count===100 && scenarios.records?.length===100,'Worker did not return 100 Python assessments');
+ assert(scenarios.data_kind==='illustrative_planning_cases','Scenario provenance invalid');
+ assert(scenarios.records.every(x=>x.input_kind==='configured_example_not_farm_observation'),'Scenario inputs mislabeled');
+ assert(new Set(scenarios.records.map(x=>x.id)).size===100,'Scenario IDs not unique');
+ assert(['feasible','blocked','unknown'].every(kind=>scenarios.records.some(x=>x.result.status===kind)),'Scenario coverage inadequate');
  const [f,n]=await Promise.all([
    get('/api/forecast').then(x=>JSON.parse(x.text)),
    get('/api/government-climate').then(x=>JSON.parse(x.text))
