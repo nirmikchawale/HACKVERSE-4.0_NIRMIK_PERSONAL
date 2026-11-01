@@ -218,17 +218,13 @@ function syncWeight(which){
 }
 function setUnit(v){
  if(!['kg','quintal'].includes(v))return;
- // Scale only the user-facing inputs; underlying normalized kilograms never change.
+ // Switch the visual unit without changing the normalized kilograms used by FastAPI.
+ const oldFactor=factor();
+ const extraKg=safeValue(amountInput.value)?Number(amountInput.value)*oldFactor:null;
  meta.unit=v;unitSelect.value=v;
  targetInput.value=toDisplay(meta.targetKg);capacityInput.value=toDisplay(meta.capacityKg);
- const a=amountInput.value;
- if(a!==''&&Number.isFinite(Number(a))){
-   const amountKg=Number(a)*(v==='quintal'?1:100); // rewritten below from saved normalized option
-   const existing=option('cotton-extra-help');
-   if(existing&&safeValue(String(existing.amount)))amountInput.value=toDisplay(Number(existing.amount));
-   else amountInput.value='';
- }
- persistMeta();paintWords();paintDecision();
+ if(extraKg!==null)amountInput.value=String(Number((extraKg/factor()).toFixed(5)));
+ persistMeta();paintWords();
 }
 function syncExtra(){
  additional.changes=additional.changes.filter(c=>c.id!=='cotton-extra-help');
