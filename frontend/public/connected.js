@@ -7,6 +7,7 @@
   const evidenceStyle=document.createElement('link');
   evidenceStyle.rel='stylesheet';evidenceStyle.href='/model-evidence.css';
   document.head.append(evidenceStyle);
+  const workspaceStyle=document.createElement('link');workspaceStyle.rel='stylesheet';workspaceStyle.href='/weather-workspace.css';document.head.append(workspaceStyle);
   // One shared responsive type scale for all six dashboard pages.
   // Original palette, layout and source-native data remain untouched.
   const typographyStyle=document.createElement('link');
@@ -426,6 +427,15 @@
   const hourlyDate=el('select','hourly-evidence-select');hourlyDate.id='hourlyEvidenceDate';
   hourlyDate.setAttribute('aria-label','Filter hourly model evidence by Indian date');
   hourlyLabel.append(hourlyDate);hourlyControls.append(hourlyLabel);
+  const hourlyScopeLabel=el('label','hourly-evidence-filter');
+  const hourlyScope=el('select','hourly-evidence-select');hourlyScope.id='hourlyEvidenceScope';
+  for(const [value,label] of [['all','All hours · future first'],['upcoming','Upcoming candidate hours'],
+    ['past','Past hours · evidence only'],['missing-rain','Missing rainfall values'],
+    ['missing-chance','Missing probability values']]){
+    const option=el('option','',label);option.value=value;hourlyScope.append(option);
+  }
+  hourlyScopeLabel.append(el('span','','Inspect model hours'),hourlyScope);hourlyControls.append(hourlyScopeLabel);
+  hourlyScope.addEventListener('change',renderHourlyEvidence);
   const hourlyDayExport=el('button','btn','Export selected day (CSV)');
   hourlyDayExport.id='exportSelectedModelDay';hourlyDayExport.type='button';hourlyDayExport.disabled=true;
   hourlyControls.append(hourlyDayExport);
@@ -456,13 +466,19 @@
     hourlyDate.value=distinctDates.includes(retained)?retained:'all';
     hourlyDate.disabled=!evidence;
     hourlyDayExport.disabled=!evidence||hourlyDate.value==='all';
-    hourlyDayExport.title=evidenceText('dayExportNote');
+    hourlyDayExport.title=hourlyDate.value==='all'?'Choose one IST date to enable selected-day CSV.':evidenceText('dayExportNote');
     if(!evidence){
       hourlySummary.textContent=okLocation()?evidenceText('hourlyNoData'):evidenceText('hourlyWrongPlace');
       hourlyTableContainer.append(el('p','hourly-evidence-note',evidenceText('hourlyEmpty')));
       return;
     }
-    const filtered=hours.filter(h=>hourlyDate.value==='all'||h.time.startsWith(hourlyDate.value));
+    const isFuture=h=>Date.parse(h.time+':00+05:30')>Date.now()+60000;
+    const filtered=hours.filter(h=>(hourlyDate.value==='all'||h.time.startsWith(hourlyDate.value))&&
+      (hourlyScope.value==='all'||(hourlyScope.value==='upcoming'&&isFuture(h))||
+       (hourlyScope.value==='past'&&!isFuture(h))||
+       (hourlyScope.value==='missing-rain'&&h.precipitation_mm===null)||
+       (hourlyScope.value==='missing-chance'&&h.precipitation_probability_pct===null)))
+      .sort((a,b)=>Number(isFuture(b))-Number(isFuture(a))||a.time.localeCompare(b.time));
     hourlySummary.textContent=evidenceText('showing')+' '+filtered.length+' '+evidenceText('of')+' '+hours.length+' '+evidenceText('records');
     const table=el('table','hourly-evidence-table');
     const head=el('thead'),heading=el('tr');
@@ -503,7 +519,10 @@
       });
       actionCell.append(action);tr.append(actionCell);body.append(tr);
     }
-    table.append(body);hourlyTableContainer.append(table);
+    table.append(body);
+    if(!filtered.length)hourlyTableContainer.append(el('p','hourly-evidence-note',
+      'No model records match these filters. This does not establish dry weather.'));
+    else hourlyTableContainer.append(table);
   }
 
   hourlyDayExport.addEventListener('click',()=>{
