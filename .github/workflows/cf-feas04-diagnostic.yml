@@ -1,0 +1,25 @@
+name: CF-FEAS-04 Public API Diagnostic
+on:
+  pull_request:
+    branches: [migration/cloudflare-typography-01]
+    paths:
+      - 'frontend/**'
+      - 'scripts/**'
+      - '.github/workflows/cf-feas04-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    name: Read-only live Cloudflare API and static asset diagnosis
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '22'
+      - name: Diagnose currently hosted public URLs without mutation
+        run: node scripts/diagnose_cloudflare_feasibility.mjs
