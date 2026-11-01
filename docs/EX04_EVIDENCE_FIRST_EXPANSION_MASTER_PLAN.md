@@ -1,8 +1,8 @@
 # Agri Foresight — Evidence-First Expansion Master Plan (EX-04)
 
-**Baseline inspected:** \`main\` at \`410f8a522ca8cc8bf4df6dac03aed93bc42a2e89\`, 1 November 2026.  
-**Candidate branch:** \`expansion/evidence-first-fieldtools-04\`.  
-**App:** one six-screen Agri Foresight web application, Jalna, Maharashtra, rain preparedness of **already-picked cotton**. No nested app, second dashboard, or separate deployed product.  
+**Baseline inspected:** \`main\` at \`410f8a522ca8cc8bf4df6dac03aed93bc42a2e89\`, 1 November 2026.
+**Candidate branch:** \`expansion/evidence-first-fieldtools-04\`.
+**App:** one six-screen Agri Foresight web application, Jalna, Maharashtra, rain preparedness of **already-picked cotton**. No nested app, second dashboard, or separate deployed product.
 **Release status:** protected \`main\` and Vercel production require exact-commit checks; latest observed production deployment was behind the inspected \`main\` by a merge. This document does **not** authorize bypassing release gates.
 
 ## Mission / optimized master execution prompt

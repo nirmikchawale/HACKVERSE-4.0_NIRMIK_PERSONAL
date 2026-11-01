@@ -64,7 +64,7 @@ const run=async()=>{
    assert(['retrieved_live','cached_recent'].includes(n.status) && n.days.length>0,
      'PUBLIC_GATE: verified NASA POWER historical government data is not available');
  }
- console.log(JSON.stringify({result:'PASS',host:'local Cloudflare Python Worker',forms:'real FastAPI',
+ console.log(JSON.stringify({result:'PASS',host:origin,forms:'real FastAPI',
    forecast:f.status,forecast_error_type:f.status==='unavailable'?f.error:null,forecast_error_stage:f.status==='unavailable'?f.error_stage:null,forecast_notice:f.notice,government:n.status,government_days:n.days.length,synthetic_live_data:false}));
 };
 run().catch(error=>{console.error('MIGRATION_SMOKE_FAIL '+String(error));process.exitCode=1});

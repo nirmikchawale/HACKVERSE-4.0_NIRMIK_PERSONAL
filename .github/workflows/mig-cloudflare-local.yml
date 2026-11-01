@@ -5,9 +5,10 @@ on:
     paths:
       - 'backend/**'
       - 'frontend/**'
-      - 'worker.py'
       - 'wrangler.jsonc'
       - 'pyproject.toml'
+      - 'uv.lock'
+      - 'pylock.toml'
       - 'scripts/prepare-cloudflare-release.mjs'
       - '.github/workflows/mig-cloudflare-local.yml'
   workflow_dispatch:
@@ -59,7 +60,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          uv run python - <<'PY'
+          uv run --with packaging python - <<'PY'
           import importlib.metadata as md
           from packaging.version import Version
           cli=md.version("workers-py")
@@ -69,6 +70,15 @@ jobs:
           print("Cloudflare pywrangler and SDK versions PASS:", cli, sdk)
           PY
           uv run pywrangler deploy --dry-run --outdir /tmp/agri-foresight-bundle
+          python - <<'PYCODE'
+          from pathlib import Path
+          bundle=Path('/tmp/agri-foresight-bundle')
+          paths=[p.relative_to(bundle).as_posix() for p in bundle.rglob('*') if p.is_file()]
+          assert 'worker.py' in paths
+          assert any(p.endswith('unlockplan/edge.py') for p in paths)
+          assert not any(p.startswith(('frontend/', '.venv/', '.venv-workers/')) for p in paths)
+          print('Worker application boundary PASS; no frontend tooling or host environments bundled')
+          PYCODE
       - name: Start real Cloudflare Python Worker locally
         shell: bash
         run: |

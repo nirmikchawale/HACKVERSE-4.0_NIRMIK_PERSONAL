@@ -12,3 +12,7 @@ python_modules/
 node_modules/.cache/
 *.local.log
 .wrangler/
+
+.venv-workers/
+*.egg-info/
+frontend/test-results/

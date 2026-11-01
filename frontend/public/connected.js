@@ -4,11 +4,121 @@
   "use strict";
   const live={forecast:null,sources:null,health:null,evaluation:null,request:null,comparison:null,replan:null,selectedHour:null,selectedPackage:null,forecastLoading:false,error:null};
   const here=id=>document.getElementById(id);
+  const evidenceStyle=document.createElement('link');
+  evidenceStyle.rel='stylesheet';evidenceStyle.href='/model-evidence.css';
+  document.head.append(evidenceStyle);
+  // One shared responsive type scale for all six dashboard pages.
+  // Original palette, layout and source-native data remain untouched.
+  const typographyStyle=document.createElement('link');
+  typographyStyle.rel='stylesheet';typographyStyle.href='/agri-typography.css';
+  if(!document.querySelector('link[href="/agri-typography.css"]'))document.head.append(typographyStyle);
+  const deadlineStyles=document.createElement('link');
+  deadlineStyles.rel='stylesheet';deadlineStyles.href='/deadline-comparisons.css';
+  document.head.append(deadlineStyles);
   const css04=document.createElement('link');css04.rel='stylesheet';css04.href='/evidence-04.css';document.head.append(css04);
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;};
   const num=n=>Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'Unknown';
   const okLocation=()=>state.place?.state==='Maharashtra'&&state.place?.city?.trim().toLowerCase()==='jalna';
   const statuses=['feasible','blocked','unknown','completed'];
+  let comparisonGeneration=0,attestedDeadlineRows=[],candidateSignature='';
+  let manualGeneration=0,manualDeadlineRows=[];
+
+  // EX-09B: page-local translations; values never change numeric source facts.
+  const evidenceLanguages={
+    en:{
+      dayExportNote:'Choose one IST date to export only those verified model hours.',
+      dayExport:'Export selected day (CSV)',
+      qualityTitle:'Forecast evidence quality',
+      qualityIntro:'Open-Meteo provides modeled weather, not a field rain gauge or a crop-safe onset threshold. Missing hours and missing values are never interpreted as dry weather.',
+      qualityExport:'Export verified modeled hours (CSV)',
+      qualityFoot:'Export is available only for the supported Jalna pilot and a validated current model response. No farmer declarations are included.',
+      qualityMissing:'No validated current model readings to audit or export. Refresh the forecast to retrieve genuine evidence.',
+      qualityUnsupported:'Not available for this location. Jalna, Maharashtra is the only supported pilot.',
+      provenance:'Provenance',retrieved:'Retrieved (UTC)',elapsed:'Elapsed since retrieval',
+      reported:'Reported hourly records',rainCount:'Rainfall values',chanceCount:'Rain-probability values',
+      duplicates:'Timestamp duplicates',gaps:'Hourly timestamp gaps',
+      cached:'Recent backend-validated model cache',fetched:'Backend-retrieved model forecast',
+      minutes:'minute(s), calculated from the provided timestamp',
+      rainValues:'hours reported a modeled millimeter value',chanceValues:'hours reported a model probability',
+      duplicateUnits:'duplicate record(s)',gapUnits:'absent hourly position(s)',
+      gapLong:'Range too long to verify in this view',
+      timeline:'Full model-hour timeline',timelineIntro:'Source-native modeled rain in millimeters and hourly probability, not observed rain or a crop-safety threshold.',
+      filter:'Filter by model date (IST)',allDates:'All available model dates',dateSuffix:'(IST)',
+      timeHeader:'Model hour · IST',rainHeader:'Modeled rain · mm',chanceHeader:'Model rain probability · %',actionHeader:'Planning action',
+      hourAction:'Use as proposed deadline',unavailable:'Unavailable',pastHour:'Past/current model hours cannot be selected as future deadlines.',
+      hourlyNoData:'No eligible current model forecast. Refresh weather to inspect genuine source hours.',
+      hourlyWrongPlace:'Hourly model data is unavailable for locations outside the Jalna pilot.',
+      hourlyEmpty:'Unavailable, expired and unsupported sources never display sample data.',
+      showing:'Displaying',of:'of',records:'authenticated model hour record(s); all times are IST. Each selected hour is only a proposed planning deadline.',
+      selected:'Model hour selected. Click Save candidate deadline to confirm this assumption.',
+      selectedSource:'Proposed hour chosen from source-validated Open-Meteo model evidence. Not a safe-rain threshold.',
+      expiredHour:'The model hour is no longer valid. Refresh the forecast before selecting another.'
+    },
+    mr:{
+      dayExportNote:'फक्त त्या दिवसाचे पडताळलेले मॉडेल तास मिळवण्यासाठी IST दिवस निवडा.',
+      dayExport:'निवडलेल्या दिवसाचा CSV घ्या',
+      qualityTitle:'हवामान अंदाजाच्या पुराव्याची गुणवत्ता',
+      qualityIntro:'Open-Meteo चे हवामान आकडे हे मॉडेलचे अंदाज आहेत; शेतातील मोजमाप किंवा सुरक्षित पावसाची वेळ नाही. नसलेला डेटा म्हणजे पाऊस शून्य असा अर्थ नाही.',
+      qualityExport:'पडताळलेल्या हवामान अंदाजाचा CSV घ्या',
+      qualityFoot:'फक्त जालना आणि पडताळलेल्या ताज्या मॉडेल अंदाजासाठी निर्यात उपलब्ध आहे. शेतकऱ्याची वैयक्तिक माहिती यात नाही.',
+      qualityMissing:'सध्या पडताळलेला ताजा अंदाज नाही. वास्तविक डेटा मिळवण्यासाठी अंदाज पुन्हा मिळवा.',
+      qualityUnsupported:'या ठिकाणासाठी उपलब्ध नाही. हा पायलट फक्त जालना, महाराष्ट्र येथे चालतो.',
+      provenance:'माहितीचा स्रोत',retrieved:'मिळाल्याची वेळ (UTC)',elapsed:'मिळाल्यापासूनचा कालावधी',
+      reported:'नोंदवलेले तास',rainCount:'पावसाचे उपलब्ध आकडे',chanceCount:'पावसाच्या शक्यतेचे आकडे',
+      duplicates:'सारखी वेळ पुन्हा',gaps:'तासांच्या नोंदीतील अंतर',
+      cached:'अलीकडे पडताळलेला मॉडेल कॅश',fetched:'Backend कडून मिळालेला मॉडेल अंदाज',
+      minutes:'मिनिटे; स्रोताच्या वेळेवरून मोजलेले',
+      rainValues:'तासांसाठी मॉडेल पावसाचे मिमी आकडे',chanceValues:'तासांसाठी मॉडेल पावसाची शक्यता',
+      duplicateUnits:'दुबार नोंदी',gapUnits:'नसलेल्या तासांच्या नोंदी',
+      gapLong:'या दृश्यात वेळेची व्याप्ती तपासता येत नाही',
+      timeline:'सर्व तासांचा हवामान अंदाज',
+      timelineIntro:'मॉडेलनुसार प्रत्येक तासातील पाऊस (मिमी) व शक्यता; हे प्रत्यक्ष निरीक्षण किंवा सुरक्षिततेचे प्रमाणपत्र नाही.',
+      filter:'मॉडेलचा दिवस निवडा (IST)',allDates:'सर्व उपलब्ध दिवस',dateSuffix:'(IST)',
+      timeHeader:'मॉडेलचा तास · IST',rainHeader:'अंदाजित पाऊस · मिमी',chanceHeader:'पावसाची शक्यता · %',actionHeader:'नियोजनाची कृती',
+      hourAction:'नियोजनाची वेळ निवडा',unavailable:'उपलब्ध नाही',
+      pastHour:'गेलेला किंवा सध्याचा तास भविष्यातील अंतिम वेळ म्हणून वापरता येत नाही.',
+      hourlyNoData:'सध्या ताजा पडताळलेला मॉडेल अंदाज नाही. खरा डेटा मिळवण्यासाठी हवामान पुन्हा मिळवा.',
+      hourlyWrongPlace:'जालना व्यतिरिक्त ठिकाणांसाठी तासांचा अंदाज उपलब्ध नाही.',
+      hourlyEmpty:'नसलेला किंवा कालबाह्य डेटा असल्यास नमुन्याचे बनावट आकडे दाखवत नाही.',
+      showing:'दाखवत आहे',of:'एकूण',records:'पडताळलेल्या तासांच्या नोंदी; सर्व वेळा IST आहेत. निवडलेली वेळ ही केवळ नियोजनासाठी आहे.',
+      selected:'मॉडेलचा तास निवडला. ही वेळ जतन करण्यासाठी Save candidate deadline दाबा.',
+      selectedSource:'Open-Meteo मॉडेलमधून निवडलेली संभाव्य वेळ; हा सुरक्षित पावसाचा निकष नाही.',
+      expiredHour:'निवडलेली वेळ आता वैध नाही. हवामान अंदाज पुन्हा मिळवा.'
+    },
+    hi:{
+      dayExportNote:'केवल उस तारीख के सत्यापित मॉडल घंटे पाने के लिए IST तारीख चुनें.',
+      dayExport:'चुनी गई तारीख का CSV लें',
+      qualityTitle:'मौसम पूर्वानुमान साक्ष्य की गुणवत्ता',
+      qualityIntro:'Open-Meteo के आँकड़े मॉडल पूर्वानुमान हैं, खेत के माप या सुरक्षित वर्षा की सीमा नहीं। लापता जानकारी को शून्य वर्षा नहीं माना जाता।',
+      qualityExport:'सत्यापित मौसम पूर्वानुमान CSV लें',
+      qualityFoot:'निर्यात केवल जालना के ताज़ा सत्यापित मॉडल डेटा के लिए है। इसमें किसान की निजी जानकारी नहीं है।',
+      qualityMissing:'अभी कोई ताज़ा सत्यापित मॉडल डेटा नहीं है। वास्तविक डेटा के लिए पूर्वानुमान रीफ़्रेश करें।',
+      qualityUnsupported:'इस स्थान के लिए उपलब्ध नहीं। पायलट केवल जालना, महाराष्ट्र के लिए है।',
+      provenance:'जानकारी का स्रोत',retrieved:'प्राप्ति समय (UTC)',elapsed:'प्राप्ति के बाद बीता समय',
+      reported:'रिपोर्ट किए गए घंटे',rainCount:'वर्षा के उपलब्ध आँकड़े',chanceCount:'वर्षा संभावना के आँकड़े',
+      duplicates:'दोहराए गए समय',gaps:'घंटों की अनुपस्थित प्रविष्टियाँ',
+      cached:'हाल में सत्यापित मॉडल कैश',fetched:'Backend से प्राप्त मॉडल पूर्वानुमान',
+      minutes:'मिनट; स्रोत के समय से गणना',
+      rainValues:'घंटों के लिए मॉडल वर्षा के मिमी मान',chanceValues:'घंटों के लिए मॉडल वर्षा संभावना',
+      duplicateUnits:'दोहराई गई प्रविष्टियाँ',gapUnits:'अनुपस्थित घंटे',
+      gapLong:'इस दृश्य में इतनी लंबी अवधि सत्यापित नहीं की जा सकती',
+      timeline:'सभी घंटों का मौसम पूर्वानुमान',
+      timelineIntro:'मॉडल के अनुसार प्रत्येक घंटे में वर्षा (मिमी) और संभावना; न कि वास्तविक माप या सुरक्षित कृषि समय।',
+      filter:'मॉडल की तारीख चुनें (IST)',allDates:'सभी उपलब्ध तारीखें',dateSuffix:'(IST)',
+      timeHeader:'मॉडल घंटा · IST',rainHeader:'मॉडल वर्षा · मिमी',chanceHeader:'वर्षा संभावना · %',actionHeader:'नियोजन विकल्प',
+      hourAction:'प्रस्तावित समय चुनें',unavailable:'उपलब्ध नहीं',
+      pastHour:'बीता या वर्तमान घंटा भविष्य की समय-सीमा नहीं हो सकता।',
+      hourlyNoData:'अभी कोई ताज़ा सत्यापित मॉडल घंटा नहीं है। वास्तविक डेटा के लिए मौसम रीफ़्रेश करें।',
+      hourlyWrongPlace:'जालना से बाहर के स्थानों के लिए यह घंटेवार मॉडल उपलब्ध नहीं है।',
+      hourlyEmpty:'अनुपलब्ध या पुराने डेटा की जगह काल्पनिक आँकड़े नहीं दिखाए जाते।',
+      showing:'दिखा रहे हैं',of:'कुल',records:'सत्यापित घंटे; सभी समय IST में हैं। चुना घंटा केवल प्रस्तावित नियोजन समय है।',
+      selected:'मॉडल घंटा चुना गया। पुष्टि के लिए Save candidate deadline दबाएँ।',
+      selectedSource:'सत्यापित Open-Meteo मॉडल से चुना प्रस्तावित घंटा; सुरक्षित वर्षा की सीमा नहीं।',
+      expiredHour:'यह घंटा अब मान्य नहीं है। नया पूर्वानुमान लाएँ।'
+    }
+  };
+  const evidenceText=k=>(evidenceLanguages[state.lang]||evidenceLanguages.en)[k]||evidenceLanguages.en[k]||k;
+
   let previousPlace=state.place.city+'|'+state.place.state;
   const ledger=el('section','live-ledger');
   ledger.id='sourceLedger';
@@ -38,7 +148,14 @@
     if(!f.hours.every(h=>/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(h.time||'')&&(h.precipitation_mm===null||(Number.isFinite(h.precipitation_mm)&&h.precipitation_mm>=0))&&(h.precipitation_probability_pct===null||(Number.isFinite(h.precipitation_probability_pct)&&h.precipitation_probability_pct>=0&&h.precipitation_probability_pct<=100))))throw new Error('Forecast hours invalid.');
     return f;
   }
-  const isCurrent=()=>okLocation()&&['retrieved_live','cached_recent'].includes(live.forecast?.status);
+  // The Python backend's STALE_AFTER_HOURS is 2. A stale-but-mislabeled
+  // response must never make interactive forecast deadlines look current.
+  const forecastAgeMilliseconds=()=>Date.now()-Date.parse(live.forecast?.retrieved_at_utc||'');
+  const isCurrent=()=>{
+    if(!okLocation()||!['retrieved_live','cached_recent'].includes(live.forecast?.status))return false;
+    const age=forecastAgeMilliseconds();
+    return Number.isFinite(age)&&age>=0&&age<=2*60*60*1000;
+  };
   async function boot(){
     try {
       const [health,sources]=await Promise.all([json('/api/health'),json('/api/sources')]);
@@ -54,6 +171,7 @@
   }
   function clearResult(){
     live.error=null;live.evaluation=null;live.request=null;live.comparison=null;live.replan=null;live.selectedPackage=null;
+    resetCandidateComparisons();resetManualComparisons();
   }
   const oldNote=noteChange;
   noteChange=function(){clearResult();oldNote();};
@@ -62,9 +180,220 @@
     const place=state.place.city+'|'+state.place.state;
     if(previousPlace!==place){previousPlace=place;live.forecast=null;live.selectedHour=null;clearResult();}
     oldSummaries();
+    renderForecastQuality();
+    renderHourlyEvidence();
     here('weatherValue').textContent=live.forecast?(isCurrent()?'Model forecast '+(live.forecast.hours.length)+' h':live.forecast.status.toUpperCase()):'No verified forecast';
   };
   updateWeatherUI=renderWeather;
+
+  // EX-08 — descriptive data-quality receipt for the genuine forecast,
+  // separate from agronomic suitability, observed rainfall, and deadline advice.
+  const qcPanel=el('section','panel source-qc-panel');
+  qcPanel.id='forecastQualityPanel';
+  qcPanel.setAttribute('aria-label','Forecast data coverage and export');
+  qcPanel.append(el('h2','','Forecast evidence quality'));
+  qcPanel.append(el('p','source-qc-disclosure',
+    'Open-Meteo provides modeled weather, not a field rain gauge or a crop-safe onset threshold. Missing hours and missing values are never interpreted as dry weather.'));
+  const qcMetrics=el('div','source-qc-metrics');
+  qcMetrics.id='forecastQualityMetrics';qcMetrics.setAttribute('aria-live','polite');
+  qcPanel.append(qcMetrics);
+  const qcExport=el('button','btn','Export verified modeled hours (CSV)');
+  qcExport.id='exportForecastEvidence';qcExport.type='button';qcExport.disabled=true;
+  qcPanel.append(qcExport);
+  qcPanel.append(el('small','source-qc-disclosure',
+    'Export is available only for the supported Jalna pilot and a validated current model response. No farmer declarations are included.'));
+  document.querySelector('section.section[data-page="1"]').append(qcPanel);
+  function forecastCoverage(){
+    if(!isCurrent())return null;
+    const f=live.forecast;
+    const ageMs=Date.now()-Date.parse(f.retrieved_at_utc||'');
+    // Match the authoritative backend's two-hour STALE_AFTER_HOURS contract.
+    // A wrongly labelled old cache must never become a "current" CSV receipt.
+    if(!Number.isFinite(ageMs)||ageMs<0||ageMs>2*60*60*1000||
+      !Array.isArray(f.hours)||!f.hours.length)return null;
+    const timeKeys=f.hours.map(h=>Date.parse(h.time+':00+05:30'));
+    if(timeKeys.some(t=>!Number.isFinite(t)))return null;
+    const unique=new Set(timeKeys), sorted=[...unique].sort((a,b)=>a-b);
+    const withinSpan=(sorted[sorted.length-1]-sorted[0])/3600000+1;
+    const gapCount=withinSpan<=1000?Math.max(0,Math.round(withinSpan)-sorted.length):null;
+    return {source:f,ageMinutes:Math.floor(ageMs/60000),records:f.hours.length,
+      rainCount:f.hours.filter(h=>h.precipitation_mm!==null).length,
+      chanceCount:f.hours.filter(h=>h.precipitation_probability_pct!==null).length,
+      duplicateHours:f.hours.length-unique.size,gapCount};
+  }
+
+  // EX-09: inspect every returned model hour, not just the first 24 bars.
+  // Values are already validated by FastAPI; no local weather prediction.
+  const hourlyPanel=el('section','panel hourly-evidence-panel');
+  hourlyPanel.id='hourlyEvidencePanel';
+  hourlyPanel.setAttribute('aria-label','All verified modeled forecast hours');
+  const hourlyTitle=el('h2','','Full model-hour timeline');
+  const hourlyIntro=el('p','hourly-evidence-note',
+    'Source-native modeled rain in millimeters and hourly probability, not observed rain or a crop-safety threshold.');
+  const hourlyControls=el('div','hourly-evidence-controls');
+  const hourlyLabel=el('label','hourly-evidence-filter');
+  hourlyLabel.append(el('span','','Filter by model date (IST)'));
+  const hourlyDate=el('select','hourly-evidence-select');hourlyDate.id='hourlyEvidenceDate';
+  hourlyDate.setAttribute('aria-label','Filter hourly model evidence by Indian date');
+  hourlyLabel.append(hourlyDate);hourlyControls.append(hourlyLabel);
+  const hourlyDayExport=el('button','btn','Export selected day (CSV)');
+  hourlyDayExport.id='exportSelectedModelDay';hourlyDayExport.type='button';hourlyDayExport.disabled=true;
+  hourlyControls.append(hourlyDayExport);
+  const hourlySummary=el('p','hourly-evidence-summary','No current verified model hours.');
+  hourlySummary.id='hourlyEvidenceStatus';hourlySummary.setAttribute('role','status');
+  hourlyControls.append(hourlySummary);
+  const hourlyTableContainer=el('div','hourly-evidence-scroll');
+  hourlyTableContainer.id='hourlyEvidenceTable';
+  hourlyTableContainer.setAttribute('tabindex','0');
+  hourlyTableContainer.setAttribute('aria-label','Horizontally scrollable forecast hour table');
+  hourlyPanel.append(hourlyTitle,hourlyIntro,hourlyControls,hourlyTableContainer);
+  qcPanel.insertAdjacentElement('afterend',hourlyPanel);
+  hourlyDate.addEventListener('change',renderHourlyEvidence);
+  function renderHourlyEvidence(){
+    hourlyTitle.textContent=evidenceText('timeline');hourlyIntro.textContent=evidenceText('timelineIntro');
+    hourlyLabel.querySelector('span').textContent=evidenceText('filter');
+    hourlyDayExport.textContent=evidenceText('dayExport');
+    hourlyTableContainer.replaceChildren();
+    const evidence=forecastCoverage(),source=evidence?.source;
+    const hours=source?.hours||[];
+    const distinctDates=[...new Set(hours.map(h=>h.time.slice(0,10)))];
+    const retained=hourlyDate.value;
+    hourlyDate.replaceChildren();
+    const all=el('option','',evidenceText('allDates'));all.value='all';hourlyDate.append(all);
+    for(const date of distinctDates){
+      const option=el('option','',date+' '+evidenceText('dateSuffix'));option.value=date;hourlyDate.append(option);
+    }
+    hourlyDate.value=distinctDates.includes(retained)?retained:'all';
+    hourlyDate.disabled=!evidence;
+    hourlyDayExport.disabled=!evidence||hourlyDate.value==='all';
+    hourlyDayExport.title=evidenceText('dayExportNote');
+    if(!evidence){
+      hourlySummary.textContent=okLocation()?evidenceText('hourlyNoData'):evidenceText('hourlyWrongPlace');
+      hourlyTableContainer.append(el('p','hourly-evidence-note',evidenceText('hourlyEmpty')));
+      return;
+    }
+    const filtered=hours.filter(h=>hourlyDate.value==='all'||h.time.startsWith(hourlyDate.value));
+    hourlySummary.textContent=evidenceText('showing')+' '+filtered.length+' '+evidenceText('of')+' '+hours.length+' '+evidenceText('records');
+    const table=el('table','hourly-evidence-table');
+    const head=el('thead'),heading=el('tr');
+    for(const value of ['timeHeader','rainHeader','chanceHeader','actionHeader'].map(evidenceText)){
+      const th=el('th','',value);th.scope='col';heading.append(th);
+    }
+    head.append(heading);table.append(head);
+    const body=el('tbody');
+    for(const hour of filtered){
+      const tr=el('tr');
+      const timeCell=el('th','',hour.time.replace('T',' '));timeCell.scope='row';
+      tr.append(timeCell);
+      tr.append(el('td','',hour.precipitation_mm===null?evidenceText('unavailable'):num(hour.precipitation_mm)+' mm'));
+      tr.append(el('td','',hour.precipitation_probability_pct===null?evidenceText('unavailable'):
+        num(hour.precipitation_probability_pct)+'%'));
+      const actionCell=el('td');
+      const action=el('button','btn hourly-evidence-action',evidenceText('hourAction'));
+      action.type='button';action.dataset.hour=hour.time;
+      const validFuture=Number.isFinite(Date.parse(hour.time+':00+05:30'))&&
+        Date.parse(hour.time+':00+05:30')>Date.now()+60000;
+      action.disabled=!validFuture;
+      action.setAttribute('aria-label','Use '+hour.time.replace('T',' ')+' IST as a proposed, not verified-safe, planning deadline');
+      if(!validFuture)action.title=evidenceText('pastHour');
+      action.addEventListener('click',()=>{
+        const fresh=forecastCoverage();
+        const stamp=Date.parse(hour.time+':00+05:30');
+        if(!fresh||!fresh.source.hours.some(h=>h.time===hour.time)||
+          !Number.isFinite(stamp)||stamp<=Date.now()+60000){
+          renderWeather();
+          here('deadlineNotice').textContent=evidenceText('expiredHour');
+          return;
+        }
+        here('deadlineInput').value=hour.time;
+        live.selectedHour=hour.time;
+        additional.deadlineSource='model';
+        here('deadlineOriginPreview').textContent=evidenceText('selectedSource');
+        here('deadlineNotice').textContent=evidenceText('selected');
+      });
+      actionCell.append(action);tr.append(actionCell);body.append(tr);
+    }
+    table.append(body);hourlyTableContainer.append(table);
+  }
+
+  hourlyDayExport.addEventListener('click',()=>{
+    const evidence=forecastCoverage();
+    const date=hourlyDate.value;
+    if(!evidence||hourlyDayExport.disabled||!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
+    const rows=evidence.source.hours.filter(h=>h.time.startsWith(date));
+    if(!rows.length)return;
+    const safe=value=>{
+      let content=String(value??'');
+      if(/^\s*[=+\-@\t\r]/.test(content))content="'"+content;
+      return '"'+content.replace(/"/g,'""')+'"';
+    };
+    const numValue=value=>typeof value==='number'&&Number.isFinite(value)?String(value):'';
+    const cols=['hour_ist','modeled_precipitation_mm','modeled_probability_pct',
+      'source_type','source_attribution','source_status','retrieved_at_utc','evidence_disclosure'];
+    const lines=rows.map(h=>[
+      safe(h.time),numValue(h.precipitation_mm),numValue(h.precipitation_probability_pct),
+      safe('external_model_forecast'),safe(evidence.source.attribution||'Open-Meteo'),
+      safe(evidence.source.status),safe(evidence.source.retrieved_at_utc),
+      safe('Selected-day source-native model hours only; not measured rainfall or agricultural safety')
+    ].join(','));
+    const data='\uFEFF'+cols.join(',')+'\r\n'+lines.join('\r\n')+'\r\n';
+    const url=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8'}));
+    const link=el('a');link.href=url;
+    link.download='agri-foresight-model-hours-jalna-'+date+'.csv';
+    link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
+  function renderForecastQuality(){
+    qcPanel.querySelector('h2').textContent=evidenceText('qualityTitle');
+    qcPanel.querySelector('p.source-qc-disclosure').textContent=evidenceText('qualityIntro');
+    qcExport.textContent=evidenceText('qualityExport');
+    qcPanel.querySelector('small.source-qc-disclosure').textContent=evidenceText('qualityFoot');
+    qcMetrics.replaceChildren();
+    const d=forecastCoverage();
+    qcExport.disabled=!d;
+    if(!d){
+      qcMetrics.append(el('p','source-qc-empty',
+        okLocation()?evidenceText('qualityMissing'):evidenceText('qualityUnsupported')));
+      return;
+    }
+    const add=(label,value)=>{
+      const item=el('div','source-qc-item');item.append(el('strong','',label),el('span','',value));
+      qcMetrics.append(item);
+    };
+    add(evidenceText('provenance'),d.source.status==='cached_recent'?evidenceText('cached'):evidenceText('fetched'));
+    add(evidenceText('retrieved'),d.source.retrieved_at_utc);
+    add(evidenceText('elapsed'),d.ageMinutes+' '+evidenceText('minutes'));
+    add(evidenceText('reported'),String(d.records));
+    add(evidenceText('rainCount'),d.rainCount+'/'+d.records+' '+evidenceText('rainValues'));
+    add(evidenceText('chanceCount'),d.chanceCount+'/'+d.records+' '+evidenceText('chanceValues'));
+    add(evidenceText('duplicates'),String(d.duplicateHours)+' '+evidenceText('duplicateUnits'));
+    add(evidenceText('gaps'),d.gapCount===null?evidenceText('gapLong'):
+      String(d.gapCount)+' '+evidenceText('gapUnits'));
+  }
+  qcExport.addEventListener('click',()=>{
+    const d=forecastCoverage();
+    if(!d||qcExport.disabled)return;
+    const source=d.source;
+    const headers=['hour_ist','modeled_precipitation_mm','modeled_precipitation_probability_pct',
+      'source_type','source_attribution','source_status','retrieved_at_utc','data_disclosure'];
+    const quote=value=>{
+      let text=String(value??'');
+      if(/^\s*[=+\-@\t\r]/.test(text))text="'"+text;
+      return '"'+text.replace(/"/g,'""')+'"';
+    };
+    const numberCell=value=>typeof value==='number'&&Number.isFinite(value)?String(value):'';
+    const lines=source.hours.map(h=>[
+      quote(h.time),numberCell(h.precipitation_mm),numberCell(h.precipitation_probability_pct),
+      quote('external_model_forecast'),quote(source.attribution||'Open-Meteo'),
+      quote(source.status),quote(source.retrieved_at_utc),
+      quote('Model values, not a station observation or crop-safety threshold')
+    ].join(','));
+    const csv='\uFEFF'+headers.join(',')+'\r\n'+lines.join('\r\n')+'\r\n';
+    const uri=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+    const link=el('a');link.href=uri;
+    link.download='agri-foresight-open-meteo-jalna-'+
+      new Date().toISOString().slice(0,10)+'.csv';
+    link.click();setTimeout(()=>URL.revokeObjectURL(uri),1000);
+  });
   // Descriptive sums of genuine future model hours, never a safety cutoff.
   function renderForecastWindows(chart,forecast){
     const now=Date.now(),seen=new Set();
@@ -102,14 +431,19 @@
     chart.append(grid);
   }
   function renderWeather(){
+    renderCandidateComparisonChoices();
+    renderForecastQuality();
+    renderHourlyEvidence();
     const chart=here('weatherChart'),mode=here('weatherChartMode'),chip=here('forecastSourceChip');
     chart.replaceChildren();here('toggleForecast').textContent='Refresh live forecast';here('clearForecast').textContent='Clear forecast view';
     if(!okLocation()){chip.textContent='UNSUPPORTED LOCATION';mode.textContent='Jalna-only data coverage';chart.append(el('div','weather-empty','Forecast for this location is not supported. Return to Jalna, Maharashtra; no other-location data is fabricated.'));here('weatherValue').textContent='Unsupported';return;}
     const f=live.forecast;
     if(!f){chip.textContent='NOT CONNECTED';mode.textContent='No authenticated model forecast';chart.append(el('div','weather-empty','No real forecast is loaded. Use Refresh live forecast to request Open-Meteo through the backend.'));here('weatherValue').textContent='Not loaded';return;}
     if(!isCurrent()){
-      chip.textContent=f.status==='stale_cache'?'STALE · DO NOT USE':'UNAVAILABLE';
-      mode.textContent=f.notice||f.error||'No current verified forecast available';
+      const old=Number.isFinite(forecastAgeMilliseconds())&&forecastAgeMilliseconds()>2*60*60*1000;
+      chip.textContent=f.status==='stale_cache'||old?'STALE · DO NOT USE':'UNAVAILABLE';
+      mode.textContent=old?'Model forecast age exceeds the backend two-hour current-data limit. Refresh to retrieve genuine evidence.':
+        f.notice||f.error||'No current verified forecast available';
       chart.append(el('div','weather-empty','No current forecast hours can be selected. Manual deadlines remain possible.'));
       here('weatherValue').textContent=f.status;return;
     }
@@ -124,9 +458,20 @@
     for(const h of sample){
       const b=el('button','hour-bar');b.type='button';b.dataset.time=h.time;b.setAttribute('aria-label','Use '+h.time+' IST model hour as proposed deadline');
       b.title=h.time+' IST • '+(h.precipitation_mm===null?'Unknown':h.precipitation_mm+' mm')+' • '+(h.precipitation_probability_pct===null?'Unknown':h.precipitation_probability_pct+'%')+' probability';
+      const at=Date.parse(h.time+':00+05:30');
+      const candidateFuture=Number.isFinite(at)&&at>Date.now()+60_000;
+      b.disabled=!candidateFuture;
+      if(!candidateFuture)b.title='Past/current model hour · for evidence only, not a future planning deadline.';
       const time=el('span','bar-time',h.time.slice(11));const fill=el('span','bar-fill');fill.style.height=Math.max(5,Math.round(95*(h.precipitation_mm??0)/max))+'%';
       const value=el('span','bar-value',(h.precipitation_mm??'—')+' mm');const chance=el('small','',h.precipitation_probability_pct===null?'Probability unknown':h.precipitation_probability_pct+'%');
       b.append(time,fill,value,chance);b.addEventListener('click',()=>{
+        const then=Date.parse(h.time+':00+05:30');
+        if(!isCurrent()||!live.forecast?.hours.some(row=>row.time===h.time)||
+          !Number.isFinite(then)||then<=Date.now()+60_000){
+          renderWeather();
+          here('deadlineNotice').textContent='That model hour is no longer an eligible future candidate. Refresh genuine weather evidence.';
+          return;
+        }
         here('deadlineInput').value=h.time;live.selectedHour=h.time;additional.deadlineSource='model';
         here('deadlineOriginPreview').textContent='Candidate hour chosen from verified Open-Meteo forecast; not a rain-onset threshold.';
         here('deadlineNotice').textContent='Model hour chosen. Click Save candidate deadline to apply it.';
@@ -188,10 +533,21 @@
     saveExtra();clearResult();renderAssessment();renderPackages();renderSummary();
   },true);
   here('changeEditor').addEventListener('change',()=>{clearResult();renderAssessment();renderPackages();renderSummary();},true);
+  // Reject impossible calendar dates before sending a timestamp to FastAPI.
+  // IST is fixed UTC+05:30; Date.parse alone can normalize invalid day numbers.
+  function isValidISTDeadline(value){
+    if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value))return false;
+    const [year,month,day,hour,minute]=value.match(/\d+/g).map(Number);
+    if(year<1||month<1||month>12||hour>23||minute>59)return false;
+    const daysInMonth=new Date(Date.UTC(year,month,0)).getUTCDate();
+    if(day<1||day>daysInMonth)return false;
+    const timestamp=Date.parse(value+':00+05:30');
+    return Number.isFinite(timestamp);
+  }
   function requestFromForm(){
     if(!okLocation())throw new Error('The server-authoritative assessment currently supports Jalna, Maharashtra only.');
     if(here('deadlineInput').value!==state.deadline)throw new Error('Save the displayed candidate deadline before evaluating.');
-    if(!state.deadline||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(state.deadline))throw new Error('Save a valid candidate deadline on Page 02.');
+    if(!isValidISTDeadline(state.deadline))throw new Error('Save a valid candidate deadline on Page 02.');
     if(!here('confirmInputs').checked)throw new Error('Confirm farmer-reported, comparable quantities on Page 03.');
     const toNum=(id,title)=>{const raw=here(id).value;if(raw.trim()==='')throw new Error(title+' is required.');const n=Number(raw);if(!Number.isFinite(n)||n<0)throw new Error(title+' must be nonnegative and finite.');return n;};
     const target=toNum('quantity','Planned work'),capacity=toNum('capacity','Confirmed capacity'),hours=toNum('duration','Required hours');
@@ -274,7 +630,7 @@
       b.type='button';b.append(el('strong','', 'Package '+(i+1)+' · '+p.change_ids.join(', ')));
       b.append(el('p','',p.projected.status.toUpperCase()+' · capacity '+num(p.projected.projected_capacity_units)+' / target '+num(p.projected.projected_target_units)+' handling units'));
       b.append(el('small','',p.warning||'Conditional package; resource confirmation is not a completed action.'));
-      b.addEventListener('click',()=>{live.selectedPackage=i;live.comparison=null;live.replan=null;renderPackages();renderSummary();});list.append(b);
+      b.addEventListener('click',()=>{live.selectedPackage=i;live.comparison=null;live.replan=null;resetCandidateComparisons();resetManualComparisons();renderPackages();renderSummary();});list.append(b);
     });
     compare.replaceChildren();
     if(live.selectedPackage===null||!packs[live.selectedPackage]){compare.append(el('p','',packs.length?'Select a package, then use Compare / replan with FastAPI.':'No eligible package selected.'));return;}
@@ -286,7 +642,7 @@
     if(live.comparison){compare.append(el('p','live-valid','Backend comparison: '+live.comparison.changes.status_before+' → '+live.comparison.changes.status_after+'. '+live.comparison.interpretation));}
     if(live.replan){compare.append(el('p','live-valid','Server-attested forecast-hour replan: '+live.replan.forecast_selection.selected_hour_local+' IST · '+live.replan.forecast_selection.attribution));}
   }
-  here('clearPackage').addEventListener('click',e=>{e.stopImmediatePropagation();live.selectedPackage=null;live.comparison=null;live.replan=null;renderPackages();renderSummary();},true);
+  here('clearPackage').addEventListener('click',e=>{e.stopImmediatePropagation();live.selectedPackage=null;live.comparison=null;live.replan=null;resetCandidateComparisons();resetManualComparisons();renderPackages();renderSummary();},true);
   const compareButton=el('button','btn primary','Compare / replan with FastAPI');compareButton.id='compareApi';compareButton.type='button';
   here('comparePanel').parentElement.append(compareButton);
   compareButton.addEventListener('click',async()=>{
@@ -310,8 +666,258 @@
     }catch(e){here('changeValidation').textContent='Comparison unavailable: '+e.message;}
     finally{compareButton.disabled=false;compareButton.textContent='Compare / replan with FastAPI';}
   });
+  // EX-06: only /api/replan calculates each selected deadline outcome.
+  const multiPanel=el('section','panel multi-deadline');
+  multiPanel.id='multiDeadlinePanel';
+  multiPanel.append(el('h2','','Compare up to 3 model-hour deadlines'));
+  multiPanel.append(el('p','multi-disclosure','Select distinct future forecast hours. Each is independently authenticated and evaluated by FastAPI. This is a declared-resource timing comparison, not a rain-onset prediction or crop-safety recommendation.'));
+  const multiFields=el('div','multi-fields');
+  const multiSelects=[1,2,3].map(n=>{
+    const label=el('label','multi-field');
+    label.append(el('span','','Candidate '+n+' · India Standard Time'));
+    const sel=el('select','multi-select');sel.id='multiCandidate'+n;
+    label.append(sel);multiFields.append(label);
+    sel.addEventListener('change',resetCandidateComparisons);
+    return sel;
+  });
+  multiPanel.append(multiFields);
+  const multiButtons=el('div','multi-buttons');
+  const multiRun=el('button','btn primary','Compare with real FastAPI');multiRun.id='runMultiDeadline';multiRun.type='button';
+  const multiCsv=el('button','btn','Export attested CSV');multiCsv.id='exportMultiDeadline';multiCsv.type='button';multiCsv.disabled=true;
+  multiButtons.append(multiRun,multiCsv);multiPanel.append(multiButtons);
+  const multiStatus=el('p','multi-status','A verified model forecast and a completed resource assessment are required.');
+  multiStatus.id='multiDeadlineStatus';multiStatus.setAttribute('role','status');
+  const multiResults=el('div','multi-results');multiResults.id='multiDeadlineResults';
+  multiPanel.append(multiStatus,multiResults);
+  here('packageList').closest('.grid2').insertAdjacentElement('afterend',multiPanel);
+  function resetCandidateComparisons(){
+    comparisonGeneration++;attestedDeadlineRows=[];multiResults.replaceChildren();
+    multiCsv.disabled=true;multiRun.textContent='Compare with real FastAPI';
+    multiRun.disabled=!(live.request&&live.evaluation&&candidateHours().length);
+    multiStatus.textContent=multiRun.disabled?
+      'Current authenticated model hours and evaluated resources are required.':
+      'Selection changed. Submit selected hours for fresh FastAPI attestation.';
+  }
+  function candidateHours(){
+    const f=live.forecast;
+    if(!isCurrent()||!f)return [];
+    const age=(Date.now()-Date.parse(f.retrieved_at_utc))/3600000;
+    if(!Number.isFinite(age)||age<0||age>2)return [];
+    const seen=new Set();
+    return f.hours.filter(h=>{
+      const timestamp=Date.parse(h.time+':00+05:30');
+      if(!Number.isFinite(timestamp)||timestamp<=Date.now()+60000||seen.has(h.time))return false;
+      seen.add(h.time);return true;
+    }).sort((a,b)=>a.time.localeCompare(b.time)).slice(0,48);
+  }
+  function renderCandidateComparisonChoices(){
+    const hours=candidateHours(),key=(live.forecast?.retrieved_at_utc||'')+'|'+hours.map(h=>h.time).join('|');
+    if(key!==candidateSignature){
+      candidateSignature=key;resetCandidateComparisons();
+      for(const sel of multiSelects){
+        sel.replaceChildren();
+        const blank=el('option','','Choose an authenticated hour');blank.value='';sel.append(blank);
+        for(const hour of hours){
+          const opt=el('option','',hour.time.replace('T',' ')+' IST · '+
+            (hour.precipitation_mm===null?'rainfall unavailable':num(hour.precipitation_mm)+' modeled mm'));
+          opt.value=hour.time;sel.append(opt);
+        }
+      }
+    }
+    const ready=!!live.request&&!!live.evaluation&&hours.length>0;
+    for(const sel of multiSelects)sel.disabled=!ready;
+    multiRun.disabled=!ready;
+    if(!hours.length)multiStatus.textContent='No recent, source-authenticated future model hours. Comparison unavailable.';
+    else if(!ready)multiStatus.textContent='Model forecast available. First evaluate farmer-declared resources on Page 04.';
+    else if(!attestedDeadlineRows.length)multiStatus.textContent='Ready · '+
+      (live.selectedPackage===null?'baseline resources only':'selected confirmed-resource package')+
+      '. Select 1–3 unique hours and request genuine backend calculations.';
+  }
+  function renderAttestedRows(){
+    multiResults.replaceChildren();
+    const table=el('table','multi-table'),thead=el('thead'),header=el('tr');
+    for(const h of ['Forecast hour (IST)','Server feasibility','Time slack (hours)','Nonpassing constraints','Model rainfall at hour','Server attestation']){
+      const th=el('th','',h);th.scope='col';header.append(th);
+    }
+    thead.append(header);table.append(thead);
+    const tbody=el('tbody');
+    for(const item of attestedDeadlineRows){
+      const tr=el('tr');
+      const result=item.value,decision=result?.after?.baseline,source=result?.forecast_selection;
+      const blockers=decision?.constraints?.filter(c=>c.status!=='pass').map(c=>c.id+': '+c.status).join(', ');
+      const values=[item.hour.replace('T',' '),
+        decision?decision.status.toUpperCase():'Unavailable',
+        decision?(decision.time_budget.time_slack_hours===null?'Unknown':num(decision.time_budget.time_slack_hours)):'—',
+        decision?(blockers||'None reported'):'—',
+        source?(source.precipitation_mm===null?'Unknown':num(source.precipitation_mm)+' mm'):'—',
+        source?(source.attribution+' · '+source.forecast_status+' · '+source.retrieved_at_utc):(item.error||'No server attestation')];
+      values.forEach((v,i)=>{const cell=el(i?'td':'th','',v);if(!i)cell.scope='row';tr.append(cell);});
+      tbody.append(tr);
+    }
+    table.append(tbody);
+    const overflow=el('div','multi-overflow');overflow.append(table);multiResults.append(overflow);
+    const verified=attestedDeadlineRows.filter(x=>x.value).length;
+    multiCsv.disabled=!verified;
+    multiStatus.textContent=verified+'/'+attestedDeadlineRows.length+' candidate(s) verified independently by FastAPI. Failed hours remain unavailable. No local feasibility or safety ranking.';
+  }
+  multiRun.addEventListener('click',async()=>{
+    if(multiRun.disabled||!live.request||!live.evaluation)return;
+    const hours=multiSelects.map(s=>s.value).filter(Boolean);
+    if(!hours.length){multiStatus.textContent='Select at least one forecast hour.';return;}
+    if(new Set(hours).size!==hours.length){multiStatus.textContent='Select distinct candidate hours.';return;}
+    const allowed=new Set(candidateHours().map(h=>h.time));
+    if(!hours.every(h=>allowed.has(h))){resetCandidateComparisons();renderCandidateComparisonChoices();multiStatus.textContent='Source hours changed. Select current hours again.';return;}
+    const token=++comparisonGeneration;multiRun.disabled=true;multiCsv.disabled=true;multiRun.textContent='Asking FastAPI…';
+    multiResults.replaceChildren();multiStatus.textContent='Requesting '+hours.length+' server attestation(s)…';
+    const baseline={...live.request,now:new Date().toISOString(),changes:[]};
+    const pack=live.selectedPackage===null?null:live.evaluation.packages[live.selectedPackage];
+    const adjusted=pack?{...baseline,target_units:pack.projected.projected_target_units,
+      capacity_units:pack.projected.projected_capacity_units}:{...baseline};
+    const outcome=await Promise.all(hours.map(async hour=>{
+      try{
+        const value=await json('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({before:baseline,after:adjusted,selected_hour_local:hour})});
+        const source=value?.forecast_selection,decision=value?.after?.baseline;
+        if(source?.selected_hour_local!==hour||source?.candidate_deadline!==hour+':00+05:30'||
+          !['retrieved_live','cached_recent'].includes(source.forecast_status)||
+          !source.attribution?.includes('Open-Meteo')||
+          !decision||!statuses.includes(decision.status)||!Array.isArray(decision.constraints)||
+          !decision.constraints.every(c=>['pass','blocked','unknown'].includes(c.status))||
+          !(decision.time_budget?.time_slack_hours===null||Number.isFinite(decision.time_budget?.time_slack_hours)))
+          throw Error('Server result failed source/decision attestation validation.');
+        return {hour,value};
+      }catch(e){return {hour,error:e.message};}
+    }));
+    if(token!==comparisonGeneration)return;
+    attestedDeadlineRows=outcome;multiRun.disabled=false;multiRun.textContent='Compare with real FastAPI';renderAttestedRows();
+  });
+  multiCsv.addEventListener('click',()=>{
+    const rows=attestedDeadlineRows.filter(x=>x.value);
+    if(!rows.length||multiCsv.disabled)return;
+    const esc=value=>{
+      let v=String(value??'');
+      if(/^\s*[=+\-@\t\r]/.test(v))v="'"+v;
+      return '"'+v.replace(/"/g,'""')+'"';
+    };
+    const heading=['hour_ist','backend_status','time_slack_hours','nonpassing_constraints',
+      'hour_precipitation_mm','hour_probability_pct','source','retrieved_at_utc','disclosure'];
+    const lines=rows.map(({hour,value})=>{
+      const d=value.after.baseline,f=value.forecast_selection;
+      return [hour,d.status,d.time_budget.time_slack_hours,
+        d.constraints.filter(c=>c.status!=='pass').map(c=>c.id+':'+c.status).join('; '),
+        f.precipitation_mm,f.precipitation_probability_pct,f.attribution,f.retrieved_at_utc,
+        'Model-hour candidate only; not rain onset, agricultural safety or completed activity'].map(esc).join(',');
+    });
+    const csv='\uFEFF'+heading.join(',')+'\r\n'+lines.join('\r\n')+'\r\n';
+    const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+    const link=el('a');link.href=url;
+    link.download='agri-foresight-attested-deadlines-'+new Date().toISOString().slice(0,10)+'.csv';
+    link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
+
+  // EX-07: explicit user-chosen future times, with NO model/IMD assertion.
+  // /api/compare is authoritative even if Open-Meteo is unavailable.
+  const manualPanel=el('section','panel manual-time-panel');manualPanel.id='manualDeadlinePanel';
+  manualPanel.append(el('h2','','Manual deadline alternatives · no weather required'));
+  manualPanel.append(el('p','manual-disclosure',
+    'When a reliable model forecast is unavailable, enter up to three distinct future planning deadlines. FastAPI compares declared resources and hours only; these dates are farmer-selected assumptions, not observed or predicted rain onset.'));
+  const manualFields=el('div','manual-fields');
+  const manualInputs=[1,2,3].map(n=>{
+    const label=el('label','manual-field');label.append(el('span','','Candidate '+n+' · IST'));
+    const input=el('input','manual-input');input.id='manualDeadline'+n;input.type='datetime-local';
+    input.setAttribute('aria-label','Manual candidate '+n+' in India Standard Time');
+    input.addEventListener('input',resetManualComparisons);
+    label.append(input);manualFields.append(label);return input;
+  });
+  manualPanel.append(manualFields);
+  const manualRun=el('button','btn primary','Compare manual deadlines with FastAPI');
+  manualRun.id='compareManualDeadlines';manualRun.type='button';
+  const manualStatus=el('p','manual-status','Evaluate farmer-declared resources on Page 04 first.');
+  manualStatus.id='manualDeadlineStatus';manualStatus.setAttribute('role','status');
+  const manualOutput=el('div','manual-output');manualOutput.id='manualDeadlineResults';
+  manualPanel.append(manualRun,manualStatus,manualOutput);
+  manualPanel.append(el('small','',
+    'No model source, rainfall probability or forecast safety claim is attached to manual comparisons. Successful results are included in Download evidence JSON on Page 06.'));
+  multiPanel.insertAdjacentElement('afterend',manualPanel);
+  function resetManualComparisons(){
+    ++manualGeneration;manualDeadlineRows=[];manualOutput.replaceChildren();
+    manualRun.textContent='Compare manual deadlines with FastAPI';
+    manualRun.disabled=!(live.request&&live.evaluation&&okLocation());
+    manualStatus.textContent=manualRun.disabled?
+      'Evaluate farmer-declared resources before comparing manual deadlines.':
+      'Selection changed. Compare user-selected times again with FastAPI.';
+  }
+  function renderManualControls(){
+    const ready=!!live.request&&!!live.evaluation&&okLocation();
+    manualRun.disabled=!ready;
+    for(const input of manualInputs)input.disabled=!ready;
+    if(!ready)manualStatus.textContent='No current API-backed farmer assessment. Evaluate resources first.';
+    else if(!manualDeadlineRows.length)manualStatus.textContent='Ready to compare up to 3 farmer-selected times. No forecast is consulted.';
+  }
+  function renderManualResults(){
+    manualOutput.replaceChildren();
+    const table=el('table','multi-table'),head=el('thead'),tr=el('tr');
+    for(const label of ['User-selected deadline (IST)','Server result','Time slack (h)','Blocked / unknown constraints','Evidence classification']){
+      const th=el('th','',label);th.scope='col';tr.append(th);
+    }
+    head.append(tr);table.append(head);
+    const body=el('tbody');
+    for(const entry of manualDeadlineRows){
+      const result=entry.response?.after?.baseline;
+      const constraints=result?.constraints?.filter(c=>c.status!=='pass').map(c=>c.id+': '+c.status).join(', ');
+      const values=[entry.hour.replace('T',' '),
+        result?result.status.toUpperCase():'Unavailable',
+        result?(result.time_budget.time_slack_hours===null?'Unknown':num(result.time_budget.time_slack_hours)):'—',
+        result?(constraints||'None reported'):(entry.error||'No verified server result'),
+        'Farmer-selected time only · no forecast attestation'];
+      const row=el('tr');
+      values.forEach((value,i)=>{
+        const cell=el(i?'td':'th','',value);if(!i)cell.scope='row';row.append(cell);
+      });
+      body.append(row);
+    }
+    table.append(body);const wrap=el('div','multi-overflow');wrap.append(table);manualOutput.append(wrap);
+    const verified=manualDeadlineRows.filter(x=>x.response).length;
+    manualStatus.textContent=verified+'/'+manualDeadlineRows.length+
+      ' manual deadline(s) returned by FastAPI. Unavailable results are not filled in.';
+  }
+  manualRun.addEventListener('click',async()=>{
+    if(manualRun.disabled||!live.request||!live.evaluation)return;
+    const selected=manualInputs.map(i=>i.value).filter(Boolean);
+    if(!selected.length){manualStatus.textContent='Enter at least one user-chosen deadline.';return;}
+    if(new Set(selected).size!==selected.length){manualStatus.textContent='Enter distinct manual deadlines.';return;}
+    if(!selected.every(time=>isValidISTDeadline(time)&&Date.parse(time+':00+05:30')>Date.now()+60000)){
+      manualStatus.textContent='Each candidate must be a valid future time in IST.';return;
+    }
+    const token=++manualGeneration;
+    manualRun.disabled=true;manualRun.textContent='Checking server…';manualOutput.replaceChildren();
+    manualStatus.textContent='Evaluating '+selected.length+' user-declared deadline(s) through FastAPI…';
+    const before={...live.request,now:new Date().toISOString(),changes:[]};
+    const pack=live.selectedPackage===null?null:live.evaluation.packages[live.selectedPackage];
+    const afterBase=pack?{...before,target_units:pack.projected.projected_target_units,
+      capacity_units:pack.projected.projected_capacity_units}:{...before};
+    const resolved=await Promise.all(selected.map(async hour=>{
+      try{
+        const response=await json('/api/compare',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({before,after:{...afterBase,deadline:hour+':00+05:30'}})});
+        const decision=response?.after?.baseline;
+        if(!response?.changes||!decision||!statuses.includes(decision.status)||
+          decision.time_budget?.candidate_deadline!==hour+':00+05:30'||
+          !Array.isArray(decision.constraints)||
+          !decision.constraints.every(c=>['pass','blocked','unknown'].includes(c.status))||
+          !(decision.time_budget?.time_slack_hours===null||Number.isFinite(decision.time_budget?.time_slack_hours))){
+          throw Error('Manual comparison failed server schema verification.');
+        }
+        return {hour,response};
+      }catch(e){return {hour,error:e.message};}
+    }));
+    if(token!==manualGeneration)return;
+    manualDeadlineRows=resolved;manualRun.disabled=false;
+    manualRun.textContent='Compare manual deadlines with FastAPI';renderManualResults();
+  });
   updateSummaryUI=renderSummary;
   function renderSummary(){
+    renderCandidateComparisonChoices();renderManualControls();
     const r=live.evaluation,b=r?.baseline,p=live.selectedPackage===null?null:r?.packages[live.selectedPackage];
     here('summaryAssessment').textContent=r?'FASTAPI · '+r.status.toUpperCase():'Not evaluated';
     here('summaryOutcome').textContent=r?r.message+' This is a conditional resource-feasibility assessment, not farming safety advice.':'No API-backed assessment has been calculated.';
@@ -333,7 +939,15 @@
       disclosure:'Conditional simulation using user declarations and genuine FastAPI output; not field-validated agricultural advice.',
       forecast:live.forecast,source_registry:live.sources,evaluation:live.evaluation,comparison:live.comparison,
       replan:live.replan,selected_package:live.selectedPackage,request:live.request,
-      government_climate_historical:governmentClimateData};
+      government_climate_historical:governmentClimateData,
+      source_attested_model_deadlines:attestedDeadlineRows.filter(x=>x.value).map(x=>({
+        candidate_hour_ist:x.hour,source_type:'Open-Meteo model / FastAPI replan',
+        server_response:x.value
+      })),
+      user_selected_manual_deadlines:manualDeadlineRows.filter(x=>x.response).map(x=>({
+        candidate_hour_ist:x.hour,source_type:'user-declared IST / FastAPI compare',
+        server_response:x.response
+      }))};
     const b=new Blob([JSON.stringify(evidence,null,2)],{type:'application/json'}),url=URL.createObjectURL(b),a=el('a');
     a.href=url;a.download='agri-foresight-evidence-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
@@ -345,6 +959,65 @@
   const govTitle=el('h2','', 'Government climate evidence · NASA POWER');
   const govIntro=el('p','gov-intro',
     'Historical daily gridded rainfall and temperature from NASA (US government). Not live observed rainfall, a future forecast, or a measurement at your farm.');
+
+  // EX-11: translate presentation only; NASA source name, units, numbers and
+  // downloaded raw JSON remain exact, unmodified government data.
+  const historyLanguage={
+    en:{
+      title:'Government climate evidence · NASA POWER',
+      intro:'Historical daily gridded rainfall and temperature from NASA (US government). Not live observed rainfall, a future forecast, or a measurement at your farm.',
+      refresh:'Refresh official data',fetching:'Contacting NASA POWER…',
+      range:'Government history display range',seven:'Latest 7 available days',all:'All available days',
+      download:'Download verified NASA JSON',
+      grid:'NASA historical grid',days:'available calendar days',rain:'Rainfall',rainUnknown:'Rainfall: unavailable',
+      air:'Mean air temperature',airUnknown:'Air temperature unavailable',dayUnit:'days with values',
+      avg:'Mean of available daily temperatures',dayRain:'mm/day',historic:'These are arithmetic summaries of historical government grid values, NOT operational forecasts.',
+      retrieved:'Verified government response',cached:'Verified recent response',historyDays:'historical days',
+      unsupported:'Unavailable for selected location',unsupportedIntro:'Official Jalna reference data cannot be applied to the selected place.',
+      unsupportedDetail:'Switch to Jalna, Maharashtra to retrieve its government historical context.',
+      unavailable:'Official source unavailable',unavailableIntro:'NASA POWER unavailable. No values are shown.',
+      invalid:'Could not verify official data',invalidIntro:'No government climate values displayed',
+      invalidDetail:'Only verified NASA POWER responses are eligible; no offline example is substituted.',
+      source:'Source',latest:'Latest provided day',retrievedUtc:'Retrieved (UTC)'
+    },
+    mr:{
+      title:'सरकारी ऐतिहासिक हवामान माहिती · NASA POWER',
+      intro:'NASA (अमेरिकन सरकार) कडील मागील दिवसांचा ग्रीड-आधारित पाऊस आणि तापमान. हे शेतातील थेट मोजमाप, भविष्यातील अंदाज किंवा सुरक्षिततेचे प्रमाणपत्र नाही.',
+      refresh:'सरकारी माहिती पुन्हा मिळवा',fetching:'NASA POWER शी संपर्क सुरू…',
+      range:'ऐतिहासिक दिवसांची व्याप्ती',seven:'अलीकडील ७ उपलब्ध दिवस',all:'सर्व उपलब्ध दिवस',
+      download:'पडताळलेला NASA JSON घ्या',
+      grid:'NASA ऐतिहासिक ग्रीड',days:'उपलब्ध दिवस',rain:'पाऊस',rainUnknown:'पावसाचा डेटा उपलब्ध नाही',
+      air:'सरासरी हवेचे तापमान',airUnknown:'तापमान उपलब्ध नाही',dayUnit:'मूल्य असलेले दिवस',
+      avg:'उपलब्ध दिवसांचे सरासरी तापमान',dayRain:'मिमी/दिवस',
+      historic:'ही ऐतिहासिक सरकारी ग्रीडमधील अंकगणितीय माहिती आहे; भविष्यातील अंदाज नाही.',
+      retrieved:'पडताळलेला सरकारी डेटा',cached:'अलीकडे पडताळलेला डेटा',historyDays:'ऐतिहासिक दिवस',
+      unsupported:'या ठिकाणासाठी उपलब्ध नाही',unsupportedIntro:'जालना येथील माहिती इतर ठिकाणाला लागू करता येत नाही.',
+      unsupportedDetail:'जालना, महाराष्ट्र निवडल्यानंतरच येथील ऐतिहासिक माहिती मिळेल.',
+      unavailable:'सरकारी स्रोत सध्या उपलब्ध नाही',unavailableIntro:'NASA POWER उपलब्ध नाही. कोणतीही बनावट मूल्ये दाखवलेली नाहीत.',
+      invalid:'सरकारी माहिती पडताळता आली नाही',invalidIntro:'सरकारी आकडे दाखवू शकत नाही',
+      invalidDetail:'फक्त पडताळलेला NASA POWER डेटा वापरता येतो; कृत्रिम उदाहरणे नाहीत.',
+      source:'स्रोत',latest:'उपलब्ध शेवटचा दिवस',retrievedUtc:'माहिती मिळाल्याची वेळ (UTC)'
+    },
+    hi:{
+      title:'सरकारी ऐतिहासिक मौसम जानकारी · NASA POWER',
+      intro:'NASA (अमेरिकी सरकार) से पिछले दिनों की ग्रिड-आधारित वर्षा और तापमान। यह खेत पर वास्तविक माप, भविष्य का पूर्वानुमान या सुरक्षा प्रमाणपत्र नहीं है।',
+      refresh:'सरकारी डेटा फिर प्राप्त करें',fetching:'NASA POWER से संपर्क हो रहा है…',
+      range:'ऐतिहासिक दिनों की सीमा',seven:'हाल के ७ उपलब्ध दिन',all:'सभी उपलब्ध दिन',
+      download:'सत्यापित NASA JSON डाउनलोड करें',
+      grid:'NASA ऐतिहासिक ग्रिड',days:'उपलब्ध दिन',rain:'वर्षा',rainUnknown:'वर्षा जानकारी उपलब्ध नहीं',
+      air:'औसत वायु तापमान',airUnknown:'तापमान उपलब्ध नहीं',dayUnit:'मान वाले दिन',
+      avg:'उपलब्ध दिनों का औसत तापमान',dayRain:'मिमी/दिन',
+      historic:'यह सरकारी ऐतिहासिक ग्रिड का गणितीय सारांश है, भविष्य का मौसम पूर्वानुमान नहीं।',
+      retrieved:'सत्यापित सरकारी जानकारी',cached:'हाल में सत्यापित जानकारी',historyDays:'ऐतिहासिक दिन',
+      unsupported:'इस स्थान के लिए उपलब्ध नहीं',unsupportedIntro:'जालना की ऐतिहासिक जानकारी दूसरे स्थान पर लागू नहीं की जा सकती।',
+      unsupportedDetail:'ऐतिहासिक संदर्भ देखने के लिए जालना, महाराष्ट्र चुनें।',
+      unavailable:'सरकारी स्रोत उपलब्ध नहीं',unavailableIntro:'NASA POWER उपलब्ध नहीं। कोई काल्पनिक मान नहीं दिखाए जाते।',
+      invalid:'सरकारी डेटा सत्यापित नहीं हुआ',invalidIntro:'सरकारी मान नहीं दिखा सकते',
+      invalidDetail:'केवल सत्यापित NASA POWER परिणाम स्वीकार हैं; कोई नकली उदाहरण नहीं।',
+      source:'स्रोत',latest:'उपलब्ध अंतिम दिन',retrievedUtc:'प्राप्ति समय (UTC)'
+    }
+  };
+  const historyText=k=>(historyLanguage[state.lang]||historyLanguage.en)[k]||historyLanguage.en[k]||k;
   const govActions=el('div','gov-action-row');
   const govRefresh=el('button','btn primary','Refresh official data');
   govRefresh.id='refreshGovernmentClimate';govRefresh.type='button';
@@ -371,48 +1044,90 @@
 
   let governmentClimateData=null;
   let governmentClimateRequest=0;
+  let governmentClimateVisibleState='loading';
+  let governmentClimateErrorMessage='';
+  function translateGovernmentPanel(){
+    govTitle.textContent=historyText('title');
+    govIntro.textContent=historyText('intro');
+    govRefresh.textContent=govRefresh.disabled?historyText('fetching'):historyText('refresh');
+    govRange.setAttribute('aria-label',historyText('range'));
+    optSeven.textContent=historyText('seven');
+    optAll.textContent=historyText('all');
+    govDownload.textContent=historyText('download');
+    if(governmentClimateData&&okLocation()){
+      govStatus.textContent=(governmentClimateData.status==='cached_recent'?
+        historyText('cached'):historyText('retrieved'))+' · '+
+        governmentClimateData.days.length+' '+historyText('historyDays');
+      renderGovernmentClimate(governmentClimateData);
+      govDetail.replaceChildren();
+      const sourceLink=el('a','','NASA POWER official daily API');
+      sourceLink.href='https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
+      sourceLink.rel='noopener noreferrer';sourceLink.target='_blank';
+      govDetail.append(historyText('source')+': ',sourceLink,' · '+historyText('latest')+': '+
+        governmentClimateData.latest_data_date+' · '+historyText('retrievedUtc')+': '+
+        governmentClimateData.retrieved_at_utc+'. '+governmentClimateData.notice);
+      return;
+    }
+    if(!okLocation()){
+      govStatus.textContent=historyText('unsupported');
+      govRows.replaceChildren(el('p','gov-intro',historyText('unsupportedIntro')));
+      govDetail.textContent=historyText('unsupportedDetail');
+    }else if(governmentClimateVisibleState==='unavailable'){
+      govStatus.textContent=historyText('unavailable');
+      govRows.replaceChildren(el('p','gov-intro',
+        historyText('unavailableIntro')+(governmentClimateErrorMessage?' · '+governmentClimateErrorMessage:'')));
+    }else if(governmentClimateVisibleState==='invalid'){
+      govStatus.textContent=historyText('invalid');
+      govRows.replaceChildren(el('p','gov-intro',historyText('invalidIntro')+
+        (governmentClimateErrorMessage?': '+governmentClimateErrorMessage:'')));
+      govDetail.textContent=historyText('invalidDetail');
+    }else if(governmentClimateVisibleState==='loading'){
+      govStatus.textContent=historyText('fetching');
+    }
+  }
   function renderGovernmentClimate(data){
     govRows.replaceChildren();
     const count=govRange.value==='all'?data.days.length:7;
     const items=data.days.slice(-count);
     const rain=items.filter(x=>x.precipitation_mm_day!==null);
     const air=items.filter(x=>x.temperature_c!==null);
-    govSummary.textContent='NASA historical grid, '+items.length+' available calendar days · '+
-      (rain.length?'Rainfall: '+num(rain.reduce((n,x)=>n+x.precipitation_mm_day,0))+
-      ' mm across '+rain.length+'/'+items.length+' days with values':'Rainfall unavailable')+
-      ' · '+(air.length?'Mean of available daily temperatures: '+
-      num(air.reduce((n,x)=>n+x.temperature_c,0)/air.length)+' °C ('+air.length+'/'+items.length+
-      ' days)':'Temperature unavailable')+
-      '. These are arithmetic summaries of historical government grid values, NOT operational forecasts.';
+    govSummary.textContent=historyText('grid')+', '+items.length+' '+historyText('days')+' · '+
+      (rain.length?historyText('rain')+': '+num(rain.reduce((n,x)=>n+x.precipitation_mm_day,0))+
+        ' mm ('+rain.length+'/'+items.length+' '+historyText('dayUnit')+')':historyText('rainUnknown'))+
+      ' · '+(air.length?historyText('avg')+': '+
+        num(air.reduce((n,x)=>n+x.temperature_c,0)/air.length)+' °C ('+
+        air.length+'/'+items.length+' '+historyText('dayUnit')+')':historyText('airUnknown'))+
+      '. '+historyText('historic');
     for(const item of [...items].reverse()){
       const card=el('article','gov-day');
       const date=el('time','',item.date);date.dateTime=item.date;
       card.append(date,
-        el('b','',item.precipitation_mm_day===null?'Rainfall: unavailable':'Rainfall: '+num(item.precipitation_mm_day)+' mm/day'),
-        el('small','',item.temperature_c===null?'Air temperature: unavailable':'Mean air temperature: '+num(item.temperature_c)+' °C'));
+        el('b','',item.precipitation_mm_day===null?historyText('rainUnknown'):
+          historyText('rain')+': '+num(item.precipitation_mm_day)+' '+historyText('dayRain')),
+        el('small','',item.temperature_c===null?historyText('airUnknown'):
+          historyText('air')+': '+num(item.temperature_c)+' °C'));
       govRows.append(card);
     }
   }
   async function loadGovernmentClimate(refresh=false){
     const token=++governmentClimateRequest;
-    governmentClimateData=null;
+    governmentClimateData=null;governmentClimateVisibleState='loading';governmentClimateErrorMessage='';
     govDownload.disabled=true;
     govCSV.disabled=true;
     govSummary.textContent='';
     govRows.replaceChildren();
     if(!okLocation()){
-      govRefresh.disabled=false;
-      govRefresh.removeAttribute('aria-busy');
-      govRefresh.textContent='Refresh official data';
-      govStatus.textContent='Unavailable for selected location';
-      govRows.append(el('p','gov-intro','Official Jalna reference data cannot be applied to the selected place.'));
-      govDetail.textContent='Switch to Jalna, Maharashtra to retrieve its government historical context.';
+      govRefresh.disabled=false;govRefresh.removeAttribute('aria-busy');
+      govRefresh.textContent=historyText('refresh');
+      governmentClimateVisibleState='unsupported';
+      govStatus.textContent=historyText('unsupported');
+      govRows.append(el('p','gov-intro',historyText('unsupportedIntro')));
+      govDetail.textContent=historyText('unsupportedDetail');
       return;
     }
-    govRefresh.disabled=true;
-    govRefresh.setAttribute('aria-busy','true');
-    govRefresh.textContent='Fetching official data…';
-    govStatus.textContent='Contacting NASA POWER…';
+    govRefresh.disabled=true;govRefresh.setAttribute('aria-busy','true');
+    govRefresh.textContent=historyText('fetching');
+    govStatus.textContent=historyText('fetching');
     try{
       const data=await json('/api/government-climate'+(refresh?'?refresh=true':''));
       if(token!==governmentClimateRequest||!okLocation())return;
@@ -421,8 +1136,9 @@
       }
       if(data.status==='unavailable'){
         if(data.days.length)throw new Error('Unavailable NASA response unexpectedly contained values.');
-        govStatus.textContent='Official source unavailable';
-        govRows.append(el('p','gov-intro',data.notice||'NASA POWER unavailable. No values are shown.'));
+        governmentClimateVisibleState='unavailable';governmentClimateErrorMessage=data.notice||'';
+        govStatus.textContent=historyText('unavailable');
+        govRows.append(el('p','gov-intro',historyText('unavailableIntro')+(data.notice?' · '+data.notice:'')));
         govDetail.replaceChildren();
         const link=el('a','', 'NASA POWER official documentation');link.href='https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
         link.target='_blank';link.rel='noopener noreferrer';govDetail.append(link);
@@ -435,27 +1151,26 @@
           (x.temperature_c===null||Number.isFinite(x.temperature_c)))){
         throw new Error('Government climate values or provenance failed validation.');
       }
-      govStatus.textContent=(data.status==='cached_recent'?'Verified recent response':'Verified government response')+' · '+data.days.length+' historical days';
+      govStatus.textContent=(data.status==='cached_recent'?historyText('cached'):historyText('retrieved'))+' · '+data.days.length+' '+historyText('historyDays');
+      governmentClimateVisibleState='verified';
       governmentClimateData=data;
       govDownload.disabled=false;
        govCSV.disabled=false;      renderGovernmentClimate(data);
       govDetail.replaceChildren();
       const link=el('a','','NASA POWER official daily API');link.href='https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
       link.rel='noopener noreferrer';link.target='_blank';
-      govDetail.append('Source: ',link,' · Latest provided day: '+data.latest_data_date+
-        ' · Retrieved (UTC): '+data.retrieved_at_utc+'. '+data.notice);
+      govDetail.append(historyText('source')+': ',link,' · '+historyText('latest')+': '+data.latest_data_date+
+        ' · '+historyText('retrievedUtc')+': '+data.retrieved_at_utc+'. '+data.notice);
     }catch(e){
       if(token!==governmentClimateRequest)return;
-      govStatus.textContent='Could not verify official data';
-      govRows.replaceChildren(el('p','gov-intro','No government climate values displayed: '+e.message));
-      govDetail.textContent='Only verified NASA POWER responses are eligible; no offline example is substituted.';
-    }finally{
-      if(token===governmentClimateRequest){
-        govRefresh.disabled=false;
-        govRefresh.removeAttribute('aria-busy');
-        govRefresh.textContent='Refresh official data';
-      }
-    }
+      governmentClimateVisibleState='invalid';governmentClimateErrorMessage=e.message;
+      govStatus.textContent=historyText('invalid');
+      govRows.replaceChildren(el('p','gov-intro',historyText('invalidIntro')+': '+e.message));
+      govDetail.textContent=historyText('invalidDetail');
+    }finally{if(token===governmentClimateRequest){
+      govRefresh.disabled=false;govRefresh.removeAttribute('aria-busy');
+      govRefresh.textContent=historyText('refresh');
+    }}
   }
   govRefresh.addEventListener('click',()=>{void loadGovernmentClimate(true);});
   govRange.addEventListener('change',()=>{if(governmentClimateData&&okLocation())renderGovernmentClimate(governmentClimateData);});
@@ -468,6 +1183,7 @@
     link.href=url;link.download='agri-foresight-nasa-jalna-'+governmentClimateData.latest_data_date+'.json';
     link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
+  here('language').addEventListener('change',translateGovernmentPanel);
   govCSV.addEventListener('click',()=>{
     if(!governmentClimateData||!okLocation()||govCSV.disabled)return;
     const d=governmentClimateData;
@@ -498,6 +1214,8 @@
     }
   };
   void loadGovernmentClimate(false);
+
+  here('language').addEventListener('change',()=>{renderForecastQuality();renderHourlyEvidence();});
 
   // Override obsolete offline-prototype copy, including on language changes.
   // Model outputs remain labeled; no simulated values appear in the real UI.
