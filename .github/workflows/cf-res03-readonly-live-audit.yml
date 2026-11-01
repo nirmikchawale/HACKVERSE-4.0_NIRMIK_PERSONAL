@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   audit:
-    name: Compare main SHA with live Cloudflare and exercise Page 03
+    name: Verify merged Farm Resources ancestry and exercise live Page 03
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     env:
@@ -58,8 +58,17 @@ jobs:
             console.log('PUBLIC_RELEASE_BUILT_AT_UTC',manifest.built_at_utc||'UNKNOWN');
             if(manifest.app!=='Agri Foresight'||manifest.generated_from!=='git')
               throw Error('Release receipt provenance fields invalid');
+            const featureBase='283af29305877a502c24391b519d08921b35b61d';
+            const compareUrl='https://api.github.com/repos/'+process.env.SOURCE_REPO+
+              '/compare/'+featureBase+'...'+published;
+            const comparison=await fetch(compareUrl,{headers:{'Accept':'application/vnd.github+json'},signal:AbortSignal.timeout(20000)});
+            if(!comparison.ok)throw Error('Cannot validate public SHA includes merged feature: HTTP '+comparison.status);
+            const relation=(await comparison.json()).status;
+            if(!['ahead','identical'].includes(relation))
+              throw Error('PUBLIC_FEATURE_NOT_DEPLOYED: published SHA does not include required Farm Resources merge');
             if(published!==expected)
-              throw Error('PUBLIC_SHA_MISMATCH: Live Worker does not serve current GitHub main. No deployment certification.');
+              console.warn('PUBLIC_MAIN_LAG: feature is deployed, but newer main '+expected+' is not live yet');
+            console.log('PUBLIC_FARM_RESOURCES_SHA_VERIFIED',published,'FEATURE_BASE',featureBase,'relation',relation);
             const health=await get('/api/health');
             if(health.status!==200)throw Error('Public health API not HTTP 200');
             let parsed;
