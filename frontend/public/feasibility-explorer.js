@@ -33,86 +33,111 @@
     return response.json();
   };
 
-  const root = node('section', 'panel feasibility-workbench');
+  // CF-FEAS-05: a compact, task-first lab; all outcomes are from verified Python cases.
+  const root = node('section', 'panel feasibility-workbench fw-lab');
   root.id = 'feasibilityWorkbench';
-  root.setAttribute('aria-label', 'Jalna feasibility examples and official historical evidence');
-  const heading = node('div', 'fw-heading');
+  root.setAttribute('aria-label', 'Jalna interactive feasibility scenario lab');
+  const heading = node('div', 'fw-heading fw-lab-heading');
   const headingCopy = node('div', 'fw-heading-copy');
-  headingCopy.append(node('div', 'section-label', 'DATA-BACKED EXPLORER · JALNA'),
-    node('h2', '', '100 worked feasibility scenarios'),
-    node('p', '', 'Explore how capacity, preparation time, readiness and confirmed changes affect a decision. Results come from the same FastAPI engine used for farmer assessments.'));
-  const label = node('span', 'fw-source-label', 'ENGINE-CALCULATED EXAMPLES');
-  heading.append(headingCopy, label);
+  headingCopy.append(node('div', 'section-label', 'FEASIBILITY EXPLORER · JALNA'),
+    node('h2', '', 'Scenario lab'));
+  const sourceLabel = node('span', 'fw-source-label', 'Checking engine…');
+  sourceLabel.id = 'fwProvenance';
+  sourceLabel.setAttribute('aria-live', 'polite');
+  const about = node('details', 'fw-about');
+  const aboutSummary = node('summary', '', 'About the examples');
+  about.append(aboutSummary, node('p', '',
+    'These are 20 configured planning cases × 5 sensitivity variants, recalculated by FastAPI or supplied as a verified build-time Python snapshot. They are not farmer records, government measurements, crop-safety advice, or live predictions. All units are abstract handling units.'));
+  heading.append(headingCopy, sourceLabel, about);
   root.append(heading);
-  root.append(node('p', 'fw-disclosure',
-    'These 100 configurations are planning examples, not actual farmer records or government measurements. They are not crop-safety recommendations. Your own farm assessment remains separate below.'));
 
   const jump = target => {
     const item = document.querySelector('#navDesktop [data-nav="' + target + '"]') ||
       document.querySelector('#navMobile [data-nav="' + target + '"]');
     if (item) item.click();
   };
-  const modeActions = node('div', 'fw-mode-actions');
-  modeActions.append(
-    makeButton('Explore the 100 examples', () => root.scrollIntoView({behavior:'smooth',block:'start'}), 'btn primary'),
-    makeButton('Set my own farm resources', () => jump(2), 'btn'),
-    makeButton('Choose planning deadline', () => jump(1), 'btn')
-  );
-  root.append(modeActions);
-  const statusLine = node('p', 'fw-status', 'Loading certified Python scenarios…');
+  const statusLine = node('p', 'fw-status fw-live-status', 'Loading verified scenarios…');
   statusLine.setAttribute('role', 'status');
   statusLine.setAttribute('aria-live', 'polite');
-  const toolbar = node('div', 'fw-toolbar');
-  const filter = node('select', 'fw-filter');
-  filter.setAttribute('aria-label', 'Filter example assessments');
-  for (const [value, label] of [['all', 'All cases'], ['feasible', 'Feasible'], ['blocked', 'Blocked'], ['unknown', 'Unknown']]) {
-    const option = node('option', '', label);
-    option.value = value;
-    filter.append(option);
-  }
-  const search = node('input', 'fw-search');
-  search.type = 'search';
-  search.placeholder = 'Search ID, scenario or variant';
-  search.setAttribute('aria-label', 'Search 100 scenario examples');
-  search.autocomplete = 'off';
-  const refresh = makeButton('Recalculate 100 cases', () => void loadCases(), 'btn primary');
-  const diagnostics = makeButton('Check live API', () => void checkApiHealth(), 'btn');
-  diagnostics.id = 'fwCheckAPI';
-  const diagnosticInfo = node('p', 'fw-status fw-diagnostic', 'Live status has not been checked yet.');
-  diagnosticInfo.id = 'fwDiagnostic';
-  diagnosticInfo.setAttribute('role', 'status');
-  const download = makeButton('Export assessed cases CSV', exportCases, 'btn');
-  download.disabled = true;
-  toolbar.append(filter, search, refresh, diagnostics, download);
-  root.append(statusLine, toolbar, diagnosticInfo);
 
-  const dashboard = node('div', 'fw-stats');
-  for (const [key, title] of [['feasible', 'Feasible under assumptions'], ['blocked', 'Known blockers'], ['unknown', 'Unknown prerequisites'], ['packages', 'Cases with possible changes']]) {
-    const item = node('button', 'fw-stat fw-stat-action');
-    item.type = 'button';
-    item.dataset.filter = key;
-    item.setAttribute('aria-label', 'Show ' + title.toLowerCase() + ' from calculated examples');
-    item.addEventListener('click', () => {
-      if (!records.length) { void loadCases(); return; }
-      filter.value = key === 'packages' ? 'all' : key;
-      packageOnly = key === 'packages';
-      currentPage = 1;
-      const matches = filteredCases();
-      selectedId = matches.length ? matches[0].id : '';
-      drawList(); drawCase();
-      casePanel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const filter = { value:'all' };
+  const dashboard = node('div', 'fw-stats fw-facets');
+  dashboard.setAttribute('role', 'group');
+  dashboard.setAttribute('aria-label', 'Filter examples by engine result');
+  const facetButtons = new Map();
+  for(const [key,title] of [['all','All cases'],['feasible','Feasible'],['blocked','Blocked'],['unknown','Unknown'],['packages','With changes']]){
+    const item = node('button', 'fw-stat fw-stat-action fw-facet');
+    item.type='button';
+    item.dataset.filter=key;
+    item.setAttribute('aria-pressed', String(key==='all'));
+    item.setAttribute('aria-label', 'Filter: '+title);
+    const name=node('span','',title);
+    const count=node('strong','','—');
+    count.id='fw-count-'+key;
+    item.append(name,count);
+    item.addEventListener('click',()=>{
+      if(!records.length){void loadCases();return;}
+      filter.value=key;
+      currentPage=1;
+      const matches=filteredCases();
+      selectedId=matches.length?matches[0].id:'';
+      drawList();drawCase();
     });
-    item.append(node('span', '', title));
-    const value = node('strong', '', 'Checking…');
-    value.id = 'fw-count-' + key;
-    item.append(value, node('small', 'fw-stat-action-label', 'Select to inspect →'));
+    facetButtons.set(key,item);
     dashboard.append(item);
   }
   root.append(dashboard);
 
+  const toolbar = node('div', 'fw-toolbar fw-lab-toolbar');
+  const search = node('input', 'fw-search');
+  search.type = 'search'; search.id='fwSearch';
+  search.placeholder = 'Search ID, scenario or variant';
+  search.setAttribute('aria-label', 'Find an example by ID, description or variant');
+  search.autocomplete = 'off';
+  const variant = node('select', 'fw-filter fw-variant');
+  variant.id='fwVariant';
+  variant.setAttribute('aria-label', 'Filter sensitivity variant');
+  for(const [key,title] of [
+    ['all','All variants'],['baseline','Baseline'],
+    ['compressed_window','Shorter window'],['capacity_resilience','More capacity'],
+    ['readiness_review','Readiness review'],['support_confirmation','Support confirmation']
+  ]){
+    const option=node('option','',title);option.value=key;variant.append(option);
+  }
+  const sort = node('select','fw-filter fw-sort');
+  sort.id='fwSort';
+  sort.setAttribute('aria-label','Sort matching examples');
+  for(const [key,title] of [['id','Case ID'],['shortfall','Largest shortfall'],['slack','Least time margin'],['capacity','Highest capacity']]){
+    const option=node('option','',title);option.value=key;sort.append(option);
+  }
+  const reset = makeButton('Clear filters',()=>{
+    search.value='';variant.value='all';sort.value='id';filter.value='all';
+    currentPage=1;selectedId=records[0]?.id||'';drawList();drawCase();
+  },'btn fw-reset');
+  reset.id='fwReset';reset.hidden=true;
+  const controls = node('div','fw-lab-primary-controls');
+  controls.append(search,variant,sort,reset);
+  const refresh=makeButton('Recalculate',()=>void loadCases(),'btn primary');
+  refresh.id='fwRefresh';
+  const diagnostics=makeButton('Check API',()=>void checkApiHealth(),'btn');
+  diagnostics.id='fwCheckAPI';
+  const download=makeButton('Export CSV',exportCases,'btn');
+  download.id='fwExport';download.disabled=true;
+  const mine=makeButton('My farm →',()=>jump(2),'btn fw-my-farm');
+  const actions=node('div','fw-lab-actions');
+  actions.append(refresh,diagnostics,download,mine);
+  toolbar.append(controls,actions);
+  root.append(toolbar,statusLine);
+  const diagnosticInfo = node('p', 'fw-status fw-diagnostic', '');
+  diagnosticInfo.id = 'fwDiagnostic';diagnosticInfo.hidden=true;
+  diagnosticInfo.setAttribute('role','status');
+  root.append(diagnosticInfo);
+
   const content = node('div', 'fw-content');
   const casePanel = node('div', 'fw-list-panel');
-  casePanel.append(node('h3', '', 'Select a planning case'));
+  const listTitle = node('h3', '', 'Browse cases');
+  listTitle.id='fwListTitle';
+  casePanel.append(listTitle);
   const caseList = node('div', 'fw-list', 'Loading calculations from the Python engine…');
   caseList.id = 'fwCaseList';
   const caseMeta = node('p', 'fw-page-meta', 'Awaiting verified scenario catalog.');
@@ -131,8 +156,17 @@
   pager.append(previousPage, nextPage);
   casePanel.append(caseList, caseMeta, pager);
   const resultPanel = node('article', 'fw-detail');
-  resultPanel.append(node('h3', '', 'Selected case · explanation'));
-  const detail = node('div', 'fw-detail-content', 'Validated case results will appear after the FastAPI response.');
+  resultPanel.append(node('h3', '', 'Inspect an example'));
+  const compareTools=node('div','fw-compare-tools');
+  const pin=makeButton('Pin for comparison',()=>{if(!selectedId)return;pinnedId=selectedId;drawCase();},'btn');
+  pin.id='fwPin';
+  const clearPin=makeButton('Clear comparison',()=>{pinnedId='';drawCase();},'btn');
+  clearPin.id='fwClearPin';clearPin.hidden=true;
+  compareTools.append(pin,clearPin);
+  const comparison=node('div','fw-comparison');
+  comparison.id='fwComparison';comparison.hidden=true;
+  resultPanel.append(compareTools,comparison);
+  const detail = node('div', 'fw-detail-content', 'Choose a verified example above.');
   detail.id = 'fwCaseDetail';
   resultPanel.append(detail);
   content.append(casePanel, resultPanel);
@@ -233,7 +267,7 @@
   }
 
   let records = [];
-  let packageOnly = false;
+  let pinnedId = '';
   let currentPage = 1;
   const PAGE_SIZE = 20;
   let selectedId = '';
@@ -243,11 +277,42 @@
     const target = document.getElementById('fw-count-' + name);
     if (target) target.textContent = String(value);
   };
+  const syncFacets=()=>{
+    for(const [key,item] of facetButtons){
+      item.setAttribute('aria-pressed',String(filter.value===key));
+    }
+    reset.hidden=filter.value==='all'&&variant.value==='all'&&sort.value==='id'&&!search.value.trim();
+  };
+  const displayComparison=()=>{
+    comparison.replaceChildren();
+    comparison.hidden=!pinnedId;
+    clearPin.hidden=!pinnedId;
+    pin.disabled=!selectedId||pinnedId===selectedId;
+    pin.textContent=pinnedId===selectedId?'Pinned case':'Pin for comparison';
+    if(!pinnedId)return;
+    const a=records.find(x=>x.id===pinnedId),b=records.find(x=>x.id===selectedId);
+    if(!a){pinnedId='';comparison.hidden=true;clearPin.hidden=true;return;}
+    if(!b||a.id===b?.id){
+      comparison.append(node('strong','','Pinned '+a.id),node('p','','Choose another row to compare the two calculated cases.'));
+      return;
+    }
+    const row=node('div','fw-compare-grid');
+    for(const x of [a,b]){
+      const column=node('div','fw-compare-column');
+      column.append(node('strong','',x.id),statusChip(x.result.status),
+        node('small','','Shortfall: '+number(x.result.baseline.shortfall_units)+' units'),
+        node('small','','Time margin: '+number(x.result.baseline.time_budget?.time_slack_hours)+' h'),
+        node('small','','Readiness: '+x.assumptions.readiness));
+      row.append(column);
+    }
+    comparison.append(node('strong','','Pinned vs selected · engine results'),row);
+  };
   const statusChip = kind => node('span', 'fw-chip fw-' + kind, kind.toUpperCase());
 
   function drawCase() {
     const entry = records.find(record => record.id === selectedId);
     detail.replaceChildren();
+    displayComparison();
     if (!entry) {
       detail.append(node('p', '', 'Select an example to inspect the exact FastAPI explanation.'));
       return;
@@ -306,15 +371,31 @@
   }
   const filteredCases = () => {
     const term = search.value.trim().toLocaleLowerCase();
-    return records.filter(entry =>
-      (filter.value === 'all' || entry.result.status === filter.value) &&
-      (!packageOnly || entry.result.packages.length > 0) &&
+    const matches = records.filter(entry =>
+      (filter.value === 'all' || filter.value === 'packages' && entry.result.packages.length > 0 ||
+        filter.value === entry.result.status) &&
+      (variant.value === 'all' || variant.value === entry.variant) &&
       (!term || (entry.id + ' ' + entry.label + ' ' + (entry.variant || '') + ' ' + (entry.source_seed || '')).toLocaleLowerCase().includes(term))
     );
+    const stable=(a,b)=>a.id.localeCompare(b.id);
+    if(sort.value==='shortfall')
+      return matches.sort((a,b)=>b.result.baseline.shortfall_units-a.result.baseline.shortfall_units||stable(a,b));
+    if(sort.value==='capacity')
+      return matches.sort((a,b)=>b.assumptions.capacity_units-a.assumptions.capacity_units||stable(a,b));
+    if(sort.value==='slack')
+      return matches.sort((a,b)=>{
+        const x=a.result.baseline.time_budget?.time_slack_hours;
+        const y=b.result.baseline.time_budget?.time_slack_hours;
+        return (Number.isFinite(x)?x:Infinity)-(Number.isFinite(y)?y:Infinity)||stable(a,b);
+      });
+    return matches.sort(stable);
   };
   function drawList() {
     caseList.replaceChildren();
     const matches = filteredCases();
+    syncFacets();
+    listTitle.textContent='Browse '+matches.length+' matching cases';
+    if(!matches.some(item=>item.id===selectedId))selectedId=matches[0]?.id||'';
     const pages = Math.max(1, Math.ceil(matches.length / PAGE_SIZE));
     currentPage = Math.min(Math.max(currentPage, 1), pages);
     const begin = (currentPage - 1) * PAGE_SIZE;
@@ -356,6 +437,7 @@
     return payload.records;
   }
   async function checkApiHealth() {
+    diagnosticInfo.hidden=false;
     diagnostics.disabled = true;
     diagnosticInfo.textContent = 'Checking Cloudflare FastAPI health…';
     try {
@@ -403,20 +485,19 @@
       records = result.records;
       if (!records.some(item => item.id === selectedId)) selectedId = records[0].id;
       currentPage = 1;
+      setCount('all',records.length);
       for (const key of ['feasible','blocked','unknown']) {
         setCount(key, records.filter(item => item.result.status === key).length);
       }
       setCount('packages', records.filter(item => item.result.packages.length > 0).length);
-      statusLine.textContent = provenance === 'live_fastapi'
-        ? '100 of 100 teaching cases recalculated by the FastAPI engine · ' +
-          result.evaluated_at_utc + ' · separate from your farm.'
-        : '100 of 100 teaching cases calculated by Python during the Cloudflare build · ' +
-          result.snapshot_generated_at_utc +
-          '. Live API is not reachable; this dated snapshot is NOT a personal evaluation.';
-      diagnosticInfo.textContent = provenance === 'live_fastapi'
-        ? 'The examples API is responding. The personal assessment has a separate input and validation step.'
-        : 'Live API unavailable (' + liveError + '). The 100 cases shown are verified build-time examples, ' +
-          'not invented weather or submitted farmer records. Use Check live API to retry.';
+      sourceLabel.textContent=provenance==='live_fastapi'?'FastAPI · live calculations':'Python snapshot · not live';
+      statusLine.textContent= '100 checked cases · '+
+        (provenance==='live_fastapi'?'engine refreshed ':'snapshot built ')+
+        (provenance==='live_fastapi'?result.evaluated_at_utc:result.snapshot_generated_at_utc)+
+        ' · configured examples, not farm records';
+      diagnosticInfo.textContent=provenance==='live_fastapi'
+        ? 'Example API is responding. Your farm assessment still requires separate declared inputs.'
+        : 'Live example API unavailable ('+liveError+'). Only the source-verified build-time cases are shown. Run Check API for details.';
       download.disabled = false;
       drawList(); drawCase();
     } catch (error) {
@@ -430,7 +511,8 @@
         'No verified examples are available. Select Check live API to inspect connectivity.'));
       statusLine.textContent = 'Unable to verify a live or build-certified example catalog.';
       download.disabled = true;
-      for (const key of ['feasible','blocked','unknown','packages']) setCount(key, 'Retry to view');
+      sourceLabel.textContent='Data unavailable';pinnedId='';comparison.hidden=true;
+      for (const key of ['all','feasible','blocked','unknown','packages']) setCount(key, '—');
       caseMeta.textContent = 'Use Recalculate 100 cases or Check live API.';
     } finally {
       if (token === caseRequest) refresh.disabled = false;
@@ -507,20 +589,15 @@
       if (token === climateRequest) refreshClimate.disabled = false;
     }
   }
-  search.addEventListener('input', () => {
-    packageOnly = false;
-    currentPage = 1;
-    const visible = filteredCases();
-    if (visible.length && !visible.some(item => item.id === selectedId)) selectedId = visible[0].id;
-    drawList(); drawCase();
-  });
-  filter.addEventListener('change', () => {
-    packageOnly = false;
-    currentPage = 1;
-    const visible = filteredCases();
-    if (visible.length && !visible.some(item => item.id === selectedId)) selectedId = visible[0].id;
-    drawList(); drawCase();
-  });
+  const onFilterChange=()=>{
+    currentPage=1;
+    const matches=filteredCases();
+    selectedId=matches[0]?.id||'';
+    drawList();drawCase();
+  };
+  search.addEventListener('input',onFilterChange);
+  variant.addEventListener('change',onFilterChange);
+  sort.addEventListener('change',onFilterChange);
   // Only initialize on Page 04. This avoids duplicate NASA requests and
   // preserves the existing one-request-per-source behaviour on other pages.
   let activated = false;
