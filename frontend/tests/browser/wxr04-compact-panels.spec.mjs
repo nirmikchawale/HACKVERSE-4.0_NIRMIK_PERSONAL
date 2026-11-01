@@ -12,7 +12,7 @@ test('one candidate Save and one gated Continue, with no static stepper',async({
  await expect(root.locator('#deadlineGuideSave')).toHaveCount(0);
  await expect(root.locator('#deadlineGuideContinue')).toHaveCount(1);
  await expect(root.locator('.wx-guide-steps,.source-strip,.network-evidence')).toHaveCount(0);
- await expect(page.locator('#deadlineGuideContinue')).toBeDisabled();
+ await expect(page.locator('#deadlineGuideContinue')).toBeEnabled();
  await expect(page.locator('#saveDeadline')).toBeDisabled();
  await page.locator('#deadlineInput').fill('2099-01-01T12:00');
  await expect(page.locator('#saveDeadline')).toBeEnabled();

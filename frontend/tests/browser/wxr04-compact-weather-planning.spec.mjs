@@ -70,16 +70,28 @@ test('WXR-04 horizon and date controls change actual available model-hour visual
  await page.locator('#forecastExplorePrev').click();
  await expect(page.locator('#weatherChart .bar-missing')).toHaveCount(1);
 });
+test('WXR-04 sole resource navigation is active before any deadline is selected',async({page})=>{
+ await visit(page);
+ const btn=page.locator('#deadlineGuideContinue');
+ await expect(btn).toBeEnabled();
+ await expect(page.locator('#deadlineInput')).toHaveValue('');
+ await expect(page.locator('#saveDeadline')).toBeDisabled();
+ await btn.focus();
+ await page.keyboard.press('Enter');
+ await expect(page.locator('section.section[data-page="2"]')).toHaveClass(/active/);
+ await expect(page.locator('#quantity')).toHaveValue('');
+ await expect(page.locator('#resourceCheckBadge')).toHaveText('0/6');
+});
 test('WXR-04 next model hour and explicit one-save workflow work without automatic deadline claims',async({page})=>{
  await visit(page);
  const cont=page.locator('#deadlineGuideContinue');
- await expect(cont).toBeDisabled();
+ await expect(cont).toBeEnabled();
  await expect(page.locator('#saveDeadline')).toBeDisabled();
  await page.locator('#deadlineGuideNextHour').click();
  await expect(page.locator('#deadlineInput')).not.toHaveValue('');
  await expect(page.locator('#deadlinePlanningGuide')).toContainText('Candidate time remaining');
  await expect(page.locator('#saveDeadline')).toBeEnabled();
- await expect(cont).toBeDisabled();
+ await expect(cont).toBeEnabled();
  await page.locator('#saveDeadline').click();
  await expect(page.locator('#deadlineNotice')).toContainText('saved');
  await expect(cont).toBeEnabled();

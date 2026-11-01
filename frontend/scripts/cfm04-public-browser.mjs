@@ -154,7 +154,7 @@ try{
     'Redundant deadline footer warning remains');
   await weatherPage.locator('#deadlineGuideContinue').waitFor({state:'visible',timeout:12000});
   assert(await weatherPage.locator('.deadline-card .goto[data-target="2"]').count()===1 &&
-    await weatherPage.locator('.wx-guide-actions #deadlineGuideContinue').count()===1,
+    await weatherPage.locator('.deadline-card #deadlineGuideContinue').count()===1,
     'Weather planning must have exactly one original working Resources action');
   assert(await weatherPage.locator('#deadlineGuideContinue').isEnabled(),
     'Existing Resources navigation must not be disabled without a saved deadline');
