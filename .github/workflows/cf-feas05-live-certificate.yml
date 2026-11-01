@@ -1,0 +1,129 @@
+name: CF-FEAS-05 read-only public Cloudflare certificate
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/cf-feas05-live-certificate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public:
+    name: Verify deployed source and desktop/mobile scenario lab
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    env:
+      EDGE_URL: https://agri-foresight.nirmikchawale1.workers.dev
+      FEATURE_SHA: 288ad4bd6aaba3aece0be8033f7d1e7726e4bf96
+    steps:
+      - name: Checkout read-only certificate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Wait for Cloudflare to publish source SHA containing merged lab
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import {appendFileSync} from 'node:fs';
+          const base=process.env.FEATURE_SHA,origin=process.env.EDGE_URL;
+          const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+          let deployed=null;
+          for(let attempt=1;attempt<=48;attempt++){
+            try{
+              const suffix='?audit='+Date.now();
+              const [a,b,c]=await Promise.all([
+                fetch(origin+'/_release.json'+suffix,{signal:AbortSignal.timeout(16000)}),
+                fetch(origin+'/feasibility-explorer.js'+suffix,{signal:AbortSignal.timeout(16000)}),
+                fetch(origin+'/feasibility-explorer.css'+suffix,{signal:AbortSignal.timeout(16000)})
+              ]);
+              if(!a.ok||!b.ok||!c.ok)throw Error('Live release/JS/CSS not all HTTP 200');
+              const release=await a.json(),js=await b.text(),css=await c.text();
+              const sha=release.git_commit_sha;
+              const feature=js.includes('fwComparison')&&js.includes('fwVariant')&&
+                js.includes('data.outcome')===false&&js.includes('dataset.outcome')&&
+                css.includes('CF-FEAS-05')&&css.includes('.fw-facet');
+              console.log('PUBLIC_FEAS_POLL',attempt,sha,'featureAssets='+feature);
+              if(feature&&/^[a-f0-9]{40}$/.test(sha||'')){
+                const url='https://api.github.com/repos/nirmikchawale/HACKVERSE-4.0_NIRMIK_PERSONAL/compare/'+base+'...'+sha;
+                const comparison=await fetch(url,{headers:{Accept:'application/vnd.github+json'},signal:AbortSignal.timeout(16000)});
+                if(!comparison.ok)throw Error('GitHub ancestry read unavailable: '+comparison.status);
+                const relation=(await comparison.json()).status;
+                if(['identical','ahead'].includes(relation)){deployed=sha;break;}
+              }
+            }catch(error){console.log('PUBLIC_FEAS_POLL_NOTICE',String(error.message).slice(0,180));}
+            await sleep(10_000);
+          }
+          if(!deployed)throw Error('Cloudflare does not yet serve a release descended from the merged Scenario Lab with correct JS/CSS');
+          appendFileSync(process.env.GITHUB_ENV,'LIVE_SHA='+deployed+'\n');
+          console.log('PUBLIC_FEAS_SHA_PASS',deployed,'base',base);
+          const health=await fetch(origin+'/api/health',{signal:AbortSignal.timeout(20000)});
+          if(!health.ok||!(await health.json()).ok)throw Error('Public FastAPI /api/health is not healthy');
+          console.log('PUBLIC_FEAS_API_HEALTH_PASS');
+          JS
+      - name: Install browser dependencies
+        working-directory: frontend
+        run: npm install
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Exercise public lab with real API or verifiable Python snapshot
+        working-directory: frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import {chromium} from '@playwright/test';
+          import {readFile} from 'node:fs/promises';
+          const origin=process.env.EDGE_URL,sha=process.env.LIVE_SHA;
+          const assert=(ok,m)=>{if(!ok)throw Error('PUBLIC_FEAS_LAB_FAIL: '+m);};
+          const browser=await chromium.launch({headless:true});
+          try{
+            for(const width of [1440,390]){
+              const context=await browser.newContext({viewport:{width,height:900},acceptDownloads:true});
+              const page=await context.newPage(),jsErrors=[];
+              page.on('pageerror',e=>jsErrors.push(e.message));
+              await page.addInitScript(()=>{localStorage.clear();sessionStorage.clear();});
+              const response=await page.goto(origin+'/',{waitUntil:'domcontentloaded',timeout:40000});
+              assert(response?.status()===200,'Home HTTP 200');
+              await page.locator((width<600?'#navMobile':'#navDesktop')+' [data-nav="3"]').click();
+              await page.waitForFunction(()=>document.querySelector('#fw-count-all')?.textContent==='100',null,{timeout:35000});
+              const facets=page.locator('#feasibilityWorkbench .fw-facet');
+              assert(await facets.count()===5,'Five outcome filter controls');
+              assert((await page.locator('#fwProvenance').textContent()).match(/FastAPI|Python snapshot/),'Authentic provenance visible');
+              assert(await page.locator('.fw-disclosure').count()===0,'Passive disclaimer not removed');
+              assert(await page.locator('.fw-mode-actions').count()===0,'Redundant header actions not removed');
+              assert(await page.locator('.fw-about:not([open])').count()===1,'Source limitations collapsed by default');
+              await page.locator('.fw-facet[data-outcome="blocked"]').click();
+              assert(await page.locator('.fw-facet[data-outcome="blocked"]').getAttribute('aria-pressed')==='true','Blocked facet press');
+              await page.locator('.fw-facet[data-outcome="all"]').click();
+              await page.locator('#fwVariant').selectOption('baseline');
+              assert((await page.locator('#fwListTitle').textContent()).includes('20 matching'),'20 real baseline variants');
+              await page.locator('#fwSearch').fill('JAL-EX-001');
+              assert((await page.locator('#fwCaseList .fw-item').count())===1,'ID search matched one case');
+              await page.locator('#fwReset').click();
+              assert((await page.locator('#fwCaseList .fw-item').count())===20,'Reset restores 20 paged rows');
+              await page.locator('#fwPin').click();
+              await page.locator('#fwCaseList .fw-item').nth(1).click();
+              const comparison=await page.locator('#fwComparison').textContent();
+              assert(comparison.includes('JAL-EX-001')&&comparison.includes('JAL-EX-002')&&comparison.includes('Shortfall:'),'Real pin and compare');
+              await page.locator('#fwClearPin').click();
+              assert(await page.locator('#fwComparison').isHidden(),'Comparison clears');
+              if(width===1440){
+                const downloadEvent=page.waitForEvent('download',{timeout:12000});
+                await page.locator('#fwExport').click();
+                const file=await downloadEvent;
+                const csv=await readFile(await file.path(),'utf8');
+                assert(csv.trim().split('\n').length===101,'CSV has header and all 100 verified cases');
+                assert(csv.includes('configured_example_not_farm_observation'),'CSV non-observational provenance');
+              }
+              assert(!(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)),'Horizontal overflow at '+width);
+              assert(jsErrors.length===0,'Browser JS exceptions: '+jsErrors.slice(0,2).join('; '));
+              console.log('PUBLIC_FEAS_BROWSER_PASS',width,'sha='+sha);
+              await context.close();
+            }
+          }finally{await browser.close();}
+          JS
