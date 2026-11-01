@@ -63,6 +63,8 @@ const run=async()=>{
  assert(snapshot.catalog_source==='prebuilt_python_engine_snapshot' &&
    snapshot.count===100 && snapshot.records?.length===100,
    'Python-built snapshot must contain 100 genuine engine-calculated cases');
+ assert(snapshot.snapshot_generated_at_utc===snapshot.evaluated_at_utc,
+   'Python-built snapshot timestamps must match actual engine evaluation');
  assert(snapshot.records.every(row=>row.input_kind==='configured_example_not_farm_observation'),
    'Snapshot may not imply actual farmer observations');
  if(process.env.EXPECTED_SHA)assert(snapshot.snapshot_source_sha===process.env.EXPECTED_SHA,
