@@ -446,6 +446,53 @@ $('toggleForecast').addEventListener('click',()=>{additional.sampleWeather=true;
 $('clearForecast').addEventListener('click',()=>{additional.sampleWeather=false;saveExtra();updateWeatherUI()});
 $('saveDeadline').addEventListener('click',()=>{if(state.deadline){noteChange();updateAllNew();}});
 $('deadlineInput').addEventListener('change',()=>{additional.deadlineSource='manual';$('deadlineOriginPreview').textContent='Manual candidate deadline · not a weather threshold';});
+/* CF-RES-05: short, source-faithful labels for the compact preparedness experience. */
+Object.assign(dict.en,{
+ prepQuickSteps:'Your six inputs',prepTapHint:'Tap to edit',prepTarget:'Work target',
+ prepCapacity:'Capacity',prepHours:'Work hours',prepDeadline:'Deadline',
+ prepSite:'Site readiness',prepConfirm:'Declaration',
+ prepProgressCaution:'Entries completed · not a crop-safety score',
+ prepLiveEstimates:'Calculated from your entries',prepLiveNoSafety:'Arithmetic only',
+ prepEditCapacity:'Edit capacity ↗',prepEditTarget:'Edit target ↗',
+ prepEditDeadline:'Edit deadline ↗',prepPathway:'See the four-step decision path',
+ prepFootnote:'Only declared resources count. No farm verification is implied.',
+ prepReview:'Review statement',prepConfirmed:'Acknowledged',prepHoursUnit:'h',
+ trustUseSummary:'Target · capacity · hours · deadline · readiness',
+ trustLimitSummary:'People · equipment · crop safety · actual rain',
+ trustDetailsAction:'Details ▾',prepEditInputs:'Edit farm inputs',
+ prepOpenForecast:'Review model forecast',prepHowCalculated:'How these numbers are calculated'
+});
+Object.assign(dict.mr,{
+ prepQuickSteps:'आपल्या सहा नोंदी',prepTapHint:'बदलण्यासाठी निवडा',prepTarget:'कामाचे लक्ष्य',
+ prepCapacity:'क्षमता',prepHours:'कामाचे तास',prepDeadline:'अंतिम वेळ',
+ prepSite:'ठिकाणाची तयारी',prepConfirm:'स्वयंघोषणा',
+ prepProgressCaution:'भरलेल्या नोंदी · पीक सुरक्षिततेचे गुण नाहीत',
+ prepLiveEstimates:'आपल्या नोंदींमधील गणना',prepLiveNoSafety:'फक्त अंकगणित',
+ prepEditCapacity:'क्षमता बदला ↗',prepEditTarget:'लक्ष्य बदला ↗',
+ prepEditDeadline:'अंतिम वेळ बदला ↗',prepPathway:'चार कृतींचा मार्ग पाहा',
+ prepFootnote:'फक्त घोषित संसाधने मोजली जातात; स्वतंत्र पडताळणी नाही.',
+ prepReview:'घोषणा तपासा',prepConfirmed:'मान्य केले',prepHoursUnit:'ता.',
+ trustUseSummary:'लक्ष्य · क्षमता · तास · अंतिम वेळ · तयारी',
+ trustLimitSummary:'कामगार · उपकरणे · पीक सुरक्षितता · प्रत्यक्ष पाऊस',
+ trustDetailsAction:'तपशील ▾',prepEditInputs:'शेताच्या नोंदी बदला',
+ prepOpenForecast:'अंदाजाचे मॉडेल पाहा',prepHowCalculated:'ही आकडेवारी कशी काढली?'
+});
+Object.assign(dict.hi,{
+ prepQuickSteps:'आपकी छह प्रविष्टियाँ',prepTapHint:'बदलने के लिए चुनें',prepTarget:'कार्य लक्ष्य',
+ prepCapacity:'क्षमता',prepHours:'कार्य के घंटे',prepDeadline:'अंतिम समय',
+ prepSite:'स्थान की तैयारी',prepConfirm:'स्वयं-घोषणा',
+ prepProgressCaution:'भरी प्रविष्टियाँ · फसल सुरक्षा का स्कोर नहीं',
+ prepLiveEstimates:'आपकी प्रविष्टियों से गणना',prepLiveNoSafety:'केवल अंकगणित',
+ prepEditCapacity:'क्षमता बदलें ↗',prepEditTarget:'लक्ष्य बदलें ↗',
+ prepEditDeadline:'समय बदलें ↗',prepPathway:'चार चरणों की प्रक्रिया देखें',
+ prepFootnote:'केवल घोषित संसाधन गिने जाते हैं; स्वतंत्र सत्यापन नहीं।',
+ prepReview:'घोषणा जाँचें',prepConfirmed:'स्वीकार किया',prepHoursUnit:'घं.',
+ trustUseSummary:'लक्ष्य · क्षमता · घंटे · अंतिम समय · तैयारी',
+ trustLimitSummary:'कर्मचारी · उपकरण · फसल सुरक्षा · वास्तविक बारिश',
+ trustDetailsAction:'विवरण ▾',prepEditInputs:'खेत की प्रविष्टियाँ बदलें',
+ prepOpenForecast:'मॉडल पूर्वानुमान देखें',prepHowCalculated:'ये संख्याएँ कैसे निकाली जाती हैं?'
+});
+
 /* These are arithmetic descriptions of the visible farmer form, NEVER a safety score.
    A saved deadline is distinguished from a date typed but not saved. */
 function renderPreparednessUI(){
@@ -456,6 +503,23 @@ function renderPreparednessUI(){
  const confirmed=$('confirmInputs').checked;
  const inputs=[target!==null,capacity!==null,hours!==null,selected,readiness!=='unknown',confirmed];
  const count=inputs.filter(Boolean).length;
+ // Each shortcut reflects only entered/confirmed form state — never inferred field safety.
+ const byField=[
+  ['quantity',inputs[0]],['capacity',inputs[1]],['duration',inputs[2]],
+  ['deadlineInput',inputs[3]],['readiness',inputs[4]],['confirmInputs',inputs[5]]
+ ];
+ for(const [field,entered] of byField){
+  const tile=document.querySelector('.preparedness-card .prep-action[data-field="'+field+'"]');
+  if(!tile)continue;
+  tile.classList.toggle('is-complete',entered);
+  tile.classList.toggle('is-caution',field==='readiness'&&readiness==='no');
+  tile.setAttribute('data-complete',entered?'true':'false');
+  const title=tile.querySelector('strong')?.textContent||field;
+  tile.setAttribute('aria-label',title+' · '+(entered?tr('prepConfirmed'):tr('prepReview'))+' · '+tr('prepTapHint'));
+ }
+ $('prepCapacityValue').textContent=capacity===null?tr('nextCapacity'):fmtNum(capacity)+' '+tr('unitsShort');
+ $('prepHoursValue').textContent=hours===null?tr('nextHours'):fmtNum(hours)+' '+tr('prepHoursUnit');
+ $('prepConfirmationValue').textContent=confirmed?tr('prepConfirmed'):tr('prepReview');
  $('checkTargetValue').textContent=target===null?tr('enterQuantity'):fmtNum(target)+' '+tr('unitsShort');
  $('checkTimeValue').textContent=selected?dateLabel(state.deadline):tr('chooseDeadline');
  $('checkSiteValue').textContent=readiness==='yes'?tr('farmerConfirms'):readiness==='no'?tr('reportedNotReady'):tr('unknownShort');
