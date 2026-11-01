@@ -68,3 +68,24 @@ html[data-theme="dark"] .fw-chip.fw-blocked{color:#ffd09b}
 .fw-page-meta{font-size:11px;color:var(--muted);line-height:1.5;margin:10px 0 0}
 .fw-pager .btn:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:540px){.fw-search{max-width:none;min-width:100%}}
+
+/* CF-FEAS-04: every summary card leads to a meaningful interaction. */
+.fw-mode-actions,.fw-evidence-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.fw-mode-actions .btn,.fw-evidence-actions .btn{min-height:39px}
+.fw-diagnostic{margin:6px 0 10px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--soft)}
+.fw-stat-action{display:flex;flex-direction:column;align-items:stretch;text-align:left;cursor:pointer;font:inherit;min-height:122px;transition:transform .14s ease,border-color .14s ease}
+.fw-stat-action:hover,.fw-metric-action:hover,.fw-history-action:hover,.fw-personal-action:hover{border-color:var(--teal);transform:translateY(-1px)}
+.fw-stat-action:focus-visible,.fw-metric-action:focus-visible,.fw-history-action:focus-visible,.fw-personal-action:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+.fw-stat-action-label{color:var(--teal);font-size:10px;display:block;line-height:1.5;margin-top:auto}
+.fw-metric-action{cursor:pointer;text-align:left;font:inherit;min-height:106px}
+.fw-metric-action small{display:block;color:var(--teal);font-size:10px;margin-top:6px}
+.fw-inline-note{font-size:12px;line-height:1.65;background:var(--soft);border-radius:9px;padding:9px 12px;color:var(--muted)}
+.fw-history-action{cursor:pointer;font:inherit;text-align:left}
+.fw-personal-action{cursor:pointer;transition:border-color .14s ease,transform .14s ease}
+.fw-personal-action:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+.fw-personal-action strong{overflow-wrap:anywhere}
+.fw-evidence-actions{margin-top:13px}
+.fw-evidence-actions .btn{flex:1 1 225px}
+.feasibility-workbench button:disabled{opacity:.6;cursor:not-allowed}
+@media(max-width:780px){.fw-mode-actions>.btn{flex:1 1 190px}.fw-stat-action{min-height:108px}}
+@media(max-width:460px){.fw-mode-actions>.btn{flex:1 1 100%}.fw-stat-action strong{font-size:18px}.fw-metric-action{min-height:96px}}
