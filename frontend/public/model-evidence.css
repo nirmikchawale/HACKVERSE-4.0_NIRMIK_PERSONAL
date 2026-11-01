@@ -29,3 +29,7 @@
 .hourly-evidence-scroll:focus-visible,.hourly-evidence-select:focus-visible,.hourly-evidence-action:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
 @media(max-width:600px){.hourly-evidence-panel{padding:13px}.hourly-evidence-table th,.hourly-evidence-table td{padding:9px}}
 @media print{.hourly-evidence-panel{display:none!important}}
+
+#exportSelectedModelDay{min-height:44px}
+#exportSelectedModelDay:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+#exportSelectedModelDay:disabled{opacity:.55}

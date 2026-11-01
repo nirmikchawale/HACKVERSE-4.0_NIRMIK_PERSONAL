@@ -15,6 +15,8 @@
   // EX-09B: page-local translations; values never change numeric source facts.
   const evidenceLanguages={
     en:{
+      dayExportNote:'Choose one IST date to export only those verified model hours.',
+      dayExport:'Export selected day (CSV)',
       qualityTitle:'Forecast evidence quality',
       qualityIntro:'Open-Meteo provides modeled weather, not a field rain gauge or a crop-safe onset threshold. Missing hours and missing values are never interpreted as dry weather.',
       qualityExport:'Export verified modeled hours (CSV)',
@@ -42,6 +44,8 @@
       expiredHour:'The model hour is no longer valid. Refresh the forecast before selecting another.'
     },
     mr:{
+      dayExportNote:'फक्त त्या दिवसाचे पडताळलेले मॉडेल तास मिळवण्यासाठी IST दिवस निवडा.',
+      dayExport:'निवडलेल्या दिवसाचा CSV घ्या',
       qualityTitle:'हवामान अंदाजाच्या पुराव्याची गुणवत्ता',
       qualityIntro:'Open-Meteo चे हवामान आकडे हे मॉडेलचे अंदाज आहेत; शेतातील मोजमाप किंवा सुरक्षित पावसाची वेळ नाही. नसलेला डेटा म्हणजे पाऊस शून्य असा अर्थ नाही.',
       qualityExport:'पडताळलेल्या हवामान अंदाजाचा CSV घ्या',
@@ -71,6 +75,8 @@
       expiredHour:'निवडलेली वेळ आता वैध नाही. हवामान अंदाज पुन्हा मिळवा.'
     },
     hi:{
+      dayExportNote:'केवल उस तारीख के सत्यापित मॉडल घंटे पाने के लिए IST तारीख चुनें.',
+      dayExport:'चुनी गई तारीख का CSV लें',
       qualityTitle:'मौसम पूर्वानुमान साक्ष्य की गुणवत्ता',
       qualityIntro:'Open-Meteo के आँकड़े मॉडल पूर्वानुमान हैं, खेत के माप या सुरक्षित वर्षा की सीमा नहीं। लापता जानकारी को शून्य वर्षा नहीं माना जाता।',
       qualityExport:'सत्यापित मौसम पूर्वानुमान CSV लें',
@@ -211,6 +217,9 @@
   const hourlyDate=el('select','hourly-evidence-select');hourlyDate.id='hourlyEvidenceDate';
   hourlyDate.setAttribute('aria-label','Filter hourly model evidence by Indian date');
   hourlyLabel.append(hourlyDate);hourlyControls.append(hourlyLabel);
+  const hourlyDayExport=el('button','btn','Export selected day (CSV)');
+  hourlyDayExport.id='exportSelectedModelDay';hourlyDayExport.type='button';hourlyDayExport.disabled=true;
+  hourlyControls.append(hourlyDayExport);
   const hourlySummary=el('p','hourly-evidence-summary','No current verified model hours.');
   hourlySummary.id='hourlyEvidenceStatus';hourlySummary.setAttribute('role','status');
   hourlyControls.append(hourlySummary);
@@ -224,6 +233,7 @@
   function renderHourlyEvidence(){
     hourlyTitle.textContent=evidenceText('timeline');hourlyIntro.textContent=evidenceText('timelineIntro');
     hourlyLabel.querySelector('span').textContent=evidenceText('filter');
+    hourlyDayExport.textContent=evidenceText('dayExport');
     hourlyTableContainer.replaceChildren();
     const evidence=forecastCoverage(),source=evidence?.source;
     const hours=source?.hours||[];
@@ -236,6 +246,8 @@
     }
     hourlyDate.value=distinctDates.includes(retained)?retained:'all';
     hourlyDate.disabled=!evidence;
+    hourlyDayExport.disabled=!evidence||hourlyDate.value==='all';
+    hourlyDayExport.title=evidenceText('dayExportNote');
     if(!evidence){
       hourlySummary.textContent=okLocation()?evidenceText('hourlyNoData'):evidenceText('hourlyWrongPlace');
       hourlyTableContainer.append(el('p','hourly-evidence-note',evidenceText('hourlyEmpty')));
@@ -284,6 +296,33 @@
     }
     table.append(body);hourlyTableContainer.append(table);
   }
+
+  hourlyDayExport.addEventListener('click',()=>{
+    const evidence=forecastCoverage();
+    const date=hourlyDate.value;
+    if(!evidence||hourlyDayExport.disabled||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date))return;
+    const rows=evidence.source.hours.filter(h=>h.time.startsWith(date));
+    if(!rows.length)return;
+    const safe=value=>{
+      let content=String(value??'');
+      if(/^\\s*[=+\\-@\\t\\r]/.test(content))content="'"+content;
+      return '"'+content.replace(/"/g,'""')+'"';
+    };
+    const numValue=value=>typeof value==='number'&&Number.isFinite(value)?String(value):'';
+    const cols=['hour_ist','modeled_precipitation_mm','modeled_probability_pct',
+      'source_type','source_attribution','source_status','retrieved_at_utc','evidence_disclosure'];
+    const lines=rows.map(h=>[
+      safe(h.time),numValue(h.precipitation_mm),numValue(h.precipitation_probability_pct),
+      safe('external_model_forecast'),safe(evidence.source.attribution||'Open-Meteo'),
+      safe(evidence.source.status),safe(evidence.source.retrieved_at_utc),
+      safe('Selected-day source-native model hours only; not measured rainfall or agricultural safety')
+    ].join(','));
+    const data='\\uFEFF'+cols.join(',')+'\\r\\n'+lines.join('\\r\\n')+'\\r\\n';
+    const url=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8'}));
+    const link=el('a');link.href=url;
+    link.download='agri-foresight-model-hours-jalna-'+date+'.csv';
+    link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
   function renderForecastQuality(){
     qcPanel.querySelector('h2').textContent=evidenceText('qualityTitle');
     qcPanel.querySelector('p.source-qc-disclosure').textContent=evidenceText('qualityIntro');
