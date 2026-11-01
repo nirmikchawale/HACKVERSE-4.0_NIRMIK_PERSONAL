@@ -12,7 +12,8 @@
       declaration:'I have checked the information I entered.',deadline:'When do you want this work finished?',baseline:'Add worker or equipment details (optional)',save:'Save my answers',run:'Check my plan',next:'See my action plan',
       readyYes:'Yes, ready',readyNo:'No, not ready',readyUnknown:'Not sure yet',
       count:'questions answered',youCan:'You can currently manage',still:'Still needs attention',resourceSummary:'Your answers at a glance',
-      unitCaution:'Use the same equal-sized work parts in both boxes; they are not kilograms or bags unless the system supports that unit.',quantityCaution:'This is arithmetic from your entries, not a crop-safety score.',
+      unitCaution:'Use the same equal-sized work parts in both boxes; they are not kilograms or bags unless the system supports that unit.',
+      planOption:'Possible plan',planConditional:'Only resources confirmed in your answers are counted. Tap to view this plan.',chosenOption:'Selected plan',inputHelpQuantity:'Count your planned work in equal-sized parts. Do not enter kilograms as handling units.',inputHelpCapacity:'How many of the same work parts can you handle using resources you already have?',inputHelpTime:'Enter your own estimate for completing the work.',inputHelpReadiness:'Say whether your required work area and equipment are already ready.',quantityCaution:'This is arithmetic from your entries, not a crop-safety score.',
       statusWaiting:'Your plan has not been checked yet',statusBlocked:'Your plan needs some changes',statusFeasible:'Your plan looks workable from the details you gave',statusUnknown:'We need a little more information',statusCompleted:'You reported that the work is completed',
       why:'What does this mean?',nextStep:'What can you do next?',waitingWhy:'Enter your work details and a deadline, then select Check my plan.',waitingNext:'The system will explain its result after the Python engine responds.',
       gapWhy:'You entered {target} equal-sized work parts. Your available capacity covers {capacity}, leaving {gap} parts to plan for.',
@@ -48,6 +49,7 @@
       readyYes:'हो, तयार आहे',readyNo:'नाही, तयार नाही',readyUnknown:'माहीत नाही',
       count:'प्रश्न भरले',youCan:'सध्या हाताळू शकता',still:'अजून बाकी आहे',resourceSummary:'तुम्ही दिलेली माहिती',
       unitCaution:'दोन्ही ठिकाणी सारख्या आकाराचे भाग मोजा. ही कामाची मोजणी आहे; वजन किंवा गोण्यांची मोजणी नाही.',
+      planOption:'शक्य प्लॅन',planConditional:'तुम्ही खात्री दिलेलीच माणसं-साधनं मोजली आहेत. प्लॅन पाहण्यासाठी इथे दाबा.',chosenOption:'निवडलेला प्लॅन',inputHelpQuantity:'कामाचे समान आकाराचे भाग मोजा. ही किलोग्रॅमची मोजणी नाही.',inputHelpCapacity:'तुमच्याकडे आत्ता असलेली माणसं-साधनं वापरून त्यातले किती भाग हाताळू शकता?',inputHelpTime:'काम पूर्ण व्हायला तुमच्या अंदाजाने किती तास लागतील ते भरा.',inputHelpReadiness:'कामाची जागा आणि लागणारी साधनं आत्ता तयार आहेत का ते सांगा.',
       quantityCaution:'हा तुमच्या आकड्यांचा हिशोब आहे. यावरून कापूस सुरक्षित राहील असं ठरत नाही.',
       statusWaiting:'तुमचा प्लॅन अजून तपासलेला नाही',statusBlocked:'प्लॅनमध्ये थोडा बदल करावा लागेल',statusFeasible:'तुम्ही दिलेल्या माहितीनुसार हा प्लॅन जमू शकतो',statusUnknown:'अजून थोडी माहिती हवी आहे',statusCompleted:'तुम्ही काम पूर्ण झालं असं सांगितलं आहे',
       why:'असं का सांगितलं?',nextStep:'आता काय करता येईल?',waitingWhy:'कामाची माहिती आणि पूर्ण करायची वेळ भरा. मग प्लॅन तपासा.',waitingNext:'सर्व्हरवरून उत्तर आल्यावर इथे सोप्या भाषेत समजावून सांगू.',
@@ -84,6 +86,7 @@
       readyYes:'हाँ, तैयार',readyNo:'नहीं, तैयार नहीं',readyUnknown:'पता नहीं',
       count:'सवाल भरे',youCan:'अभी संभाल सकते हैं',still:'अभी काम बाकी है',resourceSummary:'आपकी दी हुई जानकारी',
       unitCaution:'दोनों जगह बराबर आकार के हिस्से गिनें। यह काम की गिनती है, वजन या बोरियों की नहीं।',
+      planOption:'संभव प्लान',planConditional:'सिर्फ वही लोग और साधन गिने गए हैं जिनकी आपने पुष्टि की है। प्लान देखने के लिए दबाएँ।',chosenOption:'चुना हुआ प्लान',inputHelpQuantity:'काम के बराबर आकार के हिस्से गिनें। यह किलोग्राम की गिनती नहीं है।',inputHelpCapacity:'आपके पास मौजूद लोगों और साधनों से ऐसे कितने हिस्से संभाले जा सकते हैं?',inputHelpTime:'आपके अनुमान से काम पूरा करने में कितने घंटे लगेंगे?',inputHelpReadiness:'बताएँ कि काम की जगह और ज़रूरी साधन अभी तैयार हैं या नहीं।',
       quantityCaution:'यह हिसाब आपके दिए आँकड़ों से है। इससे कपास सुरक्षित होने की गारंटी नहीं मिलती।',
       statusWaiting:'आपका प्लान अभी जाँचा नहीं गया',statusBlocked:'आपके प्लान में कुछ बदलाव ज़रूरी हैं',statusFeasible:'आपकी जानकारी के हिसाब से प्लान संभव दिखता है',statusUnknown:'अभी थोड़ी और जानकारी चाहिए',statusCompleted:'आपने बताया कि काम पूरा हो गया',
       why:'ऐसा क्यों बताया?',nextStep:'अब क्या कर सकते हैं?',waitingWhy:'अपने काम की जानकारी और पूरा करने का समय भरें। फिर प्लान जाँचें।',waitingNext:'सर्वर का जवाब मिलने पर यहाँ आसान भाषा में समझाएँगे।',
@@ -192,6 +195,33 @@
   const technical=make('button','btn farmer-detail-toggle');technical.type='button';technical.setAttribute('aria-expanded','false');
   resultBox.insertAdjacentElement('afterend',technical);
   technical.addEventListener('click',()=>{showTechnical=!showTechnical;refresh();});
+  const tipBox=make('div','farmer-input-hints');
+  const hints={};
+  for(const [id,key] of [['quantity','inputHelpQuantity'],['capacity','inputHelpCapacity'],['duration','inputHelpTime'],['readiness','inputHelpReadiness']]){
+    const label=byId(id)?.closest('label');if(!label)continue;
+    const p=make('small','farmer-input-tip');p.dataset.farmerHelp=key;label.append(p);hints[key]=p;
+  }
+  const originalPackages=byId('packageList');
+  const quickPackages=make('div','farmer-quick-packages');
+  if(originalPackages)originalPackages.insertAdjacentElement('beforebegin',quickPackages);
+  function renderQuickPackages(){
+    quickPackages.replaceChildren();
+    if(!verified()){quickPackages.textContent=t('optionsWaiting');return;}
+    const buttons=[...(originalPackages?.querySelectorAll('button.package-card')||[])];
+    if(!buttons.length){quickPackages.textContent=t('optionsNone');return;}
+    buttons.forEach((original,i)=>{
+      const button=make('button','farmer-package-btn');button.type='button';
+      const title=make('strong','',t('planOption')+' '+(i+1));
+      const sub=make('small','',t('planConditional'));
+      button.append(title,sub);
+      if(original.classList.contains('selected')){
+        button.classList.add('selected');button.setAttribute('aria-pressed','true');title.textContent+=' ✓ '+t('chosenOption');
+      }else button.setAttribute('aria-pressed','false');
+      button.addEventListener('click',()=>original.click());
+      quickPackages.append(button);
+    });
+  }
+  if(originalPackages)new MutationObserver(renderQuickPackages).observe(originalPackages,{childList:true,subtree:true});
   const changesBox=make('section','farmer-info-card');changesBox.setAttribute('aria-live','polite');
   document.querySelector('section.section[data-page="4"] .page-head')?.insertAdjacentElement('afterend',changesBox);
   const summaryBox=make('section','farmer-info-card');summaryBox.setAttribute('aria-live','polite');
@@ -294,7 +324,8 @@
     document.documentElement.dataset.farmerView=mode==='farmer'?'on':'off';
     document.documentElement.dataset.farmerDetails=showTechnical?'on':'off';
     document.documentElement.dataset.farmerResourceDetail=showResource?'on':'off';
-    showNavigation();showWords();showResources();showResult();showPlans();
+    showNavigation();showWords();showResources();showResult();showPlans();renderQuickPackages();
+    for(const [key,node] of Object.entries(hints))node.textContent=t(key);
   }
   function setMode(value){
     mode=value==='detailed'?'detailed':'farmer';
