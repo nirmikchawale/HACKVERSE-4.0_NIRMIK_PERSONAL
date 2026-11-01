@@ -5,6 +5,14 @@ on:
     paths:
       - 'scripts/cf_feas04_hosted_certificate.mjs'
       - '.github/workflows/cf-feas04-hosted-certificate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - 'wrangler.jsonc'
+      - 'scripts/**'
+      - '.github/workflows/cf-feas04-hosted-certificate.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -37,7 +45,7 @@ jobs:
   production:
     name: Production hostname check (report-only until exact SHA is deployed)
     runs-on: ubuntu-24.04
-    continue-on-error: true
+    continue-on-error: ${{ github.event_name != 'push' }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -45,8 +53,29 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: '22'
+      - name: Wait for new production revision after main push
+        if: github.event_name == 'push'
+        env:
+          EDGE_URL: https://agri-foresight.nirmikchawale1.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          node --input-type=module <<'NODE'
+          const host=process.env.EDGE_URL, expected=process.env.EXPECTED_SHA;
+          let last='not checked';
+          for(let attempt=0;attempt<45;attempt++){
+            try {
+              const response=await fetch(host+'/_release.json',{cache:'no-store',signal:AbortSignal.timeout(12000)});
+              const payload=response.ok?await response.json():null;
+              if(payload?.git_commit_sha===expected){console.log('Cloudflare production now serves '+expected);process.exit(0);}
+              last='status='+response.status+' sha='+String(payload?.git_commit_sha||'unknown');
+            } catch(error){last=String(error?.name||'transport error');}
+            if(attempt%5===0)console.log('Production deployment pending: '+last);
+            await new Promise(resolve=>setTimeout(resolve,10000));
+          }
+          throw Error('Production did not reach exact main SHA: '+last);
+          NODE
       - name: Verify current main commit on production Worker, fail visibly if not yet served
         env:
           EDGE_URL: https://agri-foresight.nirmikchawale1.workers.dev
-          EXPECTED_SHA: 9617a47192e7e1f0caa5e224da64bfd3cffdc43b
+          EXPECTED_SHA: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.base.sha }}
         run: node scripts/cf_feas04_hosted_certificate.mjs
