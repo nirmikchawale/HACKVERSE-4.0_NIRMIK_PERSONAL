@@ -41,7 +41,8 @@ test.describe('Page 04: one hundred Cloudflare-compatible, real-engine examples'
     await expect(workbench.locator('#fwCaseDetail')).toContainText('JAL-EX-100');
 
     await workbench.locator('.fw-search').fill('');
-    await workbench.locator('.fw-filter').selectOption('unknown');
+    await workbench.locator('.fw-facet[data-filter="unknown"]').click();
+    await expect(workbench.locator('.fw-facet[data-filter="unknown"]')).toHaveAttribute('aria-pressed','true');
     await expect(workbench.locator('.fw-item').first()).toContainText('UNKNOWN');
     await workbench.locator('.fw-item').first().click();
     await expect(workbench.locator('#fwCaseDetail')).toContainText('readiness');
