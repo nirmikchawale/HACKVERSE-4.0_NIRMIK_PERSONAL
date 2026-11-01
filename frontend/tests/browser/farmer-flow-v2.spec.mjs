@@ -87,7 +87,7 @@ test('real FastAPI example yields a blocked baseline and a conditional confirmed
   await expect(page.locator('#farmerActionV2')).toContainText('After this change');
   await expect(page.locator('#farmerActionV2')).toContainText('fits');
   await expect(page.locator('section.section.active')).toHaveAttribute('data-page','4');
-  await expect(page.locator('#farmerActionV2')).toContainText('educational');
+  await expect(page.locator('#farmerActionV2')).toContainText('Educational example');
   await page.locator('#navDesktop [data-nav="2"]').click();
   await page.locator('#farmerRestore').click();
   await expect(page.locator('#farmerTargetWeight')).toHaveValue('');
