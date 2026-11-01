@@ -162,7 +162,9 @@ function snapshot(){try{return window.agriFarmerSnapshot?.()||null;}catch{return
 const home=document.querySelector('section.section[data-page="0"] .hero .content');
 const purpose=make('p','fv2-purpose');purpose.id='farmerPurpose';
 const crop=make('p','fv2-crop');crop.id='farmerCrop';
-home?.querySelector('h1')?.insertAdjacentElement('afterend',purpose);
+const nameOnHome=make('h2','fv2-home-name','AgriForesight');
+home?.prepend(nameOnHome);
+nameOnHome.insertAdjacentElement('afterend',purpose);
 purpose.insertAdjacentElement('afterend',crop);
 const panel=document.querySelector('section.section[data-page="2"] .resource-layout > .panel');
 const form=make('div','fv2-weight-form');form.id='farmerWeightForm';
