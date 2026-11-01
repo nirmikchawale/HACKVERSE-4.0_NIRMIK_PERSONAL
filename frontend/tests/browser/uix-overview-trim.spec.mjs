@@ -9,7 +9,10 @@ test('overview has no duplicated explanatory blocks and retains real backend sta
   await expect(page.locator('section[data-page="0"] .live-note')).toHaveCount(0);
   await expect(page.locator('#apiConnectionStatus')).toBeAttached();
   await expect(page.locator('#apiConnectionStatus')).toHaveClass(/sr-only/);
-  await expect(page.locator('#apiConnectionStatus')).toContainText('FastAPI connected',{timeout:25000});
+  // B-01 runs a static Vite preview without FastAPI; do not invent a live connection.
+  // B-03 separately requires the genuine backend and verifies its healthy response.
+  await expect(page.locator('#apiConnectionStatus')).not.toHaveText('Checking FastAPI connection…',{timeout:25000});
+  await expect(page.locator('#apiConnectionStatus')).toContainText(/FastAPI connected|Backend returned an unexpected response|Backend unreachable/);
   await expect(page.locator('#sourceLedger')).toBeAttached();
   await expect(page.locator('#snapshotPlace')).toBeAttached();
   await expect(page.locator('#snapshotResource')).toBeAttached();
