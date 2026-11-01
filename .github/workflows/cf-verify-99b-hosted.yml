@@ -1,0 +1,60 @@
+name: CF-VERIFY-99B Hosted Cloudflare Preview Certificate
+on:
+  push:
+    branches: [audit/cloudflare-hosted-99b2f6-20261101]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  hosted:
+    name: Exact merged SHA, genuine API, climate and 3 hosted Chromium checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    env:
+      EXPECTED_SHA: 99b2f6a1ab739080202252cedc01dd96bcc98dec
+      EDGE_URL: https://migration-cloudflare-typography-01-agri-foresight.nirmikchawale1.workers.dev
+      CLOUDFLARE_PREVIEW_URL: https://migration-cloudflare-typography-01-agri-foresight.nirmikchawale1.workers.dev/
+    steps:
+      - name: Checkout independent audit harness (does not modify target Worker)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Set up Node 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '22'
+      - name: Read-only compare current clean production workers.dev URL
+        continue-on-error: true
+        run: |
+          node --input-type=module - <<'JS'
+          const root='https://agri-foresight.nirmikchawale1.workers.dev';
+          for(const path of ['/_release.json','/api/health']) {
+            try {
+              const r=await fetch(root+path,{signal:AbortSignal.timeout(14000),cache:'no-store'});
+              const s=(await r.text()).slice(0,500);
+              console.log(JSON.stringify({url:root+path,status:r.status,content_type:r.headers.get('content-type'),body_excerpt:s}));
+            }catch(e){console.log(JSON.stringify({url:root+path,transport_error:String(e?.message||e)}))}
+          }
+          JS
+      - name: Confirm preview is externally serving exact merged Git revision and real FastAPI health
+        run: node scripts/wait-cloudflare-public.mjs
+      - name: Independently exercise live Cloudflare Worker FastAPI, official weather and source provenance
+        env:
+          REQUIRE_LIVE_CLIMATE: '1'
+        run: node backend/scripts/cloudflare-smoke.mjs
+      - name: Install existing Playwright dependencies
+        working-directory: frontend
+        run: npm install
+      - name: Install real Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Verify all four live homepage cards, snapshot, actual FastAPI calculation, desktop and mobile
+        working-directory: frontend
+        run: npx playwright test -c playwright.cloudflare.config.mjs
+      - name: Upload actual hosted screenshots and failure traces
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cloudflare-99b-hosted-home-evidence
+          path: frontend/test-results/cloudflare-hosted/
+          if-no-files-found: ignore
