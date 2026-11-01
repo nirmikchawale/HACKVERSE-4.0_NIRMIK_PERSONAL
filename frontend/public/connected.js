@@ -127,9 +127,11 @@
   const title=el('h2','', 'Live source ledger');ledger.append(title);
   ledger.append(el('p','', 'Source descriptions are returned by /api/sources. Model output is a forecast, not a measured rain-onset time or safety certification.'));
   const entries=el('div','live-sources','Source registry: connecting…');ledger.append(entries);
-  const alert=el('p','live-note','Loading real source and application status…');
+  // Keep genuine backend health accessible to assistive technology and test
+  // automation; the large explanatory banner no longer occupies the overview.
+  const alert=el('span','sr-only','Checking FastAPI connection…');
   alert.id='apiConnectionStatus';alert.setAttribute('role','status');
-  document.querySelectorAll('section.section')[0].append(alert);
+  document.querySelector('section.section[data-page="5"]').append(alert);
 
   async function json(path,init={}){
     let response;

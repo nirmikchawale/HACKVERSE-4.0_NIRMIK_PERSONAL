@@ -1,0 +1,15 @@
+/* Overview cleanup: the real evidence lives on Page 06.
+   Two feature cards share one bottom edge on wide screens.
+   Never force tall empty panels on tablet or mobile. */
+.section[data-page="0"] .lower > div { min-width:0; }
+@media (min-width:1051px) {
+  .section[data-page="0"] .lower { align-items:stretch; }
+  .section[data-page="0"] .lower > div {
+    display:flex;
+    flex-direction:column;
+  }
+  .section[data-page="0"] .lower > div > .panel {
+    flex:1 1 auto;
+    min-width:0;
+  }
+}
