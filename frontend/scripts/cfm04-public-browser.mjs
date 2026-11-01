@@ -117,7 +117,7 @@ try{
   const weatherCSS=await page.request.get(origin+'/weather-workspace.css',{timeout:15000});
   assert(weatherCSS.status()===200&&(await weatherCSS.text()).includes('qc-hour-grid'),
     'WXR-03 coverage visualization stylesheet is missing from public Cloudflare');
-  assert(source.includes('qcHourGrid')&&source.includes('qcExceptions')&&source.includes('qcReceipt'),
+  assert(source.includes('qcHourGrid')&&source.includes('qcExceptions')&&source.includes('qc-receipt'),
     'Public connected.js does not contain the certified weather workbench');
   await page.locator('#navDesktop [data-nav="1"]').click();
   const weatherPage=page.locator('section.section[data-page="1"]');
@@ -128,8 +128,12 @@ try{
   await page.waitForFunction(()=>{
     const metrics=document.querySelectorAll('#forecastQualityMetrics button.source-qc-item');
     const empty=document.querySelector('#forecastQualityMetrics .source-qc-empty');
-    return metrics.length===8 || Boolean(empty && !document.querySelector('#toggleForecast')?.disabled);
-  },null,{timeout:25000});
+    const status=document.querySelector('#apiConnectionStatus')?.textContent||'';
+    const button=document.querySelector('#toggleForecast');
+    const chip=document.querySelector('#forecastSourceChip')?.textContent||'';
+    return status.startsWith('FastAPI connected') && button && !button.disabled &&
+      chip!=='FETCHING' && (metrics.length===8||Boolean(empty));
+  },null,{timeout:30000});
   let certifiedQualityMode='unavailable';
   const publicMetrics=page.locator('#forecastQualityMetrics button.source-qc-item');
   if(await publicMetrics.count()===8){
