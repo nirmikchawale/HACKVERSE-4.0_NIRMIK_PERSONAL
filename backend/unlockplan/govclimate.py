@@ -31,7 +31,7 @@ def date_window(now: datetime) -> tuple[date, date]:
     if now.tzinfo is None or now.utcoffset() is None:
         raise GovernmentClimateError("Timezone-aware UTC time is required.")
     end = now.astimezone(timezone.utc).date() - timedelta(days=5)
-    return end - timedelta(days=13), end
+    return end - timedelta(days=19), end
 
 
 def build_url(now: datetime) -> str:
