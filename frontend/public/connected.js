@@ -1384,6 +1384,7 @@
     if(live.busy)return;
     live.busy=true;const button=here('runAssessment');button.disabled=true;button.textContent='Evaluating…';
     clearResult();
+    renderAssessment(); // Hide stale metrics while this real API request is in flight.
     try {
       const req=requestFromForm();
       const result=validateEvaluation(await json('/api/evaluate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)}));
@@ -1444,6 +1445,17 @@
   updateAssessmentUI=renderAssessment;
   function renderAssessment(){
     const r=live.evaluation,base=r?.baseline;
+    // CF-FEAS-06: no static/empty metrics or duplicated empty explanation cards.
+    // Only actual schema-validated FastAPI evaluation reveals results.
+    const evaluated=Boolean(r);
+    here('farmResultMetrics').hidden=!evaluated;
+    here('farmResultPanel').hidden=!evaluated;
+    here('resetAssessment').hidden=!evaluated&&!live.error;
+    here('resultHero').setAttribute('aria-busy',String(Boolean(live.busy)));
+    const unresolved=base?.constraints?.filter(item=>item.status!=='pass').length||0;
+    here('farmCheckCount').textContent=evaluated
+      ? (unresolved ? unresolved+' checks to review' : 'Inspect server checks')
+      : 'Review engine checks';
     here('resultGoal').textContent=base?num(base.projected_target_units):'—';
     here('resultCap').textContent=base?num(base.projected_capacity_units):'—';
     here('resultGap').textContent=base?num(base.shortfall_units):'—';
