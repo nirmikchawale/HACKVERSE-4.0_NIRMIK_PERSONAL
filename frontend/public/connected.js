@@ -1757,7 +1757,7 @@
         refresh:w.refreshForecast},
       {id:'nasa',name:t.nasa,status:historyStatus,detail:historyDetail,
         kind:nasaOK?'historical':'unavailable',available:!!nasaOK,
-        metric:nasaOK?gov.days.length+' '+w.historyDays:historyStatus,
+        metric:nasaOK?gov.days.length+' '+w.historyDays+' · '+gov.latest_data_date:historyStatus,
         when:nasaOK?gov.retrieved_at_utc:null,
         values:[[w.historyDays,nasaOK?String(gov.days.length):w.stampEmpty],
           [w.latest,nasaOK?gov.latest_data_date:w.stampEmpty]],
