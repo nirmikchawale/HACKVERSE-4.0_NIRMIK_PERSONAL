@@ -89,14 +89,25 @@ try{
     'Old unfinished server assessment text returned to homepage');
   assert(!(await page.locator('#sourceActivityReceipt').textContent()).includes('IMD official warnings'),
     'Old disconnected official warning text returned to homepage');
-  await page.locator('[data-filter="available"]').click();
-  const available=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
-  await page.locator('[data-filter="attention"]').click();
-  const needReview=await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count();
-  assert(available+needReview===3,'Active evidence filters must partition three source choices');
-  await page.locator('[data-filter="all"]').click();
-  assert(await page.locator('#evidenceSourceGrid .source-matrix-card:visible').count()===3,
-    'All three interactive sources must be restored');
+  // Keep the three filter checks in one browser turn: genuine Open-Meteo and
+  // NASA fetches may finish between independent Playwright round trips.
+  // The filters must partition one consistent source snapshot, not snapshots
+  // sampled at different stages of an asynchronous refresh.
+  const partition=await page.evaluate(()=>{
+    const grid=document.querySelector('#evidenceSourceGrid');
+    const button=key=>document.querySelector('[data-filter="'+key+'"]');
+    const visible=()=>[...grid.querySelectorAll('.source-matrix-card')]
+      .filter(node=>!node.hidden&&getComputedStyle(node).display!=='none').length;
+    const sample=key=>{
+      const control=button(key);control.click();
+      return {count:visible(),pressed:control.getAttribute('aria-pressed')==='true'};
+    };
+    return {available:sample('available'),attention:sample('attention'),all:sample('all')};
+  });
+  assert(partition.available.pressed&&partition.attention.pressed&&partition.all.pressed,
+    'Source filter controls do not update their selected states: '+JSON.stringify(partition));
+  assert(partition.available.count+partition.attention.count===3&&partition.all.count===3,
+    'Source filters do not partition the same three authenticated source choices: '+JSON.stringify(partition));
   const receiptBoxes=await receipts.evaluateAll(nodes=>nodes.map(node=>({
     left:node.getBoundingClientRect().left,right:node.getBoundingClientRect().right,
     y:node.getBoundingClientRect().y,height:node.getBoundingClientRect().height})));
