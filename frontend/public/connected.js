@@ -475,10 +475,21 @@
     saveExtra();clearResult();renderAssessment();renderPackages();renderSummary();
   },true);
   here('changeEditor').addEventListener('change',()=>{clearResult();renderAssessment();renderPackages();renderSummary();},true);
+  // Reject impossible calendar dates before sending a timestamp to FastAPI.
+  // IST is fixed UTC+05:30; Date.parse alone can normalize invalid day numbers.
+  function isValidISTDeadline(value){
+    if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value))return false;
+    const [year,month,day,hour,minute]=value.match(/\d+/g).map(Number);
+    if(year<1||month<1||month>12||hour>23||minute>59)return false;
+    const daysInMonth=new Date(Date.UTC(year,month,0)).getUTCDate();
+    if(day<1||day>daysInMonth)return false;
+    const timestamp=Date.parse(value+':00+05:30');
+    return Number.isFinite(timestamp);
+  }
   function requestFromForm(){
     if(!okLocation())throw new Error('The server-authoritative assessment currently supports Jalna, Maharashtra only.');
     if(here('deadlineInput').value!==state.deadline)throw new Error('Save the displayed candidate deadline before evaluating.');
-    if(!state.deadline||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(state.deadline))throw new Error('Save a valid candidate deadline on Page 02.');
+    if(!isValidISTDeadline(state.deadline))throw new Error('Save a valid candidate deadline on Page 02.');
     if(!here('confirmInputs').checked)throw new Error('Confirm farmer-reported, comparable quantities on Page 03.');
     const toNum=(id,title)=>{const raw=here(id).value;if(raw.trim()==='')throw new Error(title+' is required.');const n=Number(raw);if(!Number.isFinite(n)||n<0)throw new Error(title+' must be nonnegative and finite.');return n;};
     const target=toNum('quantity','Planned work'),capacity=toNum('capacity','Confirmed capacity'),hours=toNum('duration','Required hours');
