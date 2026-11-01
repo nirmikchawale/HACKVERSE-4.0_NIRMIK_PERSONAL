@@ -202,7 +202,7 @@ html[data-theme="dark"] .brand-gold{color:#f4d676}
         <div><strong data-i18n="trustUseTitle">Included in planning</strong><p data-i18n="trustUseBody">Your entered target, capacity, hours, deadline and stated readiness. FastAPI determines feasibility only after you evaluate.</p></div>
         <div><strong data-i18n="trustLimitTitle">Not independently verified</strong><p data-i18n="trustLimitBody">Worker presence, equipment, storage, transport, crop safety, actual rainfall and whether proposed help will arrive.</p></div>
       </div>
-      <p class="resource-method" data-i18n="resourceMethod">Coverage = min(capacity ÷ target, 100%); shortfall = max(target − capacity, 0). These are arithmetic planning measures, not success probabilities.</p>
+      <p class="resource-method" data-i18n="resourceMethod">Coverage = min((capacity ÷ target) × 100%, 100%); shortfall = max(target − capacity, 0). These are arithmetic planning measures, not success probabilities.</p>
     </div>
   </div></div>
   <div class="panel options-panel"><div class="panel-head"><div><div class="section-label tight">PERMITTED ALTERNATIVES</div><h2 data-i18n="optionalChanges">Additional changes you permit</h2><p data-i18n="optionsDesc">Only confirmed, independently identified alternatives can be considered by the FastAPI feasibility calculation; unconfirmed options remain excluded.</p></div><button type="button" class="btn primary" id="addChange" data-i18n="addOption">+ Add an option</button></div><div id="changeEditor" class="change-editor"></div><div class="notice" id="changeValidation" role="status">No optional changes declared. You can still evaluate the current plan.</div></div>
@@ -355,9 +355,9 @@ Object.assign(dict.en,{
  treeSite:'Report site readiness',treeAssess:'Inspect server assessment',
  trustUseTitle:'Included in planning',trustUseBody:'Your entered target, capacity, hours, deadline and stated readiness. FastAPI determines feasibility only after you evaluate.',
  trustLimitTitle:'Not independently verified',trustLimitBody:'Worker presence, equipment, storage, transport, crop safety, actual rainfall and whether proposed help will arrive.',
- resourceMethod:'Coverage = min(capacity ÷ target, 100%); shortfall = max(target − capacity, 0). These are arithmetic planning measures, not success probabilities.',
+ resourceMethod:'Coverage = min((capacity ÷ target) × 100%, 100%); shortfall = max(target − capacity, 0). These are arithmetic planning measures, not success probabilities.',
  unitsShort:'units',enterQuantity:'Enter quantity',chooseDeadline:'Choose deadline',farmerConfirms:'Farmer confirms',
- reportedNotReady:'Reported not ready',needQuantities:'Enter quantities',ofSix:'of 6',
+ reportedNotReady:'Reported not ready',needQuantities:'Enter quantities',zeroTarget:'No planned work',ofSix:'of 6',
  workRecorded:'Three quantities entered · farmer-reported',workIncomplete:'Enter target, capacity and work hours',
  farmerChosen:'Farmer-selected, not weather-certified',readyToEvaluate:'Ready for FastAPI evaluation',pendingInputs:'Complete your declaration',
  nextMissingInfo:'Next incomplete input:',nextCheckServer:'Entries are supplied; check the server response.',
@@ -372,9 +372,9 @@ Object.assign(dict.mr,{
  treeSite:'ठिकाणाची तयारी नोंदवा',treeAssess:'सर्व्हर मूल्यांकन तपासा',
  trustUseTitle:'गणनेत वापरलेले',trustUseBody:'आपले प्रमाण, क्षमता, तास, अंतिम वेळ आणि घोषित तयारी. सर्व्हर मूल्यमापनानंतरच व्यवहार्यता ठरते.',
  trustLimitTitle:'स्वतंत्र खात्री नाही',trustLimitBody:'कामगार, उपकरणे, साठवण, वाहतूक, पीक सुरक्षितता, प्रत्यक्ष पाऊस किंवा अतिरिक्त मदत.',
- resourceMethod:'क्षमता प्रमाण = min(क्षमता ÷ लक्ष्य, १००%); कमतरता = max(लक्ष्य − क्षमता, ०). ही शक्यता किंवा सुरक्षितता नाही.',
+ resourceMethod:'क्षमता प्रमाण = min((क्षमता ÷ लक्ष्य) × १००%, १००%); कमतरता = max(लक्ष्य − क्षमता, ०). ही शक्यता किंवा सुरक्षितता नाही.',
  unitsShort:'एकके',enterQuantity:'प्रमाण भरा',chooseDeadline:'अंतिम वेळ निवडा',farmerConfirms:'शेतकऱ्याची पुष्टी',
- reportedNotReady:'तयार नाही',needQuantities:'प्रमाणे भरा',ofSix:'पैकी ६',
+ reportedNotReady:'तयार नाही',needQuantities:'प्रमाणे भरा',zeroTarget:'नियोजित काम शून्य',ofSix:'पैकी ६',
  workRecorded:'तीन नोंदी भरल्या · स्वयंघोषित',workIncomplete:'प्रमाण, क्षमता व तास भरा',
  farmerChosen:'शेतकऱ्याने निवडलेली वेळ',readyToEvaluate:'सर्व्हर गणनेसाठी तयार',pendingInputs:'घोषणा पूर्ण करा',
  nextMissingInfo:'पुढील अपूर्ण नोंद:',nextCheckServer:'नोंदी भरल्या; सर्व्हरचा निकाल तपासा.',
@@ -389,9 +389,9 @@ Object.assign(dict.hi,{
  treeSite:'स्थान की तैयारी दर्ज करें',treeAssess:'सर्वर मूल्यांकन देखें',
  trustUseTitle:'गणना में शामिल',trustUseBody:'आपकी मात्रा, क्षमता, घंटे, समयसीमा और बताई गई तैयारी। व्यवहार्यता का निर्णय मूल्यांकन के बाद सर्वर करता है।',
  trustLimitTitle:'स्वतंत्र सत्यापन नहीं',trustLimitBody:'कर्मचारी, उपकरण, भंडारण, परिवहन, फसल सुरक्षा, वास्तविक वर्षा या अतिरिक्त मदद का आना।',
- resourceMethod:'क्षमता अनुपात = min(क्षमता ÷ लक्ष्य, १००%); कमी = max(लक्ष्य − क्षमता, ०)। ये सफलता की संभावना नहीं हैं।',
+ resourceMethod:'क्षमता अनुपात = min((क्षमता ÷ लक्ष्य) × १००%, १००%); कमी = max(लक्ष्य − क्षमता, ०)। ये सफलता की संभावना नहीं हैं।',
  unitsShort:'इकाइयाँ',enterQuantity:'मात्रा भरें',chooseDeadline:'समयसीमा चुनें',farmerConfirms:'किसान की पुष्टि',
- reportedNotReady:'तैयार नहीं',needQuantities:'मात्राएँ भरें',ofSix:'में से ६',
+ reportedNotReady:'तैयार नहीं',needQuantities:'मात्राएँ भरें',zeroTarget:'नियोजित कार्य शून्य',ofSix:'में से ६',
  workRecorded:'तीन प्रविष्टियाँ भरीं · स्वयं दर्ज',workIncomplete:'मात्रा, क्षमता और घंटे भरें',
  farmerChosen:'किसान द्वारा चुनी समयसीमा',readyToEvaluate:'सर्वर गणना के लिए तैयार',pendingInputs:'घोषणा पूरी करें',
  nextMissingInfo:'अगली अधूरी प्रविष्टि:',nextCheckServer:'प्रविष्टियाँ भरीं; सर्वर परिणाम देखें।',
@@ -446,7 +446,7 @@ function renderPreparednessUI(){
  $('resourceCompletenessValue').textContent=count+' '+tr('ofSix');
  $('resourceCompletenessProgress').value=count;
  const computable=target!==null&&capacity!==null&&target>0;
- $('resourceCoverageValue').textContent=computable
+ $('resourceCoverageValue').textContent=target===0?tr('zeroTarget'):computable
    ?(Math.min(capacity/target,1)*100).toLocaleString('en-IN',{maximumFractionDigits:1})+'%'
    :tr('needQuantities');
  $('resourceGapValue').textContent=target!==null&&capacity!==null
