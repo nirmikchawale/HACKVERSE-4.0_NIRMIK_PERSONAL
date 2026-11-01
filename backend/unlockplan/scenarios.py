@@ -1,4 +1,4 @@
-"""Twenty bounded, transparent teaching scenarios for the Jalna preparation planner.
+"""One hundred bounded, transparent teaching scenarios for the Jalna preparation planner.
 
 These are configured examples, NOT observed Jalna farm records, government
 measurements, or user declarations. Every decision is computed by the same
@@ -36,53 +36,91 @@ EXAMPLES = (
 )
 
 
+# Five evidence-separated, deterministic planning experiments per seed. They are
+# NOT 100 unique observed farms, nor agriculture-specific calibrated estimates.
+VARIANTS = (
+    ("baseline", "Declared baseline example"),
+    ("compressed_window", "Shortened preparation window"),
+    ("capacity_resilience", "Additional baseline handling capacity"),
+    ("readiness_review", "Handling-location readiness reassessed"),
+    ("support_confirmation", "Additional support confirmation sensitivity"),
+)
+CATALOG_SIZE = len(EXAMPLES) * len(VARIANTS)
+
+
 def get_scenarios(now: datetime | None = None) -> dict:
     instant = now or datetime.now(timezone.utc)
     if instant.tzinfo is None or instant.utcoffset() is None:
         raise ValueError("A timezone-aware evaluation time is required.")
     instant = instant.astimezone(timezone.utc).replace(second=0, microsecond=0)
     rows = []
-    for index, (name, target, capacity, duration, lead, readiness, extra, confirmation) in enumerate(EXAMPLES, 1):
-        changes = []
-        if extra:
-            changes.append({
-                "id": f"example-{index:02d}-option",
-                "type": "add_capacity",
-                "value": extra,
-                "unit": "handling_unit",
-                "availability": "available" if confirmation == "confirmed" else "unknown",
-                "confirmation_state": confirmation,
-                "resource_id": f"example-{index:02d}-additional",
-                "cost": None,
-            })
-        case = {
-            "target_units": target,
-            "capacity_units": capacity,
-            "required_hours": duration,
-            "now": instant.isoformat(),
-            "deadline": (instant + timedelta(hours=lead)).isoformat(),
-            "readiness": readiness,
-            "completed": False,
-            "unit": "handling_unit",
-            "baseline_resource_ids": [f"example-{index:02d}-baseline"],
-            "changes": changes,
-        }
-        result = evaluate(case)
-        rows.append({
-            "id": f"JAL-EX-{index:02d}",
-            "label": name,
-            "input_kind": "configured_example_not_farm_observation",
-            "assumptions": {
+    for source_index, seed in enumerate(EXAMPLES, 1):
+        name, target, seed_capacity, duration, seed_lead, seed_readiness, seed_extra, seed_confirmation = seed
+        for variation_index, (variant_key, variant_description) in enumerate(VARIANTS):
+            case_index = (source_index - 1) * len(VARIANTS) + variation_index + 1
+            capacity, lead, readiness, extra, confirmation = (
+                seed_capacity, seed_lead, seed_readiness, seed_extra, seed_confirmation
+            )
+            if variant_key == "compressed_window":
+                # Stress-test timeline assumptions: time pressure is a what-if,
+                # not a forecast of rain onset at an actual farm.
+                lead = max(0.5, min(seed_lead, round(duration * 0.55, 2)))
+            elif variant_key == "capacity_resilience":
+                # Abstract capacity increase, not a verified equipment rate.
+                capacity += max(1, round(target * 0.25))
+            elif variant_key == "readiness_review":
+                readiness = "unknown" if seed_readiness == "yes" else "yes"
+            elif variant_key == "support_confirmation":
+                if extra == 0:
+                    extra = max(5, round(target * 0.2))
+                    confirmation = "requested"
+                else:
+                    confirmation = "requested" if seed_confirmation == "confirmed" else "confirmed"
+
+            changes = []
+            if extra:
+                changes.append({
+                    "id": f"example-{case_index:03d}-option",
+                    "type": "add_capacity",
+                    "value": extra,
+                    "unit": "handling_unit",
+                    "availability": "available" if confirmation == "confirmed" else "unknown",
+                    "confirmation_state": confirmation,
+                    "resource_id": f"example-{case_index:03d}-additional",
+                    "cost": None,
+                })
+            case = {
                 "target_units": target,
                 "capacity_units": capacity,
                 "required_hours": duration,
-                "hours_until_candidate_deadline": lead,
+                "now": instant.isoformat(),
+                "deadline": (instant + timedelta(hours=lead)).isoformat(),
                 "readiness": readiness,
-                "additional_capacity_units": extra,
-                "additional_capacity_confirmation": confirmation,
-            },
-            "result": result,
-        })
+                "completed": False,
+                "unit": "handling_unit",
+                "baseline_resource_ids": [f"example-{case_index:03d}-baseline"],
+                "changes": changes,
+            }
+            result = evaluate(case)
+            rows.append({
+                "id": f"JAL-EX-{case_index:03d}",
+                "source_seed": f"JAL-SEED-{source_index:02d}",
+                "variant": variant_key,
+                "variant_description": variant_description,
+                "label": name + " · " + variant_description,
+                "input_kind": "configured_example_not_farm_observation",
+                "assumptions": {
+                    "target_units": target,
+                    "capacity_units": capacity,
+                    "required_hours": duration,
+                    "hours_until_candidate_deadline": lead,
+                    "readiness": readiness,
+                    "additional_capacity_units": extra,
+                    "additional_capacity_confirmation": confirmation,
+                },
+                "result": result,
+            })
+    assert len(rows) == CATALOG_SIZE == 100
     return {
         "status": "calculated",
         "location_scope": "Jalna, Maharashtra · already-picked cotton preparedness",
@@ -91,12 +129,13 @@ def get_scenarios(now: datetime | None = None) -> dict:
         "evaluated_at_utc": instant.isoformat(),
         "count": len(rows),
         "unit": "handling_unit",
+        "scenario_design": "20 configured seed cases × 5 explicitly described sensitivity variants",
         "records": rows,
         "notice": (
-            "Twenty illustrative resource and deadline configurations, evaluated by "
-            "the real Python engine. These are not government observations, actual "
-            "farmer submissions, weather forecasts, field-safe thresholds or crop "
-            "protection claims. Replace assumptions with farmer-confirmed inputs "
-            "before making a real resource decision."
+            "One hundred reproducible example configurations, calculated by "
+            "the real Python engine. The inputs are not government observations, "
+            "actual farmer submissions, weather forecasts, field safety thresholds "
+            "or crop protection claims. Replace these assumptions with "
+            "farmer-confirmed inputs before operational resource decisions."
         ),
     }
