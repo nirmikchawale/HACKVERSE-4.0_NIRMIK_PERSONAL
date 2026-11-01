@@ -33,7 +33,8 @@ PAGE 03 / Farm Resources
 ├── 04 Descriptive readiness diagnostics
 │   ├── number of entries provided out of six → completeness, not risk
 │   ├── coverage min(capacity ÷ target, 1) × 100%, only if target > 0
-│   └── shortfall max(target − capacity, 0) handling units
+│   ├── shortfall max(target − capacity, 0) handling units
+│   └── time margin = selected deadline − current time − declared work hours
 ├── 05 Next missing-input action
 │   └── accessible button focuses the next field or opens deadline/assessment page
 └── 06 Server-authoritative feasibility
@@ -52,7 +53,7 @@ The *coverage ratio* and *shortfall* are transparent deterministic arithmetic de
 - First navigation to Page 03 shows one working optional-change editor row with type \`add_capacity\`, empty amount/ID, and \`unknown\`; the existing **Add an option** control still adds distinct options.
 - The untouched row does not obstruct \`POST /api/evaluate\` and is not included as a server \`change\`. If the farmer edits only some fields, existing validation rejects an incomplete change rather than silently discarding it.
 - Removing the sole row and refreshing preserves the explicit empty state. Existing saved populated options remain unchanged.
-- Quantity, capacity, and hours update derived ratios without requiring a page refresh; a saved deadline and a declared site state update the pathway. Statuses never imply independently verified readiness.
+- Quantity, capacity, and hours update derived ratios without requiring a page refresh; a saved deadline updates the signed time margin, and a declared site state updates the pathway. Statuses never imply independently verified readiness.
 - Tree buttons and next-action button actually navigate/focus; keyboard focus visibly indicated.
 - Confirm Page 03 at 390 px and desktop widths; no sideways scroll or overlapping cards, retain dark/light themes and existing typography, six routes and navigation.
 - Preserve translations in English, Marathi, and Hindi for new labels; no exposed synthetic test data or misleading scientific claims.
@@ -60,7 +61,7 @@ The *coverage ratio* and *shortfall* are transparent deterministic arithmetic de
 ## Verification and release requirements
 
 1. Inspect changes for regressions to preexisting source and 100-case Feasibility Explorer.
-2. Run new Playwright browser tests for initial row, 75% capacity coverage + 20-unit shortfall in a **clearly isolated fixture**, deliberate removal/persistence, actual API payload omitting untouched row, and mobile tree navigation. Fixture values are **tests only**, not production defaults.
+2. Run new Playwright browser tests for initial row, 75% capacity coverage + 20-unit shortfall in a **clearly isolated fixture**, signed deadline margin, deliberate removal/persistence, actual API payload omitting untouched row, and mobile tree navigation. Fixture values are **tests only**, not production defaults.
 3. Run frontend typecheck, node tests, full applicable Playwright suite, Python tests/API integration and genuine Cloudflare local Worker runtime gates as configured by the project. Check GitHub Actions for the exact PR head SHA.
 4. Observe branch protection; do not force-push \`main\`. Merge by approved GitHub PR only when the necessary release checks pass. The user's request authorizes this feature but never authorizes falsifying release gate evidence.
 5. Independently check the clean Cloudflare \`/_release.json\` SHA equals the merged \`main\` SHA, \`/api/health\`, authentic forecast or clearly degraded state, and Page 03 desktop/mobile default editor + computations using a real browser on **the deployed host**, before using **PUBLICLY VERIFIED**.
