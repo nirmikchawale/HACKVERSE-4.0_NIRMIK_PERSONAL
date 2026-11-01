@@ -34,7 +34,7 @@ test.describe('CF-FEAS-04: interactive feasibility and honest source resilience'
     await expect(workbench.locator('.fw-item')).toHaveCount(1);
     await workbench.locator('.fw-item').click();
     await workbench.locator('.fw-metric-action').first().click();
-    await expect(workbench.locator('.fw-inline-note')).toContainText(/configured/i);
+    await expect(workbench.locator('.fw-inline-note')).toContainText(/Example target in handling units/i);
     await expect(page.locator('#resultTitle')).toContainText('Not evaluated');
     await expect(page.locator('#resultGoal')).not.toHaveText('—');
   });
