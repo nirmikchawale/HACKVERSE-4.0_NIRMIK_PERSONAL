@@ -11,7 +11,7 @@ async function smoke(page,width,height,label){
  await expect(page.locator('section.section')).toHaveCount(6);
  await expect(page.locator('#navDesktop [data-nav]')).toHaveCount(6);
  await expect(page.locator('#runAssessment')).toHaveText('Evaluate using FastAPI');
- await expect(page.locator('#toggleForecast')).toHaveText('Refresh forecast');
+ await expect(page.locator('#toggleForecast')).toHaveText('Refresh live forecast');
  await expect(page.locator('#sourceLedger')).toBeAttached();
  await expect(page.locator('#resultTitle')).toHaveText('Not evaluated');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1)).toBe(false);

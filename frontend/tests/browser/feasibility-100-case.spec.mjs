@@ -28,7 +28,7 @@ test.describe('Page 04: one hundred Cloudflare-compatible, real-engine examples'
     await page.locator('#navDesktop [data-nav="3"]').click();
     const workbench = page.locator('#feasibilityWorkbench');
     await expect(workbench).toBeVisible();
-    await expect(workbench).toContainText('not actual farmer records');
+    await expect(workbench).toContainText('not real farms');
     await expect(workbench.locator('.fw-item')).toHaveCount(20);
     await expect(workbench.locator('#fwPageMeta')).toContainText('of 100 matched cases');
 

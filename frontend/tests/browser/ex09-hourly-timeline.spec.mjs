@@ -65,7 +65,7 @@ test('missing provider and unsupported cities never display the source table',as
   await setSources(page,{status:'unavailable',hours:[],notice:'Provider unavailable'});
   await page.goto('/');await page.locator('#navDesktop [data-nav="1"]').click();
   await expect(page.locator('#hourlyEvidenceTable tbody tr')).toHaveCount(0);
-  await expect(page.locator('#hourlyEvidenceStatus')).toContainText('No eligible current model forecast');
+  await expect(page.locator('#hourlyEvidenceStatus')).toContainText('No current model hours');
   await expect(page.locator('#hourlyEvidenceDate')).toBeDisabled();
 });
 test('changing place removes previously validated Jalna model hours',async({page})=>{
@@ -87,7 +87,7 @@ test('old model cache cannot provide past/expired time choices',async({page})=>{
   await setSources(page,old);
   await page.goto('/');await page.locator('#navDesktop [data-nav="1"]').click();
   await expect(page.locator('#hourlyEvidenceTable tbody tr')).toHaveCount(0);
-  await expect(page.locator('#hourlyEvidenceStatus')).toContainText('No eligible current model forecast');
+  await expect(page.locator('#hourlyEvidenceStatus')).toContainText('No current model hours');
 });
 
 test('filtered day CSV contains only source-native hours for selected IST date',async({page})=>{

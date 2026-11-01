@@ -22,7 +22,7 @@ test.describe('CF-FEAS-04: interactive feasibility and honest source resilience'
     await page.locator('#navDesktop [data-nav="3"]').click();
     const workbench = page.locator('#feasibilityWorkbench');
     await expect(workbench).toBeVisible();
-    await expect(workbench).toContainText('Cloudflare build', {timeout:15000});
+    await expect(workbench).toContainText('Python-built planning examples', {timeout:15000});
     await expect(workbench).toContainText('NOT a personal evaluation');
     await expect(workbench.locator('.fw-item')).toHaveCount(20);
     await expect(workbench.locator('#fwPageMeta')).toContainText('of 100 matched cases');
@@ -34,7 +34,7 @@ test.describe('CF-FEAS-04: interactive feasibility and honest source resilience'
     await expect(workbench.locator('.fw-item')).toHaveCount(1);
     await workbench.locator('.fw-item').click();
     await workbench.locator('.fw-metric-action').first().click();
-    await expect(workbench.locator('.fw-inline-note')).toContainText(/configured/i);
+    await expect(workbench.locator('.fw-inline-note')).toContainText(/Example target in handling units/i);
     await expect(page.locator('#resultTitle')).toContainText('Not evaluated');
     await expect(page.locator('#resultGoal')).not.toHaveText('—');
   });
