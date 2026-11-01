@@ -112,10 +112,15 @@ try{
   assert(await methodology.count()===1&&
     !await methodology.evaluate(e=>e.open),
     'Resource arithmetic must be available but collapsed by default');
+  // The disclosure belongs to Page 03; clicking it while Overview is active
+  // erroneously times out even though the public app is functioning correctly.
+  await page.locator('#navDesktop [data-nav="2"]').click();
+  await methodology.locator('summary').waitFor({state:'visible',timeout:12000});
   await methodology.locator('summary').click();
   assert(await methodology.evaluate(e=>e.open),
     'Resource calculation disclosure must work');
   await methodology.locator('summary').click();
+  await page.locator('#navDesktop [data-nav="0"]').click();
 
   // Guard core planning controls as well as the newer evidence modules. This
   // frontend-path change also causes the mandatory real-backend gate to run.
@@ -137,6 +142,34 @@ try{
   await page.locator('#navDesktop [data-nav="1"]').click();
   const weatherPage=page.locator('section.section[data-page="1"]');
   await weatherPage.waitFor({state:'visible',timeout:20000});
+  // WXR-04: certify the actual clean Cloudflare production layout and one
+  // working navigation control; this is not a mocked forecast or sample farm.
+  const wcompact=await page.request.get(origin+'/weather-panel-compact.css',{timeout:15000});
+  assert(wcompact.status()===200 && (await wcompact.text()).includes('#deadlineGuideContinue'),
+    'WXR-04 compact weather layout stylesheet is missing on production');
+  assert(await weatherPage.locator('.source-strip').count()===0,
+    'Redundant forecast source/retrieval/timezone strip has returned');
+  assert(await weatherPage.locator('.deadline-card .micro-divider').count()===0 &&
+    await weatherPage.locator('.deadline-card [data-i18n="weatherCaution"]').count()===0,
+    'Redundant deadline footer warning remains');
+  await weatherPage.locator('#deadlineGuideContinue').waitFor({state:'visible',timeout:12000});
+  assert(await weatherPage.locator('.deadline-card .goto[data-target="2"]').count()===1 &&
+    await weatherPage.locator('.wx-guide-actions #deadlineGuideContinue').count()===1,
+    'Weather planning must have exactly one original working Resources action');
+  assert(await weatherPage.locator('#deadlineGuideContinue').isEnabled(),
+    'Existing Resources navigation must not be disabled without a saved deadline');
+  const wgeometry=await weatherPage.evaluate(el=>{
+    const a=el.querySelector('.forecast-panel').getBoundingClientRect();
+    const b=el.querySelector('.deadline-card').getBoundingClientRect();
+    return {top:Math.abs(a.top-b.top),bottom:Math.abs(a.bottom-b.bottom)};
+  });
+  assert(wgeometry.top<3 && wgeometry.bottom<3,
+    'Weather Model Evidence and Planning Window are not vertically aligned');
+  await weatherPage.locator('#deadlineGuideContinue').click();
+  assert(await page.locator('section.section.active').getAttribute('data-page')==='2',
+    'The real Continue to resources action does not navigate to Farm resources');
+  await page.locator('#navDesktop [data-nav="1"]').click();
+  assert(await weatherPage.isVisible(),'Weather page did not restore after resources navigation');
   assert(await weatherPage.locator('.insight-row').count()===0,
     'The three passive Weather summary cards are still present');
   await page.locator('#forecastQualityInspector').waitFor({state:'attached',timeout:20000});
