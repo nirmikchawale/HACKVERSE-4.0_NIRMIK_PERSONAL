@@ -14,6 +14,7 @@ test.describe('CF-FEAS-04: interactive feasibility and honest source resilience'
       expect(result.records.some(row => row.result.status === status)).toBe(true);
     expect(result.snapshot_notice).toContain('NOT live farm assessments');
     expect(result.snapshot_generated_at_utc).toBe(result.evaluated_at_utc);
+    expect(result.records.every(row => typeof row.result.baseline?.shortfall_units === 'number')).toBe(true);
   });
 
   test('API down: 100 engine-calculated teaching cases still browse without fake live result', async ({ page }) => {
