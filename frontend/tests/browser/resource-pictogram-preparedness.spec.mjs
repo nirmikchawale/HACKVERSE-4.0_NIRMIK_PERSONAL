@@ -58,7 +58,7 @@ test.describe('CF-RES-05 pictogram evidence and six input shortcuts', () => {
     await expect(check.locator('.prep-pathway')).not.toHaveAttribute('open','');
     await check.locator('.prep-pathway summary').click();
     await expect(check.locator('.resource-tree-node')).toHaveCount(4);
-    await expect(section.locator('#runAssessment')).toHaveCount(1);
+    await expect(page.locator('section.section[data-page="3"] #runAssessment')).toHaveCount(1);
   });
 
   test('candidate deadline shortcut navigates rather than inventing an expected window', async ({page})=>{
