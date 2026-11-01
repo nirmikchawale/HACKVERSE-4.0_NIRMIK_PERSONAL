@@ -388,6 +388,52 @@
   const qcMetrics=el('div','source-qc-metrics');
   qcMetrics.id='forecastQualityMetrics';qcMetrics.setAttribute('aria-live','polite');
   qcPanel.append(qcMetrics);
+  const qcInspector=el('section','source-qc-inspector');
+  qcInspector.id='forecastQualityInspector';
+  qcInspector.setAttribute('role','status');
+  qcInspector.setAttribute('aria-live','polite');
+  qcPanel.append(qcInspector);
+  let qcFocus='reported';
+  const qcHelp={
+    provenance:'This is an Open-Meteo numerical forecast, not a field station observation or official IMD warning.',
+    retrieved:'UTC indicates when the backend retrieved the model, not when rainfall occurred.',
+    elapsed:'Forecasts older than 120 minutes cannot supply selectable candidate deadlines.',
+    reported:'These are source-native modeled hours. Only future hours can become candidate deadlines.',
+    rainCount:'Unavailable precipitation values are unknown, never 0 mm. Modeled 0 mm never guarantees a dry field.',
+    chanceCount:'Hourly probabilities must not be summed or interpreted as a probability for the whole period.',
+    duplicates:'Duplicate timestamps could distort evidence and are reported for inspection.',
+    gaps:'A missing timestamp is missing evidence, not evidence of zero rainfall.'
+  };
+  function showQcDetail(d){
+    qcInspector.replaceChildren();
+    if(!d){qcInspector.append(el('p','','No current validated Jalna model. Refresh the forecast for quality inspection; manually chosen deadlines remain possible.'));return;}
+    const current=qcMetrics.querySelector('[data-quality="'+qcFocus+'"] strong');
+    qcInspector.append(el('strong','',current?.textContent||'Quality inspection'),el('p','',qcHelp[qcFocus]));
+    let affected=[];
+    if(qcFocus==='rainCount')affected=d.source.hours.filter(h=>h.precipitation_mm===null).map(h=>h.time);
+    if(qcFocus==='chanceCount')affected=d.source.hours.filter(h=>h.precipitation_probability_pct===null).map(h=>h.time);
+    if(qcFocus==='duplicates'){
+      const seen=new Set();affected=d.source.hours.filter(h=>seen.has(h.time)||!seen.add(h.time)).map(h=>h.time);
+    }
+    if(['rainCount','chanceCount','duplicates'].includes(qcFocus)){
+      qcInspector.append(el('p','',affected.length?'Affected source hours: '+affected.slice(0,12).join(' · ')+
+        (affected.length>12?' · '+(affected.length-12)+' more':''):
+        'No affected model hours were found in this data-quality category.'));
+    }
+    if(qcFocus==='rainCount'||qcFocus==='chanceCount'){
+      const action=el('button','btn source-qc-drill',
+        qcFocus==='rainCount'?'Inspect missing rainfall hours':'Inspect missing probability hours');
+      action.type='button';
+      action.addEventListener('click',()=>{
+        hourlyScope.value=qcFocus==='rainCount'?'missing-rain':'missing-chance';
+        hourlyDate.value='all';renderHourlyEvidence();
+        hourlyPanel.scrollIntoView({behavior:'smooth',block:'start'});
+      });qcInspector.append(action);
+    }
+    const link=el('a','source-qc-reference','Open-Meteo model documentation');
+    link.href='https://open-meteo.com/en/docs';link.target='_blank';link.rel='noopener noreferrer';
+    qcInspector.append(link);
+  }
   const qcExport=el('button','btn','Export verified modeled hours (CSV)');
   qcExport.id='exportForecastEvidence';qcExport.type='button';qcExport.disabled=true;
   qcPanel.append(qcExport);
@@ -562,21 +608,27 @@
     if(!d){
       qcMetrics.append(el('p','source-qc-empty',
         okLocation()?evidenceText('qualityMissing'):evidenceText('qualityUnsupported')));
-      return;
+      showQcDetail(null);return;
     }
-    const add=(label,value)=>{
-      const item=el('div','source-qc-item');item.append(el('strong','',label),el('span','',value));
+    const add=(key,label,value)=>{
+      const item=el('button','source-qc-item');item.type='button';item.dataset.quality=key;
+      item.setAttribute('aria-controls','forecastQualityInspector');
+      item.setAttribute('aria-expanded',String(key===qcFocus));
+      if(key===qcFocus)item.classList.add('is-active');
+      item.append(el('strong','',label),el('span','',value));
+      item.addEventListener('click',()=>{qcFocus=key;renderForecastQuality();});
       qcMetrics.append(item);
     };
-    add(evidenceText('provenance'),d.source.status==='cached_recent'?evidenceText('cached'):evidenceText('fetched'));
-    add(evidenceText('retrieved'),d.source.retrieved_at_utc);
-    add(evidenceText('elapsed'),d.ageMinutes+' '+evidenceText('minutes'));
-    add(evidenceText('reported'),String(d.records));
-    add(evidenceText('rainCount'),d.rainCount+'/'+d.records+' '+evidenceText('rainValues'));
-    add(evidenceText('chanceCount'),d.chanceCount+'/'+d.records+' '+evidenceText('chanceValues'));
-    add(evidenceText('duplicates'),String(d.duplicateHours)+' '+evidenceText('duplicateUnits'));
-    add(evidenceText('gaps'),d.gapCount===null?evidenceText('gapLong'):
+    add('provenance',evidenceText('provenance'),d.source.status==='cached_recent'?evidenceText('cached'):evidenceText('fetched'));
+    add('retrieved',evidenceText('retrieved'),d.source.retrieved_at_utc);
+    add('elapsed',evidenceText('elapsed'),d.ageMinutes+' '+evidenceText('minutes'));
+    add('reported',evidenceText('reported'),String(d.records));
+    add('rainCount',evidenceText('rainCount'),d.rainCount+'/'+d.records+' '+evidenceText('rainValues'));
+    add('chanceCount',evidenceText('chanceCount'),d.chanceCount+'/'+d.records+' '+evidenceText('chanceValues'));
+    add('duplicates',evidenceText('duplicates'),String(d.duplicateHours)+' '+evidenceText('duplicateUnits'));
+    add('gaps',evidenceText('gaps'),d.gapCount===null?evidenceText('gapLong'):
       String(d.gapCount)+' '+evidenceText('gapUnits'));
+    showQcDetail(d);
   }
   qcExport.addEventListener('click',()=>{
     const d=forecastCoverage();
