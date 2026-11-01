@@ -116,7 +116,7 @@ test('a missing forecast timestamp is not silently skipped when calculating six-
 });
 
 // Responsive acceptance: the extra evidence must not destroy the established
-// three-column desktop / one-column phone hierarchy or hide the NASA CSV action.
+// compact three-button horizon chooser on desktop and phone, without hiding NASA CSV.
 test('model cards retain responsive layout, focusable NASA export and language-safe readings',async({page})=>{
   await page.route('**/api/health',r=>r.fulfill({status:200,json:{ok:true,version:'P0',disclaimer:'Not field validated'}}));
   await page.route('**/api/sources',r=>r.fulfill({status:200,json:{sources:[],input_categories:[],operational_rules:[]}}));
@@ -138,9 +138,10 @@ test('model cards retain responsive layout, focusable NASA export and language-s
   await expect(page.locator('#downloadGovernmentCSV')).toBeFocused();
   await page.setViewportSize({width:390,height:844});
   const mobile=await grid.evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
-  expect(mobile).toBe(1);
+  expect(mobile).toBe(3);
   const widths=await grid.locator('article').evaluateAll(els=>els.map(x=>({width:x.getBoundingClientRect().width,left:x.getBoundingClientRect().left,right:x.getBoundingClientRect().right})));
-  expect(widths.every(x=>x.right<=390&&x.left>=0&&x.width>100)).toBe(true);
+  expect(widths.every(x=>x.right<=390&&x.left>=0&&x.width>=60)).toBe(true);
+  await expect(grid.locator('.wx-horizon-button')).toHaveCount(3);
   await expect(page.locator('#downloadGovernmentCSV')).toBeEnabled();
 });
 test('expired forecast does not create misleading source window cards',async({page})=>{
