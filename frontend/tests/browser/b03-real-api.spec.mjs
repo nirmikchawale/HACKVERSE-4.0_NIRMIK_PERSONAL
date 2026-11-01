@@ -128,7 +128,8 @@ test('current forecast is labelled or unavailable without fabrication',async({pa
  const status=(await page.locator('#forecastSourceChip').textContent())||'';
  expect(['LIVE MODEL FORECAST','RECENT VERIFIED CACHE','UNAVAILABLE','NOT CONNECTED','STALE · DO NOT USE']).toContain(status);
  if(status==='LIVE MODEL FORECAST'||status==='RECENT VERIFIED CACHE')
-  await expect(page.locator('#weatherChart .live-provenance')).toContainText('Open-Meteo');
+  await expect(page.locator('#forecastSourceChip')).toHaveAttribute('title',/Open-Meteo/);
+  await expect(page.locator('#forecastQualityPanel')).toContainText('Backend-retrieved model forecast');
  else await expect(page.locator('#weatherChart .hour-bar')).toHaveCount(0);
 });
 });
