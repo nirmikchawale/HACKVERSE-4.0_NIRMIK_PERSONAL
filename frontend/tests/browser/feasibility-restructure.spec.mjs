@@ -26,10 +26,10 @@ test.describe('CF-FEAS-04: interactive feasibility and honest source resilience'
     await expect(workbench).toContainText('NOT a personal evaluation');
     await expect(workbench.locator('.fw-item')).toHaveCount(20);
     await expect(workbench.locator('#fwPageMeta')).toContainText('of 100 matched cases');
-    await expect(workbench.locator('.fw-stat-action')).toHaveCount(4);
-    await workbench.locator('.fw-stat-action[data-filter="blocked"]').click();
+    await expect(workbench.locator('.fw-stat-action')).toHaveCount(5);
+    await workbench.locator('.fw-stat-action[data-outcome="blocked"]').click();
     await expect(workbench.locator('.fw-item').first()).toContainText('BLOCKED');
-    await workbench.locator('.fw-filter').selectOption('all');
+    await workbench.locator('.fw-stat-action[data-outcome="all"]').click();
     await workbench.locator('.fw-search').fill('JAL-EX-100');
     await expect(workbench.locator('.fw-item')).toHaveCount(1);
     await workbench.locator('.fw-item').click();
