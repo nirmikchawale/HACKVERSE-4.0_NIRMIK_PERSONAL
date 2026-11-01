@@ -1151,9 +1151,12 @@
       here('deadlineOriginPreview').textContent=model?'Model candidate (not observed rain)':'Farmer-selected deadline';
     }
     here('saveDeadline').disabled=!valid||saved;
-    here('deadlineGuideContinue').disabled=!saved;
+    // The user may open Farm resources before saving a deadline. This is
+    // navigation, not feasibility validation: the assessment still needs a
+    // genuinely saved deadline and declared, confirmed farm inputs.
+    here('deadlineGuideContinue').disabled=false;
     here('saveDeadline').title=valid?(saved?t.saved:t.save):t.invalid;
-    here('deadlineGuideContinue').title=saved?'Continue to resource planning':'Save a future candidate deadline first';
+    here('deadlineGuideContinue').title='Continue to farm resources (deadline can be saved later)';
   }
   here('deadlineInput').addEventListener('input',renderDeadlineGuide);
   here('deadlineInput').addEventListener('change',()=>setTimeout(renderDeadlineGuide,0));
