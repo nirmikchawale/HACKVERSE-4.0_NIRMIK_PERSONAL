@@ -128,6 +128,7 @@ html[data-theme="dark"] .brand-gold{color:#f4d676}
 <link rel="stylesheet" href="/agri-sidebar.css">
 <link rel="stylesheet" href="/overview-layout.css">
 <link rel="stylesheet" href="/resource-layout-balance.css">
+<link rel="stylesheet" href="/resource-pictogram-preparedness.css">
 </head>
 <body>
 <div class="app">
@@ -173,38 +174,49 @@ html[data-theme="dark"] .brand-gold{color:#f4d676}
   </div><div class="resource-side">
     <div class="panel preparedness-card">
       <div class="panel-head"><h2 data-i18n="preparationChecklist">02 · Preparedness check</h2><span class="bubble readiness-badge" id="resourceCheckBadge" aria-label="Inputs supplied">0/6</span></div>
-      <div class="check-rows">
-        <div><span data-i18n="checkTarget">Quantity identified</span><b id="checkTargetValue">Enter quantity</b></div>
-        <div><span data-i18n="checkTime">Candidate deadline</span><b id="checkTimeValue">Choose deadline</b></div>
-        <div><span data-i18n="checkSite">Site readiness</span><b id="checkSiteValue">Unknown</b></div>
+      <div class="prep-steps-label"><span data-i18n="prepQuickSteps">Your six inputs</span><span data-i18n="prepTapHint">Select any to edit</span></div>
+      <div class="prep-actions" aria-label="Six editable preparation inputs">
+        <button type="button" class="prep-action" data-resource-focus="quantity" data-field="quantity"><span class="prep-action-symbol" aria-hidden="true">◎</span><span class="prep-action-copy"><strong data-i18n="prepTarget">Work target</strong><small id="checkTargetValue">Enter quantity</small></span><span class="prep-action-arrow" aria-hidden="true">↗</span></button>
+        <button type="button" class="prep-action" data-resource-focus="capacity" data-field="capacity"><span class="prep-action-symbol" aria-hidden="true">▣</span><span class="prep-action-copy"><strong data-i18n="prepCapacity">Capacity</strong><small id="prepCapacityValue">Enter capacity</small></span><span class="prep-action-arrow" aria-hidden="true">↗</span></button>
+        <button type="button" class="prep-action" data-resource-focus="duration" data-field="duration"><span class="prep-action-symbol" aria-hidden="true">◷</span><span class="prep-action-copy"><strong data-i18n="prepHours">Work hours</strong><small id="prepHoursValue">Enter hours</small></span><span class="prep-action-arrow" aria-hidden="true">↗</span></button>
+        <button type="button" class="prep-action" data-resource-focus="deadlineInput" data-field="deadlineInput"><span class="prep-action-symbol" aria-hidden="true">▤</span><span class="prep-action-copy"><strong data-i18n="prepDeadline">Deadline</strong><small id="checkTimeValue">Choose deadline</small></span><span class="prep-action-arrow" aria-hidden="true">↗</span></button>
+        <button type="button" class="prep-action" data-resource-focus="readiness" data-field="readiness"><span class="prep-action-symbol" aria-hidden="true">◇</span><span class="prep-action-copy"><strong data-i18n="prepSite">Site readiness</strong><small id="checkSiteValue">Unknown</small></span><span class="prep-action-arrow" aria-hidden="true">↗</span></button>
+        <button type="button" class="prep-action" data-resource-focus="confirmInputs" data-field="confirmInputs"><span class="prep-action-symbol" aria-hidden="true">✓</span><span class="prep-action-copy"><strong data-i18n="prepConfirm">Declaration</strong><small id="prepConfirmationValue">Review</small></span><span class="prep-action-arrow" aria-hidden="true">↗</span></button>
       </div>
       <div class="resource-completeness">
         <div class="resource-completeness-head"><strong data-i18n="inputsCaptured">Form entries supplied</strong><span id="resourceCompletenessValue">0 of 6</span></div>
         <progress id="resourceCompletenessProgress" max="6" value="0" aria-label="Farm resource form entries supplied"></progress>
-        <p data-i18n="completenessCaution">Completeness counts entries, not agricultural safety or verified resource access.</p>
+        <p data-i18n="prepProgressCaution">Entries completed · not a crop-safety score</p>
       </div>
-      <div class="resource-insights" aria-label="Derived planning quantities">
-        <div class="resource-insight"><span data-i18n="reportedCoverage">Reported capacity coverage</span><strong id="resourceCoverageValue">Enter quantities</strong><small data-i18n="coverageNote">Capped at 100% of planned units</small></div>
-        <div class="resource-insight"><span data-i18n="reportedGap">Reported capacity shortfall</span><strong id="resourceGapValue">Enter quantities</strong><small data-i18n="gapNote">Planned units minus capacity, minimum zero</small></div>
-        <div class="resource-insight resource-margin"><span data-i18n="deadlineMargin">Estimated time margin</span><strong id="resourceMarginValue">Select deadline and hours</strong><small data-i18n="marginNote">Time remaining minus farmer-estimated work hours; not a safe-weather window</small></div>
+      <div class="prep-steps-label"><span data-i18n="prepLiveEstimates">From your entries</span><span data-i18n="prepLiveNoSafety">Arithmetic only</span></div>
+      <div class="resource-insights" aria-label="Calculated from farmer-entered planning amounts">
+        <button type="button" class="resource-insight" data-resource-focus="capacity"><span data-i18n="reportedCoverage">Reported capacity coverage</span><strong id="resourceCoverageValue">Enter quantities</strong><small data-i18n="prepEditCapacity">Edit capacity ↗</small></button>
+        <button type="button" class="resource-insight" data-resource-focus="quantity"><span data-i18n="reportedGap">Reported capacity shortfall</span><strong id="resourceGapValue">Enter quantities</strong><small data-i18n="prepEditTarget">Edit target ↗</small></button>
+        <button type="button" class="resource-insight resource-margin" data-resource-focus="deadlineInput"><span data-i18n="deadlineMargin">Estimated time margin</span><strong id="resourceMarginValue">Select deadline and hours</strong><small data-i18n="prepEditDeadline">Edit deadline ↗</small></button>
       </div>
-      <div class="resource-tree" aria-label="Preparedness decision pathway">
+      <details class="prep-pathway"><summary data-i18n="prepPathway">See the four-step decision path</summary><div class="resource-tree" aria-label="Preparedness decision pathway">
         <div class="resource-tree-title" data-i18n="treeTitle">Your next-step pathway</div>
         <button type="button" class="resource-tree-node" data-resource-focus="quantity"><span class="resource-tree-index">1</span><span><strong data-i18n="treeWork">Declare planned work</strong><small id="resourceTreeWork">Enter quantity, capacity and work hours</small></span></button>
         <button type="button" class="resource-tree-node" data-resource-focus="deadlineInput"><span class="resource-tree-index">2</span><span><strong data-i18n="treeDeadline">Select a candidate deadline</strong><small id="resourceTreeDeadline">Not selected</small></span></button>
         <button type="button" class="resource-tree-node" data-resource-focus="readiness"><span class="resource-tree-index">3</span><span><strong data-i18n="treeSite">Report site readiness</strong><small id="resourceTreeSite">Unknown until farmer declares</small></span></button>
         <button type="button" class="resource-tree-node" data-resource-focus="runAssessment"><span class="resource-tree-index">4</span><span><strong data-i18n="treeAssess">Inspect server assessment</strong><small id="resourceTreeAssess">Not evaluated</small></span></button>
-      </div>
+      </div></details>
       <div class="resource-next"><span id="resourceNextText">Start with your planned quantity.</span><button id="resourceNextAction" class="btn primary" type="button">Enter quantity</button></div>
-      <p class="note-small" data-i18n="resourceCaution">Only explicitly confirmed resources count toward a valid plan. Unknowns remain unknown.</p>
+      <p class="note-small" data-i18n="prepFootnote">Only confirmed resources count. Your entries are not independently verified.</p>
     </div>
     <div class="panel evidence resource-evidence">
       <h2 data-i18n="trustDetails">What we use &amp; what we don't</h2>
       <div class="resource-evidence-grid">
-        <div><strong data-i18n="trustUseTitle">Included in planning</strong><p data-i18n="trustUseBody">Your entered target, capacity, hours, deadline and stated readiness. FastAPI determines feasibility only after you evaluate.</p></div>
-        <div><strong data-i18n="trustLimitTitle">Not independently verified</strong><p data-i18n="trustLimitBody">Worker presence, equipment, storage, transport, crop safety, actual rainfall and whether proposed help will arrive.</p></div>
+        <details class="resource-proof-card proof-included" id="proofIncluded">
+          <summary><span class="resource-proof-icon" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="12" y="12" width="40" height="45" rx="7"/><path d="M25 12V8h14v4M20 27l4 4 7-8m4 4h10M20 42l4 4 7-8m4 4h10"/></svg></span><span class="resource-proof-copy"><strong data-i18n="trustUseTitle">Included in planning</strong><span class="proof-synopsis" data-i18n="trustUseSummary">Target · capacity · hours · deadline · readiness</span><span class="proof-open" data-i18n="trustDetailsAction">Details ▾</span></span></summary>
+          <div class="proof-expanded"><p data-i18n="trustUseBody">Your entered target, capacity, hours, deadline and stated readiness. FastAPI determines feasibility only after you evaluate.</p><button class="text-link goto" type="button" data-target="2"><span data-i18n="prepEditInputs">Edit farm inputs</span> →</button></div>
+        </details>
+        <details class="resource-proof-card proof-unverified" id="proofUnverified">
+          <summary><span class="resource-proof-icon" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M32 5 53 14v17c0 15-10 24-21 29C21 55 11 46 11 31V14L32 5Z"/><path d="M32 22v15"/><circle cx="32" cy="44" r="1.7" fill="currentColor" stroke="none"/></svg></span><span class="resource-proof-copy"><strong data-i18n="trustLimitTitle">Not independently verified</strong><span class="proof-synopsis" data-i18n="trustLimitSummary">Workers · tools · crop safety · actual rain</span><span class="proof-open" data-i18n="trustDetailsAction">Details ▾</span></span></summary>
+          <div class="proof-expanded"><p data-i18n="trustLimitBody">Worker presence, equipment, storage, transport, crop safety, actual rainfall and whether proposed help will arrive.</p><button class="text-link goto" type="button" data-target="1"><span data-i18n="prepOpenForecast">Review sourced forecast</span> →</button></div>
+        </details>
       </div>
-      <p class="resource-method" data-i18n="resourceMethod">Coverage = min((capacity ÷ target) × 100%, 100%); shortfall = max(target − capacity, 0). These are arithmetic planning measures, not success probabilities.</p>
+      <details class="resource-method resource-method-disclosure"><summary data-i18n="prepHowCalculated">How the planning numbers are calculated</summary><p data-i18n="resourceMethod">Coverage = min((capacity ÷ target) × 100%, 100%); shortfall = max(target − capacity, 0). These are arithmetic planning measures, not success probabilities.</p></details>
     </div>
   </div></div>
   <div class="panel options-panel"><div class="panel-head"><div><div class="section-label tight">PERMITTED ALTERNATIVES</div><h2 data-i18n="optionalChanges">Additional changes you permit</h2><p data-i18n="optionsDesc">Only confirmed, independently identified alternatives can be considered by the FastAPI feasibility calculation; unconfirmed options remain excluded.</p></div><button type="button" class="btn primary" id="addChange" data-i18n="addOption">+ Add an option</button></div><div id="changeEditor" class="change-editor"></div><div class="notice" id="changeValidation" role="status">No optional changes declared. You can still evaluate the current plan.</div></div>
