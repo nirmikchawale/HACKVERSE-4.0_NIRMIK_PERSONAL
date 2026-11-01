@@ -77,7 +77,7 @@ jobs:
         working-directory: frontend
         env:
           B03_INTEGRATION: 'true'
-        run: npm run test:browser -- tests/browser/b03-real-api.spec.mjs tests/browser/feasibility-100-case.spec.mjs
+        run: npm run test:browser -- tests/browser/b03-real-api.spec.mjs tests/browser/feasibility-100-case.spec.mjs tests/browser/farm-assessment-compact.spec.mjs
       - name: Preserve browser evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

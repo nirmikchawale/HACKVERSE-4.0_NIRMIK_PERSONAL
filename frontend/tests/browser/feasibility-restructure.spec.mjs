@@ -36,21 +36,23 @@ test.describe('CF-FEAS-04: interactive feasibility and honest source resilience'
     await workbench.locator('.fw-metric-action').first().click();
     await expect(workbench.locator('.fw-inline-note')).toContainText(/Example target in handling units/i);
     await expect(page.locator('#resultTitle')).toContainText('Not evaluated');
-    await expect(page.locator('#resultGoal')).not.toHaveText('—');
+    // Example inspection must never manufacture the user's personal assessment.
+    await expect(page.locator('#farmResultMetrics')).toBeHidden();
+    await expect(page.locator('#farmResultPanel')).toBeHidden();
   });
 
   test('all farmer readiness and metrics can open relevant inputs by mouse and keyboard', async ({ page }) => {
     await page.route('**/api/feasibility-scenarios', route => route.abort('failed'));
     await page.goto('/');
     await page.locator('#navDesktop [data-nav="3"]').click();
-    const metric = page.locator('#resultGoal').locator('..');
-    await expect(metric).toHaveAttribute('role','button');
+    const metric = page.locator('#feasResourcesAction');
+    await expect(metric).toHaveAttribute('type','button');
     await metric.focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('section.section[data-page="2"]')).toHaveClass(/active/);
     await page.locator('#navDesktop [data-nav="3"]').click();
-    const readiness = page.locator('#feasDeadline').locator('..');
-    await expect(readiness).toHaveAttribute('role','button');
+    const readiness = page.locator('#feasPlanningAction');
+    await expect(readiness).toHaveAttribute('type','button');
     await readiness.click();
     await expect(page.locator('section.section[data-page="1"]')).toHaveClass(/active/);
   });
