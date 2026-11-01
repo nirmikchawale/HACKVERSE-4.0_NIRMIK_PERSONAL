@@ -33,3 +33,7 @@
 #exportSelectedModelDay{min-height:44px}
 #exportSelectedModelDay:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
 #exportSelectedModelDay:disabled{opacity:.55}
+
+/* EX-10: past/current model-hour bars are readable evidence but cannot become future deadlines. */
+.hour-bar:disabled{cursor:not-allowed;opacity:.58}
+.hour-bar:disabled:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
