@@ -46,10 +46,10 @@ test('status tabs, variant, search, sorting and reset derive from the 100 verifi
   await expect(page.locator('#fwListTitle')).toContainText('100 matching cases');
   await expect(page.locator('#fwReset')).toBeHidden();
   await facets.filter({hasText:'Blocked'}).click();
-  await expect(page.locator('.fw-facet[data-filter="blocked"]')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('.fw-facet[data-outcome="blocked"]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('#fwListTitle')).not.toContainText('100 matching');
   await facets.filter({hasText:'With changes'}).click();
-  await expect(page.locator('.fw-facet[data-filter="packages"]')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('.fw-facet[data-outcome="packages"]')).toHaveAttribute('aria-pressed','true');
   await page.locator('#fwSort').selectOption('shortfall');
   await expect(page.locator('#fwSort')).toHaveValue('shortfall');
   await expect(page.locator('#fwCaseList .fw-item')).not.toHaveCount(0);
@@ -72,7 +72,7 @@ test('pin and compare show two authentic evaluated case results, without changin
 });
 test('CSV retains all 100 non-observational engine examples even when a filter is active',async({page})=>{
   await openLab(page);
-  await page.locator('.fw-facet[data-filter="blocked"]').click();
+  await page.locator('.fw-facet[data-outcome="blocked"]').click();
   const pending=page.waitForEvent('download');
   await page.locator('#fwExport').click();
   const download=await pending;
@@ -88,8 +88,8 @@ test('mobile lab stays usable, compact and free of horizontal overflow',async({p
   await page.setViewportSize({width:390,height:844});
   await openLab(page,true);
   await expect(page.locator('.fw-facet')).toHaveCount(5);
-  await page.locator('.fw-facet[data-filter="unknown"]').click();
-  await expect(page.locator('.fw-facet[data-filter="unknown"]')).toHaveAttribute('aria-pressed','true');
+  await page.locator('.fw-facet[data-outcome="unknown"]').click();
+  await expect(page.locator('.fw-facet[data-outcome="unknown"]')).toHaveAttribute('aria-pressed','true');
   await page.locator('#fwVariant').selectOption('readiness_review');
   await expect(page.locator('#fwListTitle')).toContainText('matching cases');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
