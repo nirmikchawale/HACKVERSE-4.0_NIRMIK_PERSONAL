@@ -38,7 +38,7 @@ jobs:
       - name: Build actual frontend assets
         working-directory: frontend
         run: |
-          npm ci
+          npm install
           node ../scripts/prepare-cloudflare-release.mjs
           npm run build
       - name: Check Cloudflare repository package builds without auto-discovery
