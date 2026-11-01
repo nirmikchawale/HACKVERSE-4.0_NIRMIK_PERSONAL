@@ -225,7 +225,16 @@ def test_forecast_replan_api_rejects_unlisted_hour(monkeypatch):
     import unlockplan.api as api
     client=TestClient(app)
     case=_feasible()
-    monkeypatch.setattr(api,'get_forecast',lambda refresh=False:_weather(datetime.now(timezone.utc)))
+    # Hold the clock before the fixed synthetic forecast hour. Otherwise the
+    # test starts failing once calendar time passes 10:00 IST on 1 November.
+    # Only the API test clock is patched; real endpoint validation is unchanged.
+    fixed_now=datetime(2026,10,31,17,30,tzinfo=timezone.utc)
+    class FixedClock(datetime):
+        @classmethod
+        def now(cls,tz=None):
+            return fixed_now.astimezone(tz) if tz is not None else fixed_now.replace(tzinfo=None)
+    monkeypatch.setattr(api,'datetime',FixedClock)
+    monkeypatch.setattr(api,'get_forecast',lambda refresh=False:_weather(fixed_now))
     response=client.post('/api/replan',json={'before':case,'after':case,'selected_hour_local':'2026-11-01T10:00'})
     assert response.status_code==422
     assert 'not present' in response.json()['detail']
