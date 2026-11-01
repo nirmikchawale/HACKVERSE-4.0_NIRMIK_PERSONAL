@@ -1,0 +1,31 @@
+/* EX-17: accessible four-source chronology and standalone paper report. */
+.source-activity{border-top:1px solid var(--border);margin-top:16px;padding-top:15px}
+.source-activity h3{font-size:17px;margin:0 0 5px;color:var(--ink)}
+.source-activity .source-matrix-intro{line-height:1.55}
+.activity-checked{display:block;margin:6px 0 12px;color:var(--muted);font-size:12px}
+.source-activity-rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:12px 0}
+.source-activity-item{border:1px solid var(--border);border-radius:14px;background:var(--card);padding:13px;min-width:0;display:flex;flex-direction:column;gap:5px}
+.source-activity-item strong{font-size:13px;color:var(--ink)}
+.source-activity-status{font-size:13px;font-weight:700;color:var(--teal)}
+.source-activity-item small,.source-activity-item time{font-size:12px;color:var(--muted);overflow-wrap:anywhere;line-height:1.5}
+.source-activity-item a{font-size:12px;color:var(--teal);text-decoration:underline;overflow-wrap:anywhere}
+.print-evidence-receipt{margin-top:18px;background:var(--card);border:1px solid var(--border)}
+.print-evidence-receipt h2{margin:0 0 8px;font-size:20px}
+.print-receipt-note{font-size:12px;line-height:1.55;color:var(--muted)}
+.print-evidence-rows{margin:12px 0;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.print-evidence-row{display:grid;grid-template-columns:minmax(130px,30%) minmax(0,1fr);gap:12px;padding:9px 11px;border-bottom:1px solid var(--border);font-size:12px;line-height:1.45}
+.print-evidence-row:last-child{border-bottom:0}
+.print-evidence-row strong{color:var(--ink)}
+.print-evidence-row span{color:var(--muted);overflow-wrap:anywhere}
+@media(max-width:740px){.source-activity-rows,.print-evidence-row{grid-template-columns:1fr}.print-evidence-row{gap:3px}}
+@page{size:A4;margin:13mm}
+@media print{
+ .section[data-page="5"]{display:block!important}
+ .section[data-page="5"]>*:not(#printEvidenceReceipt){display:none!important}
+ .section[data-page="5"] #printEvidenceReceipt{display:block!important;background:#fff!important;color:#111!important;position:static!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
+ .print-evidence-receipt h2{font-size:18pt!important;color:#111!important}
+ .print-receipt-note{font-size:9pt!important;color:#222!important}
+ .print-evidence-rows{border-color:#888!important;border-radius:0!important}
+ .print-evidence-row{grid-template-columns:30% 70%;break-inside:avoid;padding:6px 9px;gap:9px;font-size:9pt!important;border-color:#bbb!important}
+ .print-evidence-row strong,.print-evidence-row span{color:#111!important}
+}
