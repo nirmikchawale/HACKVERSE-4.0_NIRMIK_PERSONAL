@@ -612,6 +612,65 @@
   const govTitle=el('h2','', 'Government climate evidence · NASA POWER');
   const govIntro=el('p','gov-intro',
     'Historical daily gridded rainfall and temperature from NASA (US government). Not live observed rainfall, a future forecast, or a measurement at your farm.');
+
+  // EX-11: translate presentation only; NASA source name, units, numbers and
+  // downloaded raw JSON remain exact, unmodified government data.
+  const historyLanguage={
+    en:{
+      title:'Government climate evidence · NASA POWER',
+      intro:'Historical daily gridded rainfall and temperature from NASA (US government). Not live observed rainfall, a future forecast, or a measurement at your farm.',
+      refresh:'Refresh official data',fetching:'Contacting NASA POWER…',
+      range:'Government history display range',seven:'Latest 7 available days',all:'All available days',
+      download:'Download verified NASA JSON',
+      grid:'NASA historical grid',days:'available calendar days',rain:'Rainfall',rainUnknown:'Rainfall: unavailable',
+      air:'Mean air temperature',airUnknown:'Air temperature unavailable',dayUnit:'days with values',
+      avg:'Mean of available daily temperatures',dayRain:'mm/day',historic:'These are arithmetic summaries of historical government grid values, NOT operational forecasts.',
+      retrieved:'Verified government response',cached:'Verified recent response',historyDays:'historical days',
+      unsupported:'Unavailable for selected location',unsupportedIntro:'Official Jalna reference data cannot be applied to the selected place.',
+      unsupportedDetail:'Switch to Jalna, Maharashtra to retrieve its government historical context.',
+      unavailable:'Official source unavailable',unavailableIntro:'NASA POWER unavailable. No values are shown.',
+      invalid:'Could not verify official data',invalidIntro:'No government climate values displayed',
+      invalidDetail:'Only verified NASA POWER responses are eligible; no offline example is substituted.',
+      source:'Source',latest:'Latest provided day',retrievedUtc:'Retrieved (UTC)'
+    },
+    mr:{
+      title:'सरकारी ऐतिहासिक हवामान माहिती · NASA POWER',
+      intro:'NASA (अमेरिकन सरकार) कडील मागील दिवसांचा ग्रीड-आधारित पाऊस आणि तापमान. हे शेतातील थेट मोजमाप, भविष्यातील अंदाज किंवा सुरक्षिततेचे प्रमाणपत्र नाही.',
+      refresh:'सरकारी माहिती पुन्हा मिळवा',fetching:'NASA POWER शी संपर्क सुरू…',
+      range:'ऐतिहासिक दिवसांची व्याप्ती',seven:'अलीकडील ७ उपलब्ध दिवस',all:'सर्व उपलब्ध दिवस',
+      download:'पडताळलेला NASA JSON घ्या',
+      grid:'NASA ऐतिहासिक ग्रीड',days:'उपलब्ध दिवस',rain:'पाऊस',rainUnknown:'पावसाचा डेटा उपलब्ध नाही',
+      air:'सरासरी हवेचे तापमान',airUnknown:'तापमान उपलब्ध नाही',dayUnit:'मूल्य असलेले दिवस',
+      avg:'उपलब्ध दिवसांचे सरासरी तापमान',dayRain:'मिमी/दिवस',
+      historic:'ही ऐतिहासिक सरकारी ग्रीडमधील अंकगणितीय माहिती आहे; भविष्यातील अंदाज नाही.',
+      retrieved:'पडताळलेला सरकारी डेटा',cached:'अलीकडे पडताळलेला डेटा',historyDays:'ऐतिहासिक दिवस',
+      unsupported:'या ठिकाणासाठी उपलब्ध नाही',unsupportedIntro:'जालना येथील माहिती इतर ठिकाणाला लागू करता येत नाही.',
+      unsupportedDetail:'जालना, महाराष्ट्र निवडल्यानंतरच येथील ऐतिहासिक माहिती मिळेल.',
+      unavailable:'सरकारी स्रोत सध्या उपलब्ध नाही',unavailableIntro:'NASA POWER उपलब्ध नाही. कोणतीही बनावट मूल्ये दाखवलेली नाहीत.',
+      invalid:'सरकारी माहिती पडताळता आली नाही',invalidIntro:'सरकारी आकडे दाखवू शकत नाही',
+      invalidDetail:'फक्त पडताळलेला NASA POWER डेटा वापरता येतो; कृत्रिम उदाहरणे नाहीत.',
+      source:'स्रोत',latest:'उपलब्ध शेवटचा दिवस',retrievedUtc:'माहिती मिळाल्याची वेळ (UTC)'
+    },
+    hi:{
+      title:'सरकारी ऐतिहासिक मौसम जानकारी · NASA POWER',
+      intro:'NASA (अमेरिकी सरकार) से पिछले दिनों की ग्रिड-आधारित वर्षा और तापमान। यह खेत पर वास्तविक माप, भविष्य का पूर्वानुमान या सुरक्षा प्रमाणपत्र नहीं है।',
+      refresh:'सरकारी डेटा फिर प्राप्त करें',fetching:'NASA POWER से संपर्क हो रहा है…',
+      range:'ऐतिहासिक दिनों की सीमा',seven:'हाल के ७ उपलब्ध दिन',all:'सभी उपलब्ध दिन',
+      download:'सत्यापित NASA JSON डाउनलोड करें',
+      grid:'NASA ऐतिहासिक ग्रिड',days:'उपलब्ध दिन',rain:'वर्षा',rainUnknown:'वर्षा जानकारी उपलब्ध नहीं',
+      air:'औसत वायु तापमान',airUnknown:'तापमान उपलब्ध नहीं',dayUnit:'मान वाले दिन',
+      avg:'उपलब्ध दिनों का औसत तापमान',dayRain:'मिमी/दिन',
+      historic:'यह सरकारी ऐतिहासिक ग्रिड का गणितीय सारांश है, भविष्य का मौसम पूर्वानुमान नहीं।',
+      retrieved:'सत्यापित सरकारी जानकारी',cached:'हाल में सत्यापित जानकारी',historyDays:'ऐतिहासिक दिन',
+      unsupported:'इस स्थान के लिए उपलब्ध नहीं',unsupportedIntro:'जालना की ऐतिहासिक जानकारी दूसरे स्थान पर लागू नहीं की जा सकती।',
+      unsupportedDetail:'ऐतिहासिक संदर्भ देखने के लिए जालना, महाराष्ट्र चुनें।',
+      unavailable:'सरकारी स्रोत उपलब्ध नहीं',unavailableIntro:'NASA POWER उपलब्ध नहीं। कोई काल्पनिक मान नहीं दिखाए जाते।',
+      invalid:'सरकारी डेटा सत्यापित नहीं हुआ',invalidIntro:'सरकारी मान नहीं दिखा सकते',
+      invalidDetail:'केवल सत्यापित NASA POWER परिणाम स्वीकार हैं; कोई नकली उदाहरण नहीं।',
+      source:'स्रोत',latest:'उपलब्ध अंतिम दिन',retrievedUtc:'प्राप्ति समय (UTC)'
+    }
+  };
+  const historyText=k=>(historyLanguage[state.lang]||historyLanguage.en)[k]||historyLanguage.en[k]||k;
   const govActions=el('div','gov-action-row');
   const govRefresh=el('button','btn primary','Refresh official data');
   govRefresh.id='refreshGovernmentClimate';govRefresh.type='button';
@@ -636,42 +695,86 @@
 
   let governmentClimateData=null;
   let governmentClimateRequest=0;
+  let governmentClimateVisibleState='loading';
+  let governmentClimateErrorMessage='';
+  function translateGovernmentPanel(){
+    govTitle.textContent=historyText('title');
+    govIntro.textContent=historyText('intro');
+    govRefresh.textContent=govRefresh.disabled?historyText('fetching'):historyText('refresh');
+    govRange.setAttribute('aria-label',historyText('range'));
+    optSeven.textContent=historyText('seven');
+    optAll.textContent=historyText('all');
+    govDownload.textContent=historyText('download');
+    if(governmentClimateData&&okLocation()){
+      govStatus.textContent=(governmentClimateData.status==='cached_recent'?
+        historyText('cached'):historyText('retrieved'))+' · '+
+        governmentClimateData.days.length+' '+historyText('historyDays');
+      renderGovernmentClimate(governmentClimateData);
+      govDetail.replaceChildren();
+      const sourceLink=el('a','','NASA POWER official daily API');
+      sourceLink.href='https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
+      sourceLink.rel='noopener noreferrer';sourceLink.target='_blank';
+      govDetail.append(historyText('source')+': ',sourceLink,' · '+historyText('latest')+': '+
+        governmentClimateData.latest_data_date+' · '+historyText('retrievedUtc')+': '+
+        governmentClimateData.retrieved_at_utc+'. '+governmentClimateData.notice);
+      return;
+    }
+    if(!okLocation()){
+      govStatus.textContent=historyText('unsupported');
+      govRows.replaceChildren(el('p','gov-intro',historyText('unsupportedIntro')));
+      govDetail.textContent=historyText('unsupportedDetail');
+    }else if(governmentClimateVisibleState==='unavailable'){
+      govStatus.textContent=historyText('unavailable');
+      govRows.replaceChildren(el('p','gov-intro',
+        historyText('unavailableIntro')+(governmentClimateErrorMessage?' · '+governmentClimateErrorMessage:'')));
+    }else if(governmentClimateVisibleState==='invalid'){
+      govStatus.textContent=historyText('invalid');
+      govRows.replaceChildren(el('p','gov-intro',historyText('invalidIntro')+
+        (governmentClimateErrorMessage?': '+governmentClimateErrorMessage:'')));
+      govDetail.textContent=historyText('invalidDetail');
+    }else if(governmentClimateVisibleState==='loading'){
+      govStatus.textContent=historyText('fetching');
+    }
+  }
   function renderGovernmentClimate(data){
     govRows.replaceChildren();
     const count=govRange.value==='all'?data.days.length:7;
     const items=data.days.slice(-count);
     const rain=items.filter(x=>x.precipitation_mm_day!==null);
     const air=items.filter(x=>x.temperature_c!==null);
-    govSummary.textContent='NASA historical grid, '+items.length+' available calendar days · '+
-      (rain.length?'Rainfall: '+num(rain.reduce((n,x)=>n+x.precipitation_mm_day,0))+
-      ' mm across '+rain.length+'/'+items.length+' days with values':'Rainfall unavailable')+
-      ' · '+(air.length?'Mean of available daily temperatures: '+
-      num(air.reduce((n,x)=>n+x.temperature_c,0)/air.length)+' °C ('+air.length+'/'+items.length+
-      ' days)':'Temperature unavailable')+
-      '. These are arithmetic summaries of historical government grid values, NOT operational forecasts.';
+    govSummary.textContent=historyText('grid')+', '+items.length+' '+historyText('days')+' · '+
+      (rain.length?historyText('rain')+': '+num(rain.reduce((n,x)=>n+x.precipitation_mm_day,0))+
+        ' mm ('+rain.length+'/'+items.length+' '+historyText('dayUnit')+')':historyText('rainUnknown'))+
+      ' · '+(air.length?historyText('avg')+': '+
+        num(air.reduce((n,x)=>n+x.temperature_c,0)/air.length)+' °C ('+
+        air.length+'/'+items.length+' '+historyText('dayUnit')+')':historyText('airUnknown'))+
+      '. '+historyText('historic');
     for(const item of [...items].reverse()){
       const card=el('article','gov-day');
       const date=el('time','',item.date);date.dateTime=item.date;
       card.append(date,
-        el('b','',item.precipitation_mm_day===null?'Rainfall: unavailable':'Rainfall: '+num(item.precipitation_mm_day)+' mm/day'),
-        el('small','',item.temperature_c===null?'Air temperature: unavailable':'Mean air temperature: '+num(item.temperature_c)+' °C'));
+        el('b','',item.precipitation_mm_day===null?historyText('rainUnknown'):
+          historyText('rain')+': '+num(item.precipitation_mm_day)+' '+historyText('dayRain')),
+        el('small','',item.temperature_c===null?historyText('airUnknown'):
+          historyText('air')+': '+num(item.temperature_c)+' °C'));
       govRows.append(card);
     }
   }
   async function loadGovernmentClimate(refresh=false){
     const token=++governmentClimateRequest;
-    governmentClimateData=null;
+    governmentClimateData=null;governmentClimateVisibleState='loading';governmentClimateErrorMessage='';
     govDownload.disabled=true;
     govSummary.textContent='';
     govRows.replaceChildren();
     if(!okLocation()){
-      govStatus.textContent='Unavailable for selected location';
-      govRows.append(el('p','gov-intro','Official Jalna reference data cannot be applied to the selected place.'));
-      govDetail.textContent='Switch to Jalna, Maharashtra to retrieve its government historical context.';
+      governmentClimateVisibleState='unsupported';
+      govStatus.textContent=historyText('unsupported');
+      govRows.append(el('p','gov-intro',historyText('unsupportedIntro')));
+      govDetail.textContent=historyText('unsupportedDetail');
       return;
     }
     govRefresh.disabled=true;
-    govStatus.textContent='Contacting NASA POWER…';
+    govStatus.textContent=historyText('fetching');
     try{
       const data=await json('/api/government-climate'+(refresh?'?refresh=true':''));
       if(token!==governmentClimateRequest||!okLocation())return;
@@ -680,8 +783,9 @@
       }
       if(data.status==='unavailable'){
         if(data.days.length)throw new Error('Unavailable NASA response unexpectedly contained values.');
-        govStatus.textContent='Official source unavailable';
-        govRows.append(el('p','gov-intro',data.notice||'NASA POWER unavailable. No values are shown.'));
+        governmentClimateVisibleState='unavailable';governmentClimateErrorMessage=data.notice||'';
+        govStatus.textContent=historyText('unavailable');
+        govRows.append(el('p','gov-intro',historyText('unavailableIntro')+(data.notice?' · '+data.notice:'')));
         govDetail.replaceChildren();
         const link=el('a','', 'NASA POWER official documentation');link.href='https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
         link.target='_blank';link.rel='noopener noreferrer';govDetail.append(link);
@@ -694,20 +798,22 @@
           (x.temperature_c===null||Number.isFinite(x.temperature_c)))){
         throw new Error('Government climate values or provenance failed validation.');
       }
-      govStatus.textContent=(data.status==='cached_recent'?'Verified recent response':'Verified government response')+' · '+data.days.length+' historical days';
+      govStatus.textContent=(data.status==='cached_recent'?historyText('cached'):historyText('retrieved'))+' · '+data.days.length+' '+historyText('historyDays');
+      governmentClimateVisibleState='verified';
       governmentClimateData=data;
       govDownload.disabled=false;
       renderGovernmentClimate(data);
       govDetail.replaceChildren();
       const link=el('a','','NASA POWER official daily API');link.href='https://power.larc.nasa.gov/docs/services/api/temporal/daily/';
       link.rel='noopener noreferrer';link.target='_blank';
-      govDetail.append('Source: ',link,' · Latest provided day: '+data.latest_data_date+
-        ' · Retrieved (UTC): '+data.retrieved_at_utc+'. '+data.notice);
+      govDetail.append(historyText('source')+': ',link,' · '+historyText('latest')+': '+data.latest_data_date+
+        ' · '+historyText('retrievedUtc')+': '+data.retrieved_at_utc+'. '+data.notice);
     }catch(e){
       if(token!==governmentClimateRequest)return;
-      govStatus.textContent='Could not verify official data';
-      govRows.replaceChildren(el('p','gov-intro','No government climate values displayed: '+e.message));
-      govDetail.textContent='Only verified NASA POWER responses are eligible; no offline example is substituted.';
+      governmentClimateVisibleState='invalid';governmentClimateErrorMessage=e.message;
+      govStatus.textContent=historyText('invalid');
+      govRows.replaceChildren(el('p','gov-intro',historyText('invalidIntro')+': '+e.message));
+      govDetail.textContent=historyText('invalidDetail');
     }finally{if(token===governmentClimateRequest)govRefresh.disabled=false;}
   }
   govRefresh.addEventListener('click',()=>{void loadGovernmentClimate(true);});
@@ -721,6 +827,7 @@
     link.href=url;link.download='agri-foresight-nasa-jalna-'+governmentClimateData.latest_data_date+'.json';
     link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
+  here('language').addEventListener('change',translateGovernmentPanel);
   let governmentLocation=state.place.city+'|'+state.place.state;
   const updateSummaryAndLocation=updateSummaries;
   updateSummaries=function(){
