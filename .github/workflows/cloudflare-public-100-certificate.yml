@@ -1,0 +1,41 @@
+name: Cloudflare public preview exact-SHA + 100-case API certificate
+
+on:
+  push:
+    branches:
+      - migration/cloudflare-typography-01
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'wrangler.jsonc'
+      - 'pyproject.toml'
+      - '.github/workflows/cloudflare-public-100-certificate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public:
+    name: Hosted Cloudflare exact commit and 100-case real API
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout candidate commit from protected Git history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Use Node.js 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '22'
+      - name: Wait for hosted Cloudflare preview with exact Git SHA and genuine FastAPI health
+        env:
+          EDGE_URL: https://migration-cloudflare-typography-01-agri-foresight.nirmikchawale1.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        run: node scripts/wait-cloudflare-public.mjs
+      - name: Verify deployed 100-case source labels, real engine, government source contract, and assets
+        env:
+          EDGE_URL: https://migration-cloudflare-typography-01-agri-foresight.nirmikchawale1.workers.dev
+          EXPECTED_SHA: ${{ github.sha }}
+        run: node backend/scripts/cloudflare-smoke.mjs
