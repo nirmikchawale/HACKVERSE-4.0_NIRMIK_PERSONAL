@@ -351,7 +351,10 @@ function paintWords(){
  targetTitle.textContent=t('target');capacityTitle.textContent=t('cap');
  targetHint.textContent=t('targetHint');capacityHint.textContent=t('capHint');
  extraTitle.textContent=t('extraTitle');extraInfo.textContent=t('extraInfo');
+ extraSelect.setAttribute('aria-label',t('extraTitle'));
  for(const v of ['none','requested','confirmed'])extraSelect.querySelector('[value="'+v+'"]').textContent=t(v);
+ const showExtra=extraSelect.value!=='none';
+ amountLabel.hidden=!showExtra;nameLabel.hidden=!showExtra;extraHint.hidden=!showExtra;
  amountTitle.textContent=t('extraAmount');nameTitle.textContent=t('extraHelp');extraHint.textContent=t('extraHint');
  legacy.textContent=oldOptions().length?t('legacy'):'';
  check.textContent=t('check');example.textContent=t('example');
