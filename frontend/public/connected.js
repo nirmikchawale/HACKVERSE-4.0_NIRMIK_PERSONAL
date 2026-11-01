@@ -454,7 +454,7 @@
         (complete?tr.complete:tr.incomplete)));
       card.append(el('small','',tr.maximum+
         (prob.length?num(Math.max(...prob.map(h=>h.precipitation_probability_pct)))+'%':tr.unavailable)+
-        '. Not a probability for the whole window.'));
+        tr.probability));
       grid.append(card);
     }
     chart.append(grid);
