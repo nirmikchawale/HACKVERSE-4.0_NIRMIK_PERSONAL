@@ -21,11 +21,11 @@ def _feasible():
     return case
 
 
-def _weather(now, precipitation=None):
+def _weather(now, precipitation=None, hour_local='2026-11-01T09:00'):
     return {
         'status': 'retrieved_live', 'retrieved_at_utc': now.isoformat(),
         'validated': {'timezone': 'Asia/Kolkata'},
-        'hours': [{'time': '2026-11-01T09:00', 'precipitation_mm': precipitation,
+        'hours': [{'time': hour_local, 'precipitation_mm': precipitation,
                    'precipitation_probability_pct': 35}],
         'request_url': 'https://api.open-meteo.com/v1/forecast?test-fixture-only',
         'attribution': 'Open-Meteo model source (synthetic test fixture)',
@@ -202,10 +202,20 @@ def test_forecast_replan_api_rejects_unavailable_and_accepts_stubbed_recent(monk
     import unlockplan.api as api
     client=TestClient(app)
     case=_feasible()
-    payload={'before':case,'after':case,'selected_hour_local':'2026-11-01T09:00'}
+    # Use a future time relative to the test clock. The old fixed 09:00
+    # hour became stale after that time passed on 2026-11-01, making
+    # this purely synthetic contract test fail without any code regression.
+    from zoneinfo import ZoneInfo
+    current=datetime.now(timezone.utc)
+    selected=(current.astimezone(ZoneInfo('Asia/Kolkata'))+timedelta(hours=2)).replace(
+        minute=0,second=0,microsecond=0
+    )
+    hour=selected.strftime('%Y-%m-%dT%H:%M')
+    case['now']=(selected-timedelta(hours=1)).isoformat()
+    payload={'before':case,'after':case,'selected_hour_local':hour}
     monkeypatch.setattr(api,'get_forecast',lambda refresh=False:{'status':'unavailable'})
     assert client.post('/api/replan',json=payload).status_code==409
-    fresh=_weather(datetime.now(timezone.utc))  # Synthetic test-only stub.
+    fresh=_weather(current,hour_local=hour)  # Synthetic test-only stub.
     monkeypatch.setattr(api,'get_forecast',lambda refresh=False:fresh)
     response=client.post('/api/replan',json=payload)
     assert response.status_code==200
