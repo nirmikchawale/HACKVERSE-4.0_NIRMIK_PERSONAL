@@ -141,7 +141,7 @@ let meta=read()||{unit:'quintal',targetKg:null,capacityKg:null};
 let restoring=false,internal=false,demo=false,previous=null;
 const factor=()=>meta.unit==='quintal'?100:1;
 const toDisplay=kg=>Number.isFinite(kg)?fmt(Number((kg/factor()).toFixed(5))).replace(/,/g,''):'';
-const quantityUnit=()=>meta.unit==='quintal'?t('q').split(' ')[0]:t('kg').split(' ')[0];
+const quantityUnit=()=>meta.unit==='quintal'?(lang()==='en'?'quintals':t('q').split(' ')[0]):(lang()==='en'?'kg':t('kg').split(' ')[0]);
 const safeValue=v=>typeof v==='string'&&v.trim()!==''&&Number.isFinite(Number(v))&&Number(v)>=0&&Number(v)<=1e9;
 const toKg=v=>{const n=Number(v)*factor();return Number.isFinite(n)&&n<=1e11?Number(n.toFixed(6)):null;};
 const persistMeta=()=>{try{localStorage.setItem(storeKey,JSON.stringify(meta));}catch{}};
