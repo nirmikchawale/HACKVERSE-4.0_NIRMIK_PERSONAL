@@ -4,6 +4,9 @@
   "use strict";
   const live={forecast:null,sources:null,health:null,evaluation:null,request:null,comparison:null,replan:null,selectedHour:null,selectedPackage:null,forecastLoading:false,error:null};
   const here=id=>document.getElementById(id);
+  const evidenceStyle=document.createElement('link');
+  evidenceStyle.rel='stylesheet';evidenceStyle.href='/model-evidence.css';
+  document.head.append(evidenceStyle);
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;};
   const num=n=>Number.isFinite(Number(n))?Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}):'Unknown';
   const okLocation=()=>state.place?.state==='Maharashtra'&&state.place?.city?.trim().toLowerCase()==='jalna';
@@ -61,10 +64,96 @@
     const place=state.place.city+'|'+state.place.state;
     if(previousPlace!==place){previousPlace=place;live.forecast=null;live.selectedHour=null;clearResult();}
     oldSummaries();
+    renderForecastQuality();
     here('weatherValue').textContent=live.forecast?(isCurrent()?'Model forecast '+(live.forecast.hours.length)+' h':live.forecast.status.toUpperCase()):'No verified forecast';
   };
   updateWeatherUI=renderWeather;
+
+  // EX-08 — descriptive data-quality receipt for the genuine forecast,
+  // separate from agronomic suitability, observed rainfall, and deadline advice.
+  const qcPanel=el('section','panel source-qc-panel');
+  qcPanel.id='forecastQualityPanel';
+  qcPanel.setAttribute('aria-label','Forecast data coverage and export');
+  qcPanel.append(el('h2','','Forecast evidence quality'));
+  qcPanel.append(el('p','source-qc-disclosure',
+    'Open-Meteo provides modeled weather, not a field rain gauge or a crop-safe onset threshold. Missing hours and missing values are never interpreted as dry weather.'));
+  const qcMetrics=el('div','source-qc-metrics');
+  qcMetrics.id='forecastQualityMetrics';qcMetrics.setAttribute('aria-live','polite');
+  qcPanel.append(qcMetrics);
+  const qcExport=el('button','btn','Export verified modeled hours (CSV)');
+  qcExport.id='exportForecastEvidence';qcExport.type='button';qcExport.disabled=true;
+  qcPanel.append(qcExport);
+  qcPanel.append(el('small','source-qc-disclosure',
+    'Export is available only for the supported Jalna pilot and a validated current model response. No farmer declarations are included.'));
+  document.querySelector('section.section[data-page="1"]').append(qcPanel);
+  function forecastCoverage(){
+    if(!isCurrent())return null;
+    const f=live.forecast;
+    const ageMs=Date.now()-Date.parse(f.retrieved_at_utc||'');
+    // Match the authoritative backend's two-hour STALE_AFTER_HOURS contract.
+    // A wrongly labelled old cache must never become a "current" CSV receipt.
+    if(!Number.isFinite(ageMs)||ageMs<0||ageMs>2*60*60*1000||
+      !Array.isArray(f.hours)||!f.hours.length)return null;
+    const timeKeys=f.hours.map(h=>Date.parse(h.time+':00+05:30'));
+    if(timeKeys.some(t=>!Number.isFinite(t)))return null;
+    const unique=new Set(timeKeys), sorted=[...unique].sort((a,b)=>a-b);
+    const withinSpan=(sorted[sorted.length-1]-sorted[0])/3600000+1;
+    const gapCount=withinSpan<=1000?Math.max(0,Math.round(withinSpan)-sorted.length):null;
+    return {source:f,ageMinutes:Math.floor(ageMs/60000),records:f.hours.length,
+      rainCount:f.hours.filter(h=>h.precipitation_mm!==null).length,
+      chanceCount:f.hours.filter(h=>h.precipitation_probability_pct!==null).length,
+      duplicateHours:f.hours.length-unique.size,gapCount};
+  }
+  function renderForecastQuality(){
+    qcMetrics.replaceChildren();
+    const d=forecastCoverage();
+    qcExport.disabled=!d;
+    if(!d){
+      qcMetrics.append(el('p','source-qc-empty',
+        okLocation()?'No validated current model readings to audit or export. Refresh the forecast to retrieve genuine evidence.':
+          'Not available for this location. Jalna, Maharashtra is the only supported pilot.'));
+      return;
+    }
+    const add=(label,value)=>{
+      const item=el('div','source-qc-item');item.append(el('strong','',label),el('span','',value));
+      qcMetrics.append(item);
+    };
+    add('Provenance',d.source.status==='cached_recent'?'Recent backend-validated model cache':'Backend-retrieved model forecast');
+    add('Retrieved (UTC)',d.source.retrieved_at_utc);
+    add('Elapsed since retrieval',d.ageMinutes+' minute(s), calculated from the provided timestamp');
+    add('Reported hourly records',String(d.records));
+    add('Rainfall values',d.rainCount+'/'+d.records+' hours reported a modeled millimeter value');
+    add('Rain-probability values',d.chanceCount+'/'+d.records+' hours reported a model probability');
+    add('Timestamp duplicates',String(d.duplicateHours)+' duplicate record(s)');
+    add('Hourly timestamp gaps',d.gapCount===null?'Range too long to verify in this view':String(d.gapCount)+' absent hourly position(s)');
+  }
+  qcExport.addEventListener('click',()=>{
+    const d=forecastCoverage();
+    if(!d||qcExport.disabled)return;
+    const source=d.source;
+    const headers=['hour_ist','modeled_precipitation_mm','modeled_precipitation_probability_pct',
+      'source_type','source_attribution','source_status','retrieved_at_utc','data_disclosure'];
+    const quote=value=>{
+      let text=String(value??'');
+      if(/^\s*[=+\-@\t\r]/.test(text))text="'"+text;
+      return '"'+text.replace(/"/g,'""')+'"';
+    };
+    const numberCell=value=>typeof value==='number'&&Number.isFinite(value)?String(value):'';
+    const lines=source.hours.map(h=>[
+      quote(h.time),numberCell(h.precipitation_mm),numberCell(h.precipitation_probability_pct),
+      quote('external_model_forecast'),quote(source.attribution||'Open-Meteo'),
+      quote(source.status),quote(source.retrieved_at_utc),
+      quote('Model values, not a station observation or crop-safety threshold')
+    ].join(','));
+    const csv='\uFEFF'+headers.join(',')+'\r\n'+lines.join('\r\n')+'\r\n';
+    const uri=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+    const link=el('a');link.href=uri;
+    link.download='agri-foresight-open-meteo-jalna-'+
+      new Date().toISOString().slice(0,10)+'.csv';
+    link.click();setTimeout(()=>URL.revokeObjectURL(uri),1000);
+  });
   function renderWeather(){
+    renderForecastQuality();
     const chart=here('weatherChart'),mode=here('weatherChartMode'),chip=here('forecastSourceChip');
     chart.replaceChildren();here('toggleForecast').textContent='Refresh live forecast';here('clearForecast').textContent='Clear forecast view';
     if(!okLocation()){chip.textContent='UNSUPPORTED LOCATION';mode.textContent='Jalna-only data coverage';chart.append(el('div','weather-empty','Forecast for this location is not supported. Return to Jalna, Maharashtra; no other-location data is fabricated.'));here('weatherValue').textContent='Unsupported';return;}
