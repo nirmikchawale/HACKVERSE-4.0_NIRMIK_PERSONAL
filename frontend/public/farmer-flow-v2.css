@@ -116,3 +116,5 @@ body[data-experience="farmer"] section[data-page="0"] .hero .content>p.eyebrow,
 body[data-experience="farmer"] section[data-page="0"] .hero .content>[data-i18n="heroBody"]{display:none!important}
 body[data-experience="farmer"] .fv2-purpose{display:block!important;margin:0 0 12px!important}
 body[data-experience="farmer"] .fv2-crop{margin:0 0 18px}
+
+.fv2-extra .field[hidden],.fv2-extra small[hidden]{display:none!important}
