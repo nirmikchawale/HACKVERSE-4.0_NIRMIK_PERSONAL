@@ -27,6 +27,20 @@ test('Home clearly explains purpose and cotton scope, with full Detailed View pr
   await expect(page.locator('section[data-page="1"] .weather-layout')).toBeVisible();
   await expect(page.locator('#weatherChart')).toBeVisible();
 });
+test('Farmer View action plan renders before assessment and Detailed View keeps technical cards',async({page})=>{
+  await page.goto('/');
+  await page.locator('#navDesktop [data-nav="4"]').click();
+  const action=page.locator('#farmerActionV2');
+  await expect(action).toBeVisible();
+  await expect(action).toContainText('First check your plan');
+  await expect(page.locator('#farmerActionCard')).toBeHidden();
+  await page.locator('#experienceSwitch button').nth(1).click();
+  await expect(page.locator('body')).toHaveAttribute('data-experience','detailed');
+  await expect(action).toBeHidden();
+  await expect(page.locator('section[data-page="4"] > .grid2')).toBeVisible();
+  await page.locator('#experienceSwitch button').nth(0).click();
+  await expect(action).toBeVisible();
+});
 test('current weather unavailable is never displayed as invented live rainfall',async({page})=>{
   await page.route('**/api/forecast**',route=>route.fulfill({
     status:200,contentType:'application/json',
@@ -98,6 +112,7 @@ test('real FastAPI example yields a blocked baseline and a conditional confirmed
   page.once('dialog',dialog=>dialog.accept());
   await page.locator('#farmerExample').click();
   await expect(page.locator('#resultTitle')).toContainText('BLOCKED',{timeout:20000});
+  await expect(page.locator('#farmerActionV2')).toBeVisible();
   await expect(page.locator('#farmerActionV2')).toContainText('Possible change',{timeout:20000});
   await expect(page.locator('#farmerActionV2')).toContainText('4 quintals');
   await expect(page.locator('#farmerActionV2')).toContainText('After this change');
