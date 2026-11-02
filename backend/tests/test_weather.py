@@ -38,7 +38,10 @@ def test_expired_cache_marked_stale(tmp_path):
  assert r['status']=='stale_cache' and r['error']
 
 def test_no_rain_no_warning(tmp_path):
- r=get_forecast(refresh=True,cache_path=tmp_path/'real.json',fetcher=lambda url:synthetic_response(rain=False))
+ # Fixed reference time matches the fixed hourly test fixture; do not let the
+ # calendar make this genuine schema-validation test expire in future years.
+ now=datetime(2026,10,31,14,0,tzinfo=timezone.utc)
+ r=get_forecast(refresh=True,cache_path=tmp_path/'real.json',fetcher=lambda url:synthetic_response(rain=False),now=now)
  assert r['validated']['positive_precipitation_hours']==0
  assert 'No positive modeled' in r['notice']
 
