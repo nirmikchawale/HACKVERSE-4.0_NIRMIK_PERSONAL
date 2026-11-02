@@ -91,6 +91,14 @@ try{
     .waitFor({state:'visible',timeout:25000});
   assert((await page.locator('#jalnaContext').textContent()).includes('Jalna'),
     'Farmer Check Weather must display sourced Jalna context');
+  // FE-04: verify the real on-screen Action Plan card, not merely hidden DOM text.
+  await page.locator('#navDesktop [data-nav="4"]').click();
+  assert(await page.locator('#farmerActionV2').isVisible(),
+    'Farmer My Action Plan is blank: redesigned card hidden by competing styles');
+  assert((await page.locator('#farmerActionV2').textContent()).trim().length>30,
+    'Farmer My Action Plan is present but contains no useful instructions');
+  assert(await page.locator('#farmerActionCard').isHidden(),
+    'Old Action Plan card must not overlap redesigned results');
   await page.locator('#navDesktop [data-nav="0"]').click();
   await page.locator('#experienceSwitch button').filter({hasText:'Detailed View'}).click();
   assert(await page.locator('body').getAttribute('data-experience')==='detailed',

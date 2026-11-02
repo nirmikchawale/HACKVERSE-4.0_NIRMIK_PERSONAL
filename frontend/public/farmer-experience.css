@@ -56,7 +56,8 @@ body[data-experience="farmer"] section[data-page="3"] #resultHero{padding:12px 1
 body[data-experience="farmer"] section[data-page="3"] .farm-eval-head{display:none}
 body[data-experience="farmer"] section[data-page="4"] > .feature-stripe,
 body[data-experience="farmer"] section[data-page="4"] > .grid2,
-body[data-experience="farmer"] section[data-page="4"] > .panel:not(#farmerActionCard){display:none!important}
+/* Preserve the legacy Action Plan until FE-03 loads, but do not hide its replacement. */
+body[data-experience="farmer"] section[data-page="4"] > .panel:not(#farmerActionCard):not(#farmerActionV2){display:none!important}
 body[data-experience="farmer"] section[data-page="5"] > :not(#farmerHelpPanel){display:none!important}
 body[data-experience="farmer"] section[data-page="5"] > #farmerHelpPanel{display:block!important}
 body[data-experience="detailed"] .farmer-help-panel{display:none}
