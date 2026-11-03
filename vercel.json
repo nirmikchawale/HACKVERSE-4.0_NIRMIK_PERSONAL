@@ -36,5 +36,12 @@
         "service": "frontend"
       }
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "**": false,
+      "main": true,
+      "release/cert-*": true
+    }
+  }
 }
